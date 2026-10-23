@@ -13,6 +13,7 @@
   --pencil: #1f2433;
   --line: rgba(230, 238, 251, 0.14);
   --pixel: 'VT323', ui-monospace, monospace;
+  --arcade: 'Press Start 2P', 'VT323', monospace;
   --title: 'VT323', ui-monospace, monospace;
   --slash: 'Anton', Impact, sans-serif;
   --hand: 'Patrick Hand', 'Comic Sans MS', cursive;
@@ -48,13 +49,25 @@ hr { border: none; border-top: 1px solid var(--line); margin: 16px 0; }
   radial-gradient(circle at 20% 70%, rgba(220,230,245,.12), transparent 30%), radial-gradient(circle at 75% 60%, rgba(220,230,245,.10), transparent 35%), radial-gradient(circle at 50% 85%, rgba(220,230,245,.14), transparent 40%);
   animation: fogdrift 18s ease-in-out infinite alternate; pointer-events: none; }
 @keyframes fogdrift { from { transform: translateX(-4%); } to { transform: translateX(4%); } }
-.logo { font-family: var(--pixel); font-size: clamp(64px, 16vw, 132px); line-height: .85; letter-spacing: 6px; color: var(--foam); text-shadow: 0 0 24px rgba(180, 210, 255, .35), 5px 5px 0 #000; position: relative; }
-.logo small { display: block; font-size: .2em; letter-spacing: 3px; color: var(--muted); text-shadow: none; margin-top: 12px; }
+.logo { font-family: var(--arcade); font-size: clamp(30px, 8.4vw, 76px); line-height: 1; letter-spacing: 2px; color: #fff; text-shadow: 0 4px 0 #6a6a76, 0 8px 0 #2d2d3a, 0 0 30px rgba(180, 210, 255, .35); position: relative; }
+.logo small { display: block; font-size: clamp(8px, 1.6vw, 12px); letter-spacing: 1px; color: var(--muted); text-shadow: none; margin-top: 22px; text-transform: uppercase; }
 .title-canvas { width: 300px; height: 120px; image-rendering: pixelated; margin: 14px 0 22px; position: relative; }
 .ts-lh { position: absolute; left: 30px; bottom: 0; filter: drop-shadow(0 0 12px #ffe9a0); }
 .ts-crow { position: absolute; right: 30px; bottom: 6px; font-size: 30px; animation: bob 2.6s ease-in-out infinite; }
-.title-menu { display: flex; flex-direction: column; gap: 10px; align-items: center; position: relative; }
-.title-menu .btn { min-width: 290px; }
+.title-menu { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; position: relative; margin-top: 4px; }
+.tm-item { position: relative; background: none; border: none; color: #fff; font-family: var(--arcade); font-size: clamp(13px, 2.6vw, 18px); letter-spacing: 1px; padding: 10px 12px 10px 40px; text-align: left; display: flex; align-items: baseline; gap: 14px; outline: none; cursor: pointer; }
+.tm-sub { font-size: .62em; color: var(--muted); letter-spacing: 0; }
+.tm-item.sel { color: var(--yellow); }
+.tm-item.sel .tm-sub { color: #c9a24a; }
+.tm-item::before { content: ''; position: absolute; left: 8px; top: 50%; width: 18px; height: 16px; transform: translateY(-50%); background: var(--red); image-rendering: pixelated;
+  clip-path: polygon(0 12.5%, 12.5% 12.5%, 12.5% 0, 37.5% 0, 37.5% 12.5%, 62.5% 12.5%, 62.5% 0, 87.5% 0, 87.5% 12.5%, 100% 12.5%, 100% 50%, 87.5% 50%, 87.5% 62.5%, 75% 62.5%, 75% 75%, 62.5% 75%, 62.5% 87.5%, 50% 87.5%, 50% 100%, 50% 100%, 50% 87.5%, 37.5% 87.5%, 37.5% 75%, 25% 75%, 25% 62.5%, 12.5% 62.5%, 12.5% 50%, 0 50%);
+  visibility: hidden; }
+.tm-item.sel::before { visibility: visible; animation: heartbeat 1.1s steps(1) infinite; }
+@keyframes heartbeat { 0%, 70% { transform: translateY(-50%); } 71%, 100% { transform: translateY(calc(-50% - 2px)); } }
+.tm-item.chosen { animation: chosen .38s steps(1); }
+@keyframes chosen { 0%, 50% { color: #fff; } 25%, 75% { color: var(--yellow); } }
+.tm-item.chosen::before { animation: none; }
+.title-foot { position: relative; display: flex; gap: 28px; margin-top: 30px; font-family: var(--arcade); font-size: 9px; color: #5c6478; letter-spacing: 1px; }
 .foot { color: var(--muted); font-size: 13px; margin-top: 30px; position: relative; }
 .name-screen { font-family: var(--pixel); position: relative; }
 .name-screen h2 { font-size: 36px; font-weight: normal; }
@@ -341,10 +354,11 @@ canvas.dodge { display: block; margin: 0 auto; background: #000; border: 3px sol
 .job-list { list-style: none; padding-left: 0; }
 
 /* ───────── accounts ───────── */
-.account-chip { position: absolute; top: 14px; right: 14px; z-index: 2; display: flex; align-items: center; gap: 8px; background: #000; color: #fff; border: 3px solid #fff; font-family: var(--pixel); font-size: 22px; padding: 3px 12px 3px 6px; }
-.account-chip.login { padding: 4px 16px; letter-spacing: 2px; }
+.account-chip { position: absolute; top: 16px; right: 16px; z-index: 2; display: flex; align-items: center; gap: 10px; background: none; color: #fff; border: none; font-family: var(--arcade); font-size: 11px; letter-spacing: 1px; padding: 6px 8px; }
+.account-chip.login::before { content: '▶'; color: transparent; margin-right: 2px; }
+.account-chip.login:hover::before, .account-chip.login:focus-visible::before { color: var(--red); }
 .account-chip img { width: 30px; image-rendering: pixelated; }
-.account-chip:hover, .account-chip:focus-visible { border-color: var(--yellow); color: var(--yellow); outline: none; }
+.account-chip:hover, .account-chip:focus-visible { color: var(--yellow); outline: none; }
 .auth { max-width: 440px; margin: 4vh auto 24px; background: #000; border: 4px solid #fff; box-shadow: 8px 8px 0 rgba(0,0,0,.6); padding: 18px 22px 22px; font-family: var(--pixel); position: relative; }
 .auth-logo { font-size: 46px; letter-spacing: 6px; text-align: center; line-height: 1; margin: 4px 0 14px; text-shadow: 3px 3px 0 #2d2d3a, 0 0 18px rgba(180, 210, 255, .25); }
 .auth-h { font-family: var(--pixel); font-weight: normal; font-size: 34px; margin: 0 0 4px; letter-spacing: 1px; }

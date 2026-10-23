@@ -33,6 +33,8 @@ window.Sfx = (function () {
     setEnabled(v) { enabled = v; },
     blip(pitch) { tone(pitch || 440, 0.045, 'square', 0.025); },
     select() { tone(660, 0.06, 'square', 0.04); },
+    move() { tone(520, 0.035, 'square', 0.03); },
+    confirm() { tone(784, 0.05, 'square', 0.045); setTimeout(() => tone(1175, 0.09, 'square', 0.045), 55); },
     hit() { tone(220, 0.12, 'sawtooth', 0.06, 80); },
     crit() { tone(880, 0.08, 'square', 0.05); setTimeout(() => tone(1320, 0.12, 'square', 0.05), 70); },
     hurt() { tone(140, 0.2, 'sawtooth', 0.07, 60); },

@@ -143,20 +143,19 @@
       : '<button class="account-chip login" data-a="account">LOG IN</button>';
   }
 
+  // The title screen: a classic RPG menu. Plain pixel text, a heart cursor, arrow keys to move, Z to choose.
+  let titleKeys = null, titleSel = null;
   function title() {
+    const items = (S.started ? [['cont', 'CONTINUE', esc(S.name) + ' · CH ' + (S.flags.chapter || 0)]] : [])
+      .concat([['new', 'NEW GAME'], ['papers', 'PAST PAPERS'], ['drills', 'DRILLS & NOTEBOOK'], ['daily', 'DAILY CHALLENGE', '#' + diveNumber()], ['settings', 'SETTINGS']]);
     const el = screen(accountChip() +
       '<div class="logo">LOWMARSH<small>a story about showing your working</small></div>' +
       '<canvas class="title-canvas" width="200" height="80" aria-hidden="true"></canvas>' +
-      '<div class="title-menu">' +
-      (S.started ? '<button class="btn primary" data-a="cont">▶ CONTINUE — ' + esc(S.name) + '</button>' : '') +
-      '<button class="btn ' + (S.started ? '' : 'primary') + '" data-a="new">' + (S.started ? 'NEW GAME' : '▶ NEW GAME') + '</button>' +
-      '<button class="btn" data-a="papers">📝 PAST PAPERS</button>' +
-      '<button class="btn" data-a="drills">🎯 DRILLS & NOTEBOOK</button>' +
-      '<button class="btn" data-a="daily">⏱ DAILY CHALLENGE #' + diveNumber() + '</button>' +
-      '<button class="btn small" data-a="settings">⚙ settings</button>' +
-      '</div>');
+      '<nav class="title-menu" aria-label="Main menu">' +
+      items.map(([a, label, sub], i) => '<button class="tm-item" data-a="' + a + '" data-i="' + i + '"><span class="tm-label">' + label + '</span>' + (sub ? '<span class="tm-sub">' + sub + '</span>' : '') + '</button>').join('') +
+      '</nav><div class="title-foot">' + (matchMedia('(pointer: coarse)').matches ? '<span>TAP TO SELECT</span>' : '<span>↑↓ CHOOSE</span><span>Z / ENTER SELECT</span>') + '</div>');
     drawTitleScene($('.title-canvas', el));
-    on(el, {
+    const actions = {
       cont: () => startWorld(),
       new: () => {
         if (S.started && !confirm('Start a new story? Your story progress will be erased (practice stats are kept).')) return;
@@ -169,7 +168,47 @@
       daily: () => dailyIntro(title),
       settings: () => settings(title),
       account: () => (Auth.current() && Auth.current().username ? profile(title) : login(title)),
+    };
+    const btns = Array.from(el.querySelectorAll('.tm-item'));
+    // The cursor remembers where it was when you come back from a submenu.
+    let sel = Math.max(0, btns.findIndex(b => b.dataset.a === titleSel)), busy = false;
+    btns[sel].classList.add('sel');
+    const pick = (i, quiet) => {
+      i = (i + btns.length) % btns.length;
+      if (i === sel) return;
+      btns[sel].classList.remove('sel');
+      sel = i;
+      btns[sel].classList.add('sel');
+      titleSel = btns[sel].dataset.a;
+      if (!quiet) Sfx.move();
+    };
+    // Choosing an option: the classic confirm chirp and a quick flash, then go.
+    const choose = i => {
+      if (busy) return;
+      pick(i, true);
+      titleSel = btns[sel].dataset.a;
+      busy = true;
+      Sfx.confirm();
+      btns[sel].classList.add('chosen');
+      setTimeout(() => { busy = false; btns[sel].classList.remove('chosen'); actions[btns[sel].dataset.a](); }, 380);
+    };
+    btns.forEach((b, i) => {
+      b.addEventListener('mouseenter', () => pick(i));
+      b.addEventListener('focus', () => pick(i, true));
+      b.addEventListener('click', e => { e.stopPropagation(); choose(i); });
     });
+    el.onclick = e => { const t = e.target.closest('[data-a=account]'); if (t) { Sfx.select(); actions.account(); } };
+    if (titleKeys) document.removeEventListener('keydown', titleKeys, true);
+    titleKeys = e => {
+      const ts = document.getElementById('title');
+      if (!btns[0].isConnected) { document.removeEventListener('keydown', titleKeys, true); titleKeys = null; return; }
+      if (ts.classList.contains('hidden') || document.querySelector('.panel-screen') || document.activeElement && document.activeElement.tagName === 'INPUT') return;
+      const k = e.key.toLowerCase();
+      if (k === 'arrowup' || k === 'w') { e.preventDefault(); pick(sel - 1); }
+      else if (k === 'arrowdown' || k === 's') { e.preventDefault(); pick(sel + 1); }
+      else if (k === 'enter' || k === 'z' || k === ' ') { e.preventDefault(); choose(sel); }
+    };
+    document.addEventListener('keydown', titleKeys, true);
   }
 
   // A little pixel scene for the title: the dark lighthouse, the sea, and Rook on a post.
