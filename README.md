@@ -4,7 +4,7 @@
 
 You put Lowmarsh back together one real problem at a time: a gangplank, a bridge, a lighthouse, a census, a flood, a lock. Every one of them is real AS maths, and most are real OCR exam questions, solved step by step with Rook's help.
 
-Inspired by Undertale (talk your way through encounters, FIGHT never works, spare your enemies), Krillion (the 25-second step timer and the Daily Dive), Pokémon Mystery Dungeon (a stranded hero and a partner who believes in them) and Persona 5 (the countdown to your exam).
+Inspired by Undertale (talk your way through encounters, FIGHT never works, spare your enemies), Krillion (the step timer and the daily challenge) and Pokémon Mystery Dungeon (a stranded hero and a partner who believes in them).
 
 ## Play
 
@@ -14,7 +14,7 @@ No build step. Serve the folder and open it in a browser:
 python3 -m http.server 8000   # then open http://localhost:8000
 ```
 
-Progress saves in your browser. Controls: arrows or WASD to move, Z or Enter to talk and confirm, C or Esc for the menu, R to ask Rook. On a phone, use the on-screen pad.
+Progress saves in your browser, per account if you sign in (see [docs/ACCOUNTS.md](docs/ACCOUNTS.md)). Controls: arrows or WASD to move, Z or Enter to talk and confirm, C or Esc (or the ☰ MENU button, top left) for the menu, R to ask Rook. On a phone, use the on-screen pad.
 
 ## Part One: AS level (complete)
 
@@ -34,9 +34,9 @@ Part Two (the rest of A level, on a new map up the road north) will be built onc
 ## Everything else in the menu
 
 - **Mira's Notebook.** One page per topic, collected through the story. Each has a lesson, a worked example and the usual trap.
-- **Past Papers.** All twelve OCR AS papers (H230/01 and H230/02, 2018 to 2023). Sit them under exam conditions with a clock, work through them guided step by step, or pick out single questions.
+- **Past Papers.** All twelve OCR AS papers (H230/01 and H230/02, 2018 to 2023), filtered by exam board (Edexcel and AQA coming soon) and by AS, A Level or both. Sit them under exam conditions with a clock, work through them guided step by step, or pick out single questions.
 - **Drills.** Practise by topic. Mixed and weak-topic drills too.
-- **Daily Dive.** The Krillion mode: 7 problems down the Lowmarsh well, 25 seconds a step, 700 m to the bottom.
+- **Daily Challenge.** 7 problems down the Lowmarsh well, a new set every day and the same for everyone. Every timer in the game runs at real exam pace: 72 seconds a mark.
 - **Scratch Pad, Grapher, Formula Book.** Space to work things out, a grapher that plots anything you type, and the OCR formula booklet.
 
 ## Project layout
@@ -50,7 +50,8 @@ js/engine/               graph.js (SVG plots), sprites.js, tiles.js, ui.js, worl
                          solver.js (step-by-step notebook, sessions), battle.js (encounters)
 js/data/                 topics.js, questions.js (drill bank), papers.js / papers2.js (H230/01), papers3.js (H230/02)
 js/story/                cast.js, maps.js, ch1–ch5.js, finale.js, sides.js (topic-pack side quests), guide.js (objectives, Rook's hints, side-quest list)
-js/main.js               game shell: saves, menus, the G scripting API
+js/main.js               game shell: saves, menus, accounts screens, the G scripting API
+js/auth.js, auth-config.js  accounts (local email accounts; Google/Apple via Firebase when configured)
 tools/validate.js        node tools/validate.js checks every answer, paper total and story problem
 docs/                    DESIGN.md (story bible and structure), ADDING_QUESTIONS.md
 ```

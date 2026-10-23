@@ -335,8 +335,8 @@
   ];
 
   window.PAPERS = [
-    { id: 'o18', title: 'OCR H230/01 — June 2018', board: 'OCR AS Level Mathematics A', paper: 'Pure Mathematics and Statistics', minutes: 90, questions: o18 },
-    { id: 'o19', title: 'OCR H230/01 — June 2019', board: 'OCR AS Level Mathematics A', paper: 'Pure Mathematics and Statistics', minutes: 90, questions: o19 },
+    { id: 'o18', title: 'OCR H230/01 — June 2018', board: 'OCR', level: 'AS', paper: 'Pure Mathematics and Statistics', minutes: 90, questions: o18 },
+    { id: 'o19', title: 'OCR H230/01 — June 2019', board: 'OCR', level: 'AS', paper: 'Pure Mathematics and Statistics', minutes: 90, questions: o19 },
   ];
   window.PAPER_Q = {};
   window.PAPERS.forEach(p => p.questions.forEach(q => { q.source = p.title + ' Q' + q.num; q.steps.forEach(s => { s.type = s.type || 'num'; }); window.PAPER_Q[q.id] = q; }));

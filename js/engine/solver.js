@@ -1,5 +1,5 @@
 // Working out problems step by step: the notebook used for story problems, single steps inside encounters,
-// and drill / Daily Dive sessions. The player always writes the working; Rook only guides.
+// and drill / Daily Challenge sessions. The player always writes the working; Rook only guides.
 (function () {
   'use strict';
   const $ = (s, el) => (el || document).querySelector(s);
@@ -53,7 +53,11 @@
     return { destroy: () => {} };
   }
 
-  // A Krillion-style countdown bar. Returns { stop, pause, resume, frac, add }.
+  // Real exam pace: OCR AS and A level papers both allow 72 seconds a mark (75 marks in 90 minutes, 100 in 120).
+  const SEC_PER_MARK = 72;
+  const stepTime = s => s.time || SEC_PER_MARK * (s.marks || 1);
+
+  // A countdown bar. Returns { stop, pause, resume, frac, add }.
   function countdown(bar, seconds, onEnd) {
     let left = seconds, limit = seconds, running = true, last = performance.now(), raf, tick = Math.ceil(seconds);
     const loop = now => {
@@ -63,7 +67,8 @@
       }
       last = now;
       bar.querySelector('i').style.width = Math.max(0, left / limit * 100) + '%';
-      bar.querySelector('span').textContent = Math.max(0, Math.ceil(left)) + 's';
+      const sec = Math.max(0, Math.ceil(left));
+      bar.querySelector('span').textContent = sec >= 60 ? Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0') : sec + 's';
       bar.classList.toggle('low', left <= 5);
       if (left <= 0) { running = false; onEnd(); return; }
       raf = requestAnimationFrame(loop);
@@ -85,10 +90,12 @@
 
   // ───────── story problems: the notebook ─────────
   // Unlimited attempts. Rook hints after a slip, and offers to talk you through it after two.
-  function story(problem) {
+  function story(problem, opts) {
+    opts = opts || {};
     return new Promise(resolve => {
       const giver = problem.giver ? Game.CAST[problem.giver] : null;
       const el = UI.panel(
+        (opts.quit ? '<div class="nb-bar"><button class="btn small" data-t="quit">◂ ' + esc(opts.quit) + '</button></div>' : '') +
         '<div class="notebook">' +
         '<div class="nb-head"><span class="nb-tag">' + esc(Game.topicLabel(problem.topic)) + '</span><h2>' + esc(problem.title) + '</h2></div>' +
         (problem.context ? '<div class="nb-context">' + (giver ? '<img src="' + Sprites.portrait(giver.portrait) + '" alt=""><div><b style="color:' + giver.color + '">' + esc(giver.name) + '</b><br>' : '<div>') + Game.fmt(problem.context) + '</div></div>' : '') +
@@ -98,7 +105,7 @@
         '<div class="step-ask"></div>' +
         '<div class="nb-input"></div>' +
         '<div class="nb-rook"><img src="' + Sprites.portrait('rook') + '" alt=""><div class="nb-rook-say">Take it one step at a time. I\'ll be right here.</div></div>' +
-        '<div class="nb-tools"><button class="btn small" data-t="hint">🐦 Hint</button><button class="btn small" data-t="teach">📖 Talk me through it</button><button class="btn small" data-t="notes">Mira\'s notes</button></div>' +
+        '<div class="nb-tools"><button class="btn small" data-t="hint">🐦 Hint</button><button class="btn small" data-t="teach">📖 Talk me through it</button><button class="btn small" data-t="notes">Mira\'s notes</button><button class="btn small" data-t="scratch">✏️ Scratch pad</button></div>' +
         '</div>', 'nb-screen');
       let i = 0, wrongs = 0, taught = false, firstTry = 0, draft = '', box = null;
       const rookSay = html => { const r = $('.nb-rook-say', el); r.innerHTML = html; UI.renderMath(r); };
@@ -155,8 +162,11 @@
         if (t.dataset.t === 'hint') rookSay(s.hint);
         if (t.dataset.t === 'teach') { taught = true; rookSay('Right, watch: ' + s.explain + '<br><i>Now you write it in.</i>'); }
         if (t.dataset.t === 'notes') Game.showLesson(problem.topic);
+        if (t.dataset.t === 'scratch') Game.scratch(() => {});
+        if (t.dataset.t === 'quit') { if (box) box.destroy(); el.close(); resolve({ quit: true }); }
       });
       showStep();
+      Game.scratchTip && Game.scratchTip();
     });
   }
 
@@ -166,6 +176,7 @@
     return new Promise(resolve => {
       const s = problem.steps[i];
       window.__step = { problem, i };
+      const secs = opts.timed ? stepTime(s) + (opts.extra || 0) : 0;
       host.innerHTML = (opts.timed ? '<div class="timer"><i></i><span></span></div>' : '') +
         '<div class="step-ask dark">' + stepHeader(problem, i) + '</div><div class="st-input"></div>' +
         (opts.taught ? '<div class="fb-exp">🐦 ' + s.explain + '</div>' : '') +
@@ -179,19 +190,19 @@
         Game.record(problem.topic, res.ok && !opts.taught && !opts.hint);
         done({ ok: res.ok, frac: clock ? clock.frac() : 1, message: res.message });
       });
-      if (opts.timed) clock = countdown($('.timer', host), s.time || opts.timed, () => done({ ok: false, timedOut: true, frac: 0 }));
+      if (opts.timed) clock = countdown($('.timer', host), secs, () => done({ ok: false, timedOut: true, frac: 0 }));
       if (opts.clockRef) opts.clockRef(clock);
     });
   }
 
-  // ───────── drills & Daily Dive: a full-screen run of questions ─────────
+  // ───────── drills & the Daily Challenge: a full-screen run of questions ─────────
   function session(questions, opts) {
     return new Promise(resolve => {
       const daily = opts.mode === 'daily';
       const el = UI.panel(
         '<div class="sess">' +
-        '<div class="sess-top"><button class="btn small" data-q="quit">✕</button><div class="sess-title">' + esc(opts.title) + '</div>' + (opts.clock ? '<div class="exam-clock"></div>' : '') + '<div class="qcount"></div></div>' +
-        (daily ? '<div class="gauge"><div class="gauge-track"><span class="gauge-krill" style="left:0%">🦐</span></div><div class="gauge-depth">0m</div></div><div class="depth-note"></div>' : '') +
+        '<div class="sess-top"><button class="btn small" data-q="quit">◂ ' + (opts.mode === 'exam' ? 'hand in' : 'quit') + '</button><div class="sess-title">' + esc(opts.title) + '</div>' + (opts.clock ? '<div class="exam-clock"></div>' : '') + '<div class="qcount"></div><button class="btn small" data-q="scratch">✏️ Scratch pad</button></div>' +
+        (daily ? '<div class="gauge"><div class="gauge-track"><span class="gauge-krill" style="left:0%">🪣</span></div><div class="gauge-depth">0m</div></div><div class="depth-note"></div>' : '') +
         '<div class="notebook"><div class="nb-head"><span class="nb-tag"></span></div><div class="nb-context"></div><div class="nb-prompt"></div><ol class="working"></ol><div class="step-host"></div></div>' +
         '</div>', 'nb-screen');
       const R = { steps: 0, right: 0, depth: 0, grid: [], missed: [], start: Date.now(), hints: 0, marks: 0, byQ: [] };
@@ -222,6 +233,8 @@
         tickClock();
       }
 
+      el.querySelector('[data-q=scratch]').addEventListener('click', () => Game.scratch(() => {}));
+      Game.scratchTip && Game.scratchTip();
       el.querySelector('[data-q=quit]').addEventListener('click', () => {
         if (opts.mode === 'exam') { if (confirm('Hand in the paper now? Unanswered questions score 0.')) finishNow(); return; }
         if (confirm('Stop this session?')) { quit = true; clearInterval(examTimer); if (clock) clock.stop(); el.close(); resolve(null); }
@@ -238,7 +251,7 @@
         si = 0; qGain = 0; qGot = 0;
         $('.qcount', el).textContent = 'Q' + (qi + 1) + '/' + questions.length;
         $('.nb-tag', el).textContent = (q.num ? 'Q' + q.num + ' · ' : '') + Game.topicLabel(q.topic) + ' · ' + qMarks(q) + ' marks' + (q.dr ? ' · show detailed reasoning' : '');
-        $('.nb-context', el).innerHTML = q.context ? Game.fmt(q.context) : '';
+        $('.nb-context', el).innerHTML = q.context ? '<div>' + Game.fmt(q.context) + '</div>' : '';
         $('.nb-context', el).style.display = q.context ? '' : 'none';
         $('.nb-prompt', el).innerHTML = q.prompt;
         $('.working', el).innerHTML = '';
@@ -253,7 +266,7 @@
       async function ask(extra) {
         const q = questions[qi];
         const host = $('.step-host', el);
-        const r = await oneStep(host, q, si, { timed: opts.timed ? 25 : 0, hint: hinted, clockRef: c => (clock = c) });
+        const r = await oneStep(host, q, si, { timed: !!opts.timed, hint: hinted, clockRef: c => (clock = c) });
         if (quit) return;
         const s = q.steps[si], marks = s.marks || 1;
         if (r.ok) {
@@ -310,5 +323,5 @@
   }
   const qMarks = q => q.steps.reduce((t, s) => t + (s.marks || 1), 0);
 
-  window.Solver = { story, oneStep, session, answerBox, countdown, qMarks };
+  window.Solver = { story, oneStep, session, answerBox, countdown, qMarks, stepTime, SEC_PER_MARK };
 })();

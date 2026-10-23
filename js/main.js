@@ -1,32 +1,41 @@
 // LOWMARSH — the game shell: saving, the script API used by the story, menus, Mira's notebook,
-// the scratch pad and grapher, drills, the Daily Dive and Past Paper mode.
+// the scratch pad and grapher, drills, the Daily Challenge, Past Paper mode and accounts.
 (function () {
   'use strict';
   const $ = (s, el) => (el || document).querySelector(s);
   const esc = UI.esc;
 
   // ───────── save ─────────
+  // Each signed-in account has its own save; signed out, you play on the device's guest save.
   const KEY = 'lowmarsh-save-v1';
   const fresh = () => ({
     name: '', started: false, map: 'world', x: 50, y: 58, dir: 'up',
     flags: { chapter: 0, fogLevel: 0.55 }, items: {}, pages: [], solved: {}, stats: {}, daily: {}, papers: {},
-    examDate: '2027-05-13', sound: true, timedDrills: false,
+    sound: true, timedDrills: false, paperFilter: { board: 'OCR', level: 'AS' },
   });
+  const saveKey = () => { const a = Auth.current(); return a ? KEY + ':' + a.uid : KEY; };
   let S = fresh();
-  try { S = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) { /* private mode */ }
-  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignore */ } };
-  Sfx.setEnabled(S.sound);
+  function loadSave() {
+    S = fresh();
+    try { S = Object.assign(fresh(), JSON.parse(localStorage.getItem(saveKey())) || {}); } catch (e) { /* private mode */ }
+    Sfx.setEnabled(S.sound);
+  }
+  loadSave();
+  const persist = () => { try { localStorage.setItem(saveKey(), JSON.stringify(S)); } catch (e) { /* ignore */ } };
+  // One-off tips (shared by every save on this device).
+  const tipsKey = 'lowmarsh-tips';
+  const seenTip = k => { try { return (JSON.parse(localStorage.getItem(tipsKey)) || {})[k]; } catch (e) { return false; } };
+  const markTip = k => { try { const t = JSON.parse(localStorage.getItem(tipsKey)) || {}; t[k] = 1; localStorage.setItem(tipsKey, JSON.stringify(t)); } catch (e) { /* ignore */ } };
 
   const fmt = s => String(s).replace(/\{name\}/g, esc(S.name || 'you'));
   const fmtPlain = s => String(s).replace(/\{name\}/g, S.name || 'you');
   const topic = id => window.TOPICS.find(t => t.id === id);
   const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
   const diveNumber = () => Math.floor((Date.parse(todayStr() + 'T00:00:00Z') - Date.UTC(2026, 9, 23)) / 86400000) + 1;
-  const daysLeft = () => Math.max(0, Math.ceil((Date.parse(S.examDate + 'T09:00:00') - Date.now()) / 86400000));
   const shuffle = (a, rnd) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor((rnd || Math.random)() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   function seeded(str) { let h = 1779033703 ^ str.length; for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); } let a = h >>> 0; return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
-  // All practice questions: the drill bank plus both past papers.
+  // All practice questions: the drill bank plus every past paper.
   const allQuestions = () => window.QUESTIONS.concat(window.PAPERS.flatMap(p => p.questions));
 
   const DEPTHS = [[0, 'the well mouth — daylight'], [100, 'the bucket rope ends here'], [200, 'old coins glint in the dark'], [300, 'the water is cold and very still'], [400, 'roots of the old oak reach this far'], [500, 'someone carved initials here: M.H.'], [600, 'the deep spring — Lowmarsh\'s water starts here'], [700, 'the bottom. A perfect dive.']];
@@ -106,12 +115,14 @@
     const hud = document.getElementById('hud');
     if (!World.active) { hud.innerHTML = ''; return; }
     const obj = window.SCRIPTS.objective ? window.SCRIPTS.objective(S.flags) : '';
-    hud.innerHTML = '<span class="hud-loc">' + esc(World.map.name) + '</span>' + (obj ? '<span class="hud-obj">📜 ' + esc(fmtPlain(obj)) + '</span>' : '');
+    hud.innerHTML = '<button class="hud-menu" title="Menu (C or Esc)">☰ MENU <kbd>C</kbd></button><span class="hud-loc">' + esc(World.map.name) + '</span>' + (obj ? '<span class="hud-obj">📜 ' + esc(fmtPlain(obj)) + '</span>' : '');
   }
 
   // ───────── title & new game ─────────
   function screen(html, cls) {
     World.active = false;
+    World.locked = false;
+    document.body.classList.remove('in-world');
     document.getElementById('frame').classList.add('hidden');
     document.getElementById('touch').classList.add('hidden');
     const s = document.getElementById('title');
@@ -125,24 +136,31 @@
     el.onclick = e => { const t = e.target.closest('[data-a]'); if (t && handlers[t.dataset.a]) { Sfx.select(); handlers[t.dataset.a](t.dataset.v, t); } };
   }
 
+  function accountChip() {
+    const a = Auth.current();
+    return a && a.username
+      ? '<button class="account-chip" data-a="account" title="Your profile"><img src="' + Sprites.portrait('player') + '" alt=""><span>' + esc(a.username) + '</span></button>'
+      : '<button class="account-chip login" data-a="account">LOG IN</button>';
+  }
+
   function title() {
-    const el = screen(
+    const el = screen(accountChip() +
       '<div class="logo">LOWMARSH<small>a story about showing your working</small></div>' +
       '<canvas class="title-canvas" width="200" height="80" aria-hidden="true"></canvas>' +
       '<div class="title-menu">' +
       (S.started ? '<button class="btn primary" data-a="cont">▶ CONTINUE — ' + esc(S.name) + '</button>' : '') +
       '<button class="btn ' + (S.started ? '' : 'primary') + '" data-a="new">' + (S.started ? 'NEW GAME' : '▶ NEW GAME') + '</button>' +
-      '<button class="btn" data-a="papers">📝 PAST PAPERS (OCR)</button>' +
+      '<button class="btn" data-a="papers">📝 PAST PAPERS</button>' +
       '<button class="btn" data-a="drills">🎯 DRILLS & NOTEBOOK</button>' +
-      '<button class="btn" data-a="daily">⏱ DAILY DIVE #' + diveNumber() + '</button>' +
+      '<button class="btn" data-a="daily">⏱ DAILY CHALLENGE #' + diveNumber() + '</button>' +
       '<button class="btn small" data-a="settings">⚙ settings</button>' +
-      '</div><p class="foot">OCR AS Level Mathematics A (H230) · ' + daysLeft() + ' days to your exam</p>');
+      '</div>');
     drawTitleScene($('.title-canvas', el));
     on(el, {
       cont: () => startWorld(),
       new: () => {
         if (S.started && !confirm('Start a new story? Your story progress will be erased (practice stats are kept).')) return;
-        const keep = { stats: S.stats, daily: S.daily, papers: S.papers, examDate: S.examDate, sound: S.sound };
+        const keep = { stats: S.stats, daily: S.daily, papers: S.papers, sound: S.sound, paperFilter: S.paperFilter };
         S = Object.assign(fresh(), keep); persist();
         nameEntry();
       },
@@ -150,6 +168,7 @@
       drills: () => drillsMenu(title),
       daily: () => dailyIntro(title),
       settings: () => settings(title),
+      account: () => (Auth.current() && Auth.current().username ? profile(title) : login(title)),
     });
   }
 
@@ -195,6 +214,7 @@
   }
 
   function startWorld(fresh) {
+    document.body.classList.add('in-world');
     document.getElementById('title').classList.add('hidden');
     document.getElementById('frame').classList.remove('hidden');
     if (matchMedia('(pointer: coarse)').matches) document.getElementById('touch').classList.remove('hidden');
@@ -209,16 +229,16 @@
     if (World.locked) return;
     World.locked = true;
     const el = UI.panel(
-      '<div class="menu-box"><div class="menu-head"><div><b>' + esc(S.name) + '</b> · LV ' + level() + ' · HP ' + maxHP() + '</div><div class="muted">Chapter ' + (S.flags.chapter || 0) + ' · ' + daysLeft() + ' days to your exam</div></div>' +
+      '<div class="menu-box"><div class="menu-head"><div><b>' + esc(S.name) + '</b> · LV ' + level() + ' · HP ' + maxHP() + '</div><div class="muted">Chapter ' + (S.flags.chapter || 0) + (Auth.current() && Auth.current().username ? ' · signed in as ' + esc(Auth.current().username) : '') + '</div></div>' +
       '<div class="menu-grid">' +
       '<button data-a="rook">🐦 Ask Rook</button><button data-a="notebook">📖 Mira\'s Notebook</button>' +
       '<button data-a="scratch">✏️ Scratch Pad</button><button data-a="grapher">📈 Grapher</button>' +
       '<button data-a="formulae">📐 Formula Book</button><button data-a="items">🎒 Items</button>' +
-      '<button data-a="jobs">📋 Side Quests</button>' +
+      '<button data-a="jobs">📋 Side Quests</button>' + (Auth.current() && Auth.current().username ? '<button data-a="account">👤 Profile</button>' : '<button data-a="account">🔑 Log in</button>') +
       '<button data-a="drills">🎯 Drills</button><button data-a="papers">📝 Past Papers</button>' +
-      '<button data-a="daily">⏱ Daily Dive</button><button data-a="save">💾 Save</button>' +
-      '<button data-a="settings">⚙ Settings</button><button data-a="title">🚪 Title Screen</button>' +
-      '</div><button class="btn small" data-a="close">close (Esc)</button></div>', 'menu-screen', () => (World.locked = false));
+      '<button data-a="daily">⏱ Daily Challenge</button><button data-a="save">💾 Save</button>' +
+      '<button data-a="settings">⚙ Settings</button>' +
+      '</div><div class="menu-foot"><button class="btn small" data-a="close">◂ back to the game (Esc)</button><button class="btn small primary" data-a="title">🚪 Save & exit to main menu</button></div></div>', 'menu-screen', () => (World.locked = false));
     const close = () => { el.close(); World.locked = false; };
     const sub = fn => () => { el.close(); fn(() => { World.locked = false; }); };
     on(el, {
@@ -230,12 +250,13 @@
       formulae: sub(back => formulae(back)),
       items: sub(back => itemsView(back)),
       jobs: sub(back => jobsView(back)),
+      account: sub(back => (Auth.current() && Auth.current().username ? profile(back) : login(back))),
       drills: sub(back => drillsMenu(back, true)),
       papers: sub(back => papersMenu(back, true)),
       daily: sub(back => dailyIntro(back, true)),
       save: () => { G.save(); UI.toast('Saved.'); },
       settings: sub(back => settings(back, true)),
-      title: () => { G.save(); el.close(); World.locked = false; title(); },
+      title: () => { G.save(); el.close(); World.locked = false; UI.toast('Saved.'); title(); },
     });
   }
 
@@ -248,9 +269,15 @@
     });
   }
 
-  // Panels opened from the pause menu or the title screen.
-  function overlayPanel(html, back, cls) {
-    const el = UI.panel('<div class="sheet ' + (cls || '') + '"><button class="btn small sheet-close" data-a="back">◂ back</button>' + html + '</div>', 'sheet-screen', () => back());
+  // Panels opened from the pause menu or the title screen. `host` = [castId, line]: someone from Lowmarsh
+  // introduces the screen in a little dialogue box, the way they would in the game.
+  function hostBox(host) {
+    if (!host) return '';
+    const c = window.CAST[host[0]];
+    return '<div class="host"><img src="' + Sprites.portrait(c.portrait) + '" alt=""><div><b style="color:' + c.color + '">' + esc(fmtPlain(c.name)) + '</b><p>' + fmt(host[1]) + '</p></div></div>';
+  }
+  function overlayPanel(html, back, cls, host) {
+    const el = UI.panel('<div class="sheet ' + (cls || '') + '"><button class="btn small sheet-close" data-a="back">◂ back</button>' + hostBox(host) + html + '</div>', 'sheet-screen', () => back());
     on(el, { back: () => { el.close(); back(); } });
     return el;
   }
@@ -264,7 +291,7 @@
         ? '<button class="nb-page" data-a="open" data-v="' + t.id + '"><b>' + esc(t.name) + '</b><span>' + esc(t.spec) + ' · ' + esc(t.paper) + (acc == null ? '' : ' · ' + Math.round(acc * 100) + '%') + '</span></button>'
         : '<div class="nb-page missing"><b>— missing page —</b><span>' + esc(t.spec) + '</span></div>';
     }).join('');
-    const el = overlayPanel('<h2 class="p5"><span>MIRA\'S NOTEBOOK</span></h2>' + (story ? '<p class="muted">' + S.pages.length + ' of ' + T.length + ' pages found. Pages turn up as the story goes on — but you can study every topic in Drills.</p>' : '') + '<div class="nb-pages">' + cards + '</div>', back);
+    const el = overlayPanel('<h2 class="p5"><span>MIRA\'S NOTEBOOK</span></h2>' + (story ? '<p class="muted">' + S.pages.length + ' of ' + T.length + ' pages found. Pages turn up as the story goes on, but you can study every topic in Drills.</p>' : '') + '<div class="nb-pages">' + cards + '</div>', back);
     on(el, { back: () => { el.close(); back(); }, open: id => { el.close(); showLesson(id, () => notebook(back, story)); } });
   }
 
@@ -283,7 +310,8 @@
   // ───────── scratch pad & grapher ─────────
   let scratchImage = null;
   function scratch(back) {
-    const el = overlayPanel('<h2 class="p5"><span>SCRATCH PAD</span></h2><p class="muted">Write your working with a finger, stylus or mouse. It stays here while you play.</p>' +
+    markTip('scratch');
+    const el = overlayPanel('<h2 class="p5"><span>SCRATCH PAD</span></h2><p class="muted">A sheet of paper for your working, like the back of an exam paper. Draw with a mouse, finger or stylus. It keeps what you write until you clear it.</p>' +
       '<div class="row scratch-tools"><button class="btn small" data-t="pen">✏️ pen</button><button class="btn small" data-t="red">🔴 red</button><button class="btn small" data-t="eraser">🧽 eraser</button><button class="btn small" data-t="clear">🗑 clear</button></div>' +
       '<canvas class="scratch" width="900" height="1100"></canvas>', back, 'scratch-sheet');
     const cv = $('canvas', el), c = cv.getContext('2d');
@@ -310,6 +338,21 @@
       if (t.dataset.t === 'clear') { paper(); scratchImage = null; } else tool = t.dataset.t;
       el.querySelectorAll('[data-t]').forEach(b => b.classList.toggle('on', b === t && t.dataset.t !== 'clear'));
     });
+  }
+
+  // The first time someone meets a problem, point out the scratch pad button.
+  function scratchTip() {
+    if (seenTip('scratch')) return;
+    setTimeout(() => {
+      const btns = document.querySelectorAll('[data-t=scratch], [data-q=scratch]');
+      const b = btns[btns.length - 1];
+      if (!b || document.querySelector('.tip-bubble')) return;
+      const tip = document.createElement('div');
+      tip.className = 'tip-bubble';
+      tip.innerHTML = '<b>✏️ New here?</b> This is your <b>scratch pad</b>: a blank sheet for your working. Draw on it with your mouse, finger or stylus, then come back and type the answer. <button class="btn small">Got it</button>';
+      b.insertAdjacentElement('afterend', tip);
+      tip.querySelector('button').addEventListener('click', () => { markTip('scratch'); tip.remove(); });
+    }, 400);
   }
 
   function grapher(back, preset) {
@@ -343,15 +386,13 @@
   }
 
   function settings(back) {
+    const a = Auth.current();
     const el = overlayPanel('<h2 class="p5"><span>SETTINGS</span></h2>' +
-      '<p>When is your first OCR AS exam?</p><input type="date" class="ans" id="exam" value="' + esc(S.examDate) + '" style="max-width:220px">' +
-      '<p class="muted">' + daysLeft() + ' days to go. Check the OCR timetable for your exact date.</p>' +
       '<label class="toggle"><input type="checkbox" id="snd"' + (S.sound ? ' checked' : '') + '> Sound effects</label>' +
+      '<hr><p class="muted">' + (a && a.username ? 'Signed in as <b>' + esc(a.username) + '</b>.' : 'Not signed in. Your progress is saved on this device.') + '</p>' +
       '<hr><p class="muted">Controls: arrows/WASD move · Z/Enter talk & confirm · C/Esc menu · R ask Rook. On phones use the on-screen pad.</p>' +
       '<button class="btn danger small" data-a="wipe">Erase ALL save data</button>', back);
-    $('#exam', el).addEventListener('change', e => { if (e.target.value) { S.examDate = e.target.value; persist(); } });
     $('#snd', el).addEventListener('change', e => { S.sound = e.target.checked; Sfx.setEnabled(S.sound); persist(); });
-    $('#exam', el).addEventListener('keydown', e => e.stopPropagation());
     el.querySelector('[data-a=wipe]').addEventListener('click', () => { if (confirm('Erase everything, including practice stats?')) { S = fresh(); persist(); location.reload(); } });
   }
 
@@ -364,9 +405,10 @@
         '<div class="acc"><i style="width:' + Math.round((acc || 0) * 100) + '%"></i></div>' +
         '<div class="row"><button class="btn small" data-a="lesson" data-v="' + t.id + '">📖 Notes</button><button class="btn small primary" data-a="go" data-v="' + t.id + '">Practise</button></div></div>';
     }).join('');
-    const el = overlayPanel('<h2 class="p5"><span>DRILLS</span></h2><p class="muted">Every topic, every past-paper question, step by step.</p>' +
-      '<div class="row" style="margin-bottom:12px"><label class="toggle"><input type="checkbox" id="tm"' + (S.timedDrills ? ' checked' : '') + '> Krillion timer (25 s a step)</label>' +
-      '<button class="btn small" data-a="mixed">🔀 Mixed</button><button class="btn small" data-a="weak">🩹 Weakest topics</button></div><div class="topic-grid">' + cards + '</div>', back);
+    const el = overlayPanel('<h2 class="p5"><span>DRILLS</span></h2>' +
+      '<div class="row" style="margin-bottom:12px"><label class="toggle"><input type="checkbox" id="tm"' + (S.timedDrills ? ' checked' : '') + '> ⏱ Exam timing (72 s a mark, like the real paper)</label>' +
+      '<button class="btn small" data-a="mixed">🔀 Mixed</button><button class="btn small" data-a="weak">🩹 Weakest topics</button></div><div class="topic-grid">' + cards + '</div>', back, '',
+      ['rook', 'Every topic, every past-paper question, one step at a time. Pick the one that scares you most. That\'s the one worth doing.']);
     $('#tm', el).addEventListener('change', e => { S.timedDrills = e.target.checked; persist(); });
     on(el, {
       back: () => { el.close(); back(); },
@@ -390,19 +432,32 @@
     if (R) results(R, 'drill', back); else back();
   }
 
-  // ───────── Daily Dive ─────────
+  // ───────── the Daily Challenge (down the old Lowmarsh well) ─────────
+  // A new set every day, the same for everyone: today's date seeds which 7 topics and which questions.
+  function streak() {
+    let n = 0;
+    for (let d = new Date(); ; d.setDate(d.getDate() - 1)) {
+      const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      if (S.daily[k]) n++; else if (n || k !== todayStr()) break;
+    }
+    return n;
+  }
   function dailyIntro(back) {
     const today = S.daily[todayStr()];
-    const el = overlayPanel('<h2 class="p5"><span>THE DAILY DIVE</span></h2><div class="pixel muted">dive #' + diveNumber() + ' — down the old Lowmarsh well</div>' +
-      '<ul class="howto"><li>7 problems a day. Same for everyone.</li><li>25 seconds a step. One shot each.</li><li>Fast, clean working sinks you deeper.</li><li>Each problem is worth up to 100 m. 700 m is the bottom.</li><li>One dive per day.</li></ul>' +
-      (today ? '<div class="share">' + esc(shareText(today)) + '</div><div class="row"><button class="btn small" data-a="copy">Copy result</button><button class="btn small" data-a="endless">∞ Endless dive</button></div>'
-        : '<div class="row"><button class="btn primary" data-a="go">▼ DIVE ▼</button><button class="btn" data-a="endless">∞ ENDLESS</button></div>'), back);
+    const mid = new Date(); mid.setHours(24, 0, 0, 0);
+    const mins = Math.ceil((mid - Date.now()) / 60000);
+    const st = streak();
+    const el = overlayPanel('<h2 class="p5"><span>DAILY CHALLENGE</span></h2><div class="pixel muted">#' + diveNumber() + ' · down the old Lowmarsh well' + (st ? ' · 🔥 ' + st + '-day streak' : '') + '</div>' +
+      '<ul class="howto"><li>7 problems, a new set every day, the same for everyone.</li><li>Every step gets real exam time: 72 seconds a mark.</li><li>One shot per step. Fast, clean working sinks you deeper.</li><li>Up to 100 m a problem. 700 m is the bottom.</li></ul>' +
+      (today ? '<div class="share">' + esc(shareText(today)) + '</div><p class="pixel muted">Next challenge in ' + Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm.</p><div class="row"><button class="btn small" data-a="copy">Copy result</button><button class="btn small" data-a="endless">∞ Endless practice</button></div>'
+        : '<div class="row"><button class="btn primary" data-a="go">▼ START TODAY\'S CHALLENGE ▼</button><button class="btn" data-a="endless">∞ ENDLESS</button></div>'), back, '',
+      ['moss', today ? 'You got ' + today.depth + ' metres down today! Come back tomorrow. New problems every morning, I\'ve checked.' : 'The old well! Seven problems, the same ones for everyone today. I dropped a pebble down it once. Never heard it land.']);
     const run = async (seed, isDaily) => {
       el.close();
       const rnd = seeded(seed);
       const T = shuffle(window.TOPICS, rnd).slice(0, 7);
       const qs = T.map(t => shuffle(allQuestions().filter(q => q.topic === t.id), rnd)[0]).filter(Boolean);
-      const R = await Solver.session(qs, { mode: 'daily', title: isDaily ? 'Daily Dive #' + diveNumber() : 'Endless Dive', timed: true, attempts: 1 });
+      const R = await Solver.session(qs, { mode: 'daily', title: isDaily ? 'Daily Challenge #' + diveNumber() : 'Endless practice', timed: true, attempts: 1 });
       if (!R) return back();
       if (isDaily) { S.daily[todayStr()] = { depth: R.depth, grid: R.grid.join(''), n: diveNumber() }; }
       persist();
@@ -410,39 +465,62 @@
     };
     on(el, { back: () => { el.close(); back(); }, go: () => run(todayStr(), true), endless: () => run('e' + Date.now(), false), copy: () => copy(shareText(today)) });
   }
-  const shareText = d => 'LOWMARSH · dive #' + d.n + '\n' + d.depth + 'm' + (d.depth >= 700 ? ' · THE BOTTOM' : '') + '\n' + d.grid;
+  const shareText = d => 'LOWMARSH · daily #' + d.n + '\n' + d.depth + 'm' + (d.depth >= 700 ? ' · THE BOTTOM' : '') + '\n' + d.grid;
   const copy = t => { if (navigator.clipboard) navigator.clipboard.writeText(t).then(() => UI.toast('Copied!'), () => prompt('Copy:', t)); else prompt('Copy:', t); };
 
   // ───────── Past Papers ─────────
+  const BOARDS = [['OCR', 'OCR'], ['Edexcel', 'Edexcel — coming soon'], ['AQA', 'AQA — coming soon']];
+  const LEVELS = [['AS', 'AS'], ['A', 'A Level'], ['both', 'Both']];
   function papersMenu(back) {
-    const cards = window.PAPERS.map(p => {
+    const f = S.paperFilter || (S.paperFilter = { board: 'OCR', level: 'AS' });
+    const lvl = p => p.level || 'AS';
+    const list = window.PAPERS.filter(p => (p.board || 'OCR') === f.board && (f.level === 'both' || lvl(p) === f.level));
+    const groups = [];
+    list.forEach(p => {
+      const name = (lvl(p) === 'AS' ? 'AS' : 'A Level') + ' · ' + p.paper;
+      let g = groups.find(x => x.name === name);
+      if (!g) groups.push(g = { name, papers: [] });
+      g.papers.push(p);
+    });
+    const card = p => {
       const best = S.papers[p.id];
       const total = p.questions.reduce((t, q) => t + q.marks, 0);
-      return '<div class="topic"><div class="tn">' + esc(p.title) + '</div><div class="ts">' + esc(p.paper) + ' · ' + total + ' marks · ' + p.minutes + ' min' + (best ? ' · best ' + best + '/' + total : '') + '</div>' +
-        '<div class="row"><button class="btn small primary" data-a="exam" data-v="' + p.id + '">⏱ Exam conditions</button><button class="btn small" data-a="guided" data-v="' + p.id + '">🐦 Guided</button><button class="btn small" data-a="list" data-v="' + p.id + '">☰ Pick a question</button></div></div>';
-    }).join('');
-    const el = overlayPanel('<h2 class="p5"><span>PAST PAPERS</span></h2><p class="muted"><b>Exam conditions</b>: 90-minute clock, one attempt per step, marked like the mark scheme. <b>Guided</b>: hints, Rook\'s walkthroughs and Mira\'s notes, no clock.</p><div class="topic-grid">' + cards + '</div>', back);
+      const parts = p.title.replace(/^OCR\s+/, '').split(/\s+—\s+/);
+      return '<div class="paper-card"><div class="pc-when">' + esc(parts[1] || parts[0]) + '</div><div class="pc-code">' + esc(parts[1] ? parts[0] : '') + ' · ' + total + ' marks · ' + p.minutes + ' min' + (best != null ? ' · <span class="best">best ' + best + '/' + total + '</span>' : '') + '</div>' +
+        '<div class="pc-btns"><button class="btn small primary" data-a="exam" data-v="' + p.id + '">⏱ Exam conditions</button><button class="btn small" data-a="guided" data-v="' + p.id + '">🐦 Guided</button><button class="btn small" data-a="list" data-v="' + p.id + '">☰ Pick a question</button></div></div>';
+    };
+    const comingSoon = '<div class="empty-box">A Level papers are on their way. Mira\'s still copying them out.</div>';
+    const body = groups.map(g => '<h3 class="group-head">' + esc(g.name) + '</h3><div class="paper-grid">' + g.papers.map(card).join('') + '</div>').join('') +
+      (f.level !== 'AS' && !list.some(p => lvl(p) === 'A') ? (f.level === 'both' ? '<h3 class="group-head">A Level</h3>' : '') + comingSoon : '');
+    const el = overlayPanel('<h2 class="p5"><span>PAST PAPERS</span></h2>' +
+      '<div class="pp-controls"><label class="pp-board">Exam board <select id="board">' + BOARDS.map(([v, l]) => '<option value="' + v + '"' + (v === f.board ? ' selected' : '') + (v !== 'OCR' ? ' disabled' : '') + '>' + l + '</option>').join('') + '</select></label>' +
+      '<div class="seg" role="group" aria-label="Level">' + LEVELS.map(([v, l]) => '<button data-a="lvl" data-v="' + v + '" class="' + (v === f.level ? 'on' : '') + '">' + l + '</button>').join('') + '</div></div>' +
+      '<div class="pp-modes"><span><b>⏱ Exam conditions</b> a real clock, one try per step, marked like the mark scheme</span><span><b>🐦 Guided</b> no clock, hints, Rook talks you through it</span><span><b>☰ Pick a question</b> just the one you want</span></div>' +
+      body, back, 'papers-sheet', ['strix', 'The Exam Hall. Phones away, pens out. Every paper here is real and every mark counts. Hoo.']);
+    $('#board', el).addEventListener('change', e => { f.board = e.target.value; persist(); el.close(); papersMenu(back); });
     on(el, {
       back: () => { el.close(); back(); },
-      exam: id => { el.close(); runPaper(id, back); },
-      guided: id => { el.close(); guidedPaper(window.PAPERS.find(p => p.id === id).questions, 0, back); },
+      lvl: v => { f.level = v; persist(); el.close(); papersMenu(back); },
+      exam: id => { el.close(); runPaper(id, () => papersMenu(back)); },
+      guided: id => { el.close(); guidedPaper(window.PAPERS.find(p => p.id === id).questions, 0, () => papersMenu(back)); },
       list: id => { el.close(); paperList(id, back); },
     });
   }
 
   function paperList(id, back) {
     const p = window.PAPERS.find(x => x.id === id);
-    const el = overlayPanel('<h2 class="p5"><span>' + esc(p.title) + '</span></h2><div class="q-list">' + p.questions.map((q, i) => '<button data-a="q" data-v="' + i + '"><b>Q' + esc(q.num) + '</b> <span class="muted">[' + q.marks + '] ' + esc(topic(q.topic).name) + '</span>' + (S.solved[q.id] ? ' ✓' : '') + '</button>').join('') + '</div>', () => papersMenu(back));
+    const el = overlayPanel('<h2 class="p5"><span>' + esc(p.title.replace(/^OCR\s+/, '')) + '</span></h2><div class="q-list">' + p.questions.map((q, i) => '<button data-a="q" data-v="' + i + '"><b>Q' + esc(q.num) + '</b> <span class="muted">[' + q.marks + '] ' + esc(topic(q.topic).name) + '</span>' + (S.solved[q.id] ? ' ✓' : '') + '</button>').join('') + '</div>', () => papersMenu(back));
     on(el, { back: () => { el.close(); papersMenu(back); }, q: i => { el.close(); guidedPaper(p.questions, +i, () => paperList(id, back), true); } });
   }
 
   async function guidedPaper(qs, i, back, single) {
     const q = qs[i];
-    await Solver.story(Object.assign({ title: q.source, giver: null }, q));
+    const r = await Solver.story(Object.assign({}, q, { title: q.source.replace(/^OCR\s+/, ''), giver: null }), { quit: single ? 'back to the questions' : 'back to past papers' });
+    if (r && r.quit) return back();
     S.solved[q.id] = true; persist();
     if (!single && i + 1 < qs.length) {
       const next = await new Promise(res => {
-        const el = UI.panel('<div class="sheet"><h2>Next: Q' + esc(qs[i + 1].num) + '</h2><div class="row"><button class="btn primary" data-a="y">CONTINUE ▸</button><button class="btn" data-a="n">stop here</button></div></div>', 'sheet-screen');
+        const el = UI.panel('<div class="sheet"><button class="btn small sheet-close" data-a="n">◂ back to past papers</button><h2 class="p5"><span>Next: Q' + esc(qs[i + 1].num) + '</span></h2><div class="row"><button class="btn primary" data-a="y">CONTINUE ▸</button></div></div>', 'sheet-screen');
         on(el, { y: () => { el.close(); res(true); }, n: () => { el.close(); res(false); } });
       });
       if (next) return guidedPaper(qs, i + 1, back);
@@ -452,7 +530,7 @@
 
   async function runPaper(id, back) {
     const p = window.PAPERS.find(x => x.id === id);
-    const R = await Solver.session(p.questions, { mode: 'exam', title: p.title, timed: false, attempts: 1, clock: p.minutes });
+    const R = await Solver.session(p.questions, { mode: 'exam', title: p.title.replace(/^OCR\s+/, ''), timed: false, attempts: 1, clock: p.minutes });
     if (!R) return back();
     const total = p.questions.reduce((t, q) => t + q.marks, 0);
     S.papers[id] = Math.max(S.papers[id] || 0, R.marks);
@@ -460,10 +538,95 @@
     results(R, 'exam', back, null, total);
   }
 
+  // ───────── accounts: log in, sign up, choose a username, profile ─────────
+  const GOOGLE_G = '<svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.2-.2-1.7H9v3.3h4.8a4.1 4.1 0 0 1-1.8 2.7v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"/><path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.9 10.7a5.4 5.4 0 0 1 0-3.4V5H.9a9 9 0 0 0 0 8z"/><path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.5 1.4l2.6-2.6A9 9 0 0 0 .9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"/></svg>';
+  const APPLE = '<svg viewBox="0 0 17 20" width="16" height="18" aria-hidden="true"><path fill="currentColor" d="M14.1 10.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9-.8 0-2-.9-3.4-.9-1.7 0-3.3 1-4.2 2.6-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8 1.6 0 2 .8 3.4.8 1.4 0 2.3-1.3 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9 0 0-2.7-1-2.7-4.1zM11.6 3c.7-.9 1.2-2 1.1-3.2-1 0-2.3.7-3 1.6-.7.8-1.2 2-1.1 3.1 1.1.1 2.3-.6 3-1.5z"/></svg>';
+  function authPanel(inner, back) {
+    const el = UI.panel('<div class="auth"><button class="btn small sheet-close" data-a="back">◂ back</button><div class="auth-logo">LOWMARSH</div>' + inner + '</div>', 'sheet-screen auth-screen', () => back());
+    el.addEventListener('keydown', e => e.stopPropagation());
+    return el;
+  }
+  // After signing in: give the account its own save (bringing the guest save with it the first time).
+  function afterSignIn() {
+    const k = saveKey();
+    try { if (!localStorage.getItem(k)) localStorage.setItem(k, JSON.stringify(S)); } catch (e) { /* ignore */ }
+    loadSave();
+    UI.toast('Signed in as ' + Auth.current().username);
+    title();
+  }
+  function login(back, mode) {
+    mode = mode || 'in';
+    const up = mode === 'up';
+    const el = authPanel(
+      '<div class="tabs"><button data-a="tab" data-v="in" class="' + (up ? '' : 'on') + '">SIGN IN</button><button data-a="tab" data-v="up" class="' + (up ? 'on' : '') + '">SIGN UP</button></div>' +
+      '<button class="sso" data-a="sso" data-v="google">' + GOOGLE_G + '<span>Continue with Google</span></button>' +
+      '<button class="sso apple" data-a="sso" data-v="apple">' + APPLE + '<span>Continue with Apple</span></button>' +
+      '<div class="or"><span>or</span></div>' +
+      '<form class="auth-form" novalidate>' +
+      (up ? '<label>Email<input name="id" type="email" autocomplete="email" required></label><label>Password<input name="pw" type="password" autocomplete="new-password" minlength="8" required></label><label>Confirm password<input name="pw2" type="password" autocomplete="new-password" required></label>'
+        : '<label>Email or username<input name="id" autocomplete="username" required></label><label>Password<input name="pw" type="password" autocomplete="current-password" required></label>') +
+      '<button class="btn primary" type="submit">' + (up ? 'CREATE ACCOUNT ▸' : 'SIGN IN ▸') + '</button></form>' +
+      '<p class="swap">' + (up ? 'Already have an account? <button data-a="tab" data-v="in">Sign in</button>' : 'New to Lowmarsh? <button data-a="tab" data-v="up">Sign up</button>') + '</p>' +
+      '<div class="host auth-rook"><img src="' + Sprites.portrait('rook') + '" alt=""><div><b style="color:#b8c0ff">Rook</b><p class="say">' + (up ? 'An account keeps your story, your stats and your streak together.' : 'Welcome back. I kept your seat warm. Metaphorically.') + '</p></div></div>' +
+      (Auth.configured ? '' : '<p class="muted small-note">Accounts are kept on this device for now.</p>'), back);
+    const say = t => { $('.say', el).textContent = t; };
+    const done = () => { el.close(); Auth.current().username ? afterSignIn() : chooseUsername(back); };
+    on(el, {
+      back: () => { el.close(); back(); },
+      tab: v => { el.close(); login(back, v); },
+      sso: async v => { try { await Auth.signInWith(v); done(); } catch (e) { say(e.message); } },
+    });
+    $('form', el).addEventListener('submit', async e => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      try {
+        if (up) {
+          if (fd.get('pw') !== fd.get('pw2')) return say('Those passwords don\'t match.');
+          await Auth.signUp(fd.get('id'), fd.get('pw'));
+        } else await Auth.signIn(fd.get('id'), fd.get('pw'));
+        done();
+      } catch (err) { say(err.message); }
+    });
+    setTimeout(() => { const i = $('input', el); if (i) i.focus(); }, 50);
+  }
+  function chooseUsername(back, editing) {
+    const cur = Auth.current();
+    const el = authPanel('<h2 class="auth-h">' + (editing ? 'Change your username' : 'Choose a username') + '</h2><p class="muted">This is the name other players see. You can change it later.</p>' +
+      '<form class="auth-form" novalidate><label>Username<input name="u" maxlength="16" autocomplete="off" spellcheck="false" value="' + esc(cur.username || (S.name || '').replace(/[^A-Za-z0-9_]/g, '')) + '"></label><div class="u-check"></div>' +
+      '<button class="btn primary" type="submit">THAT\'S ME ▸</button></form>', back);
+    const inp = $('input', el), chk = $('.u-check', el);
+    const check = () => { const err = inp.value ? Auth.validUsername(inp.value) : ''; chk.textContent = err || (inp.value ? '✓ Available' : ''); chk.className = 'u-check ' + (err ? 'bad' : 'ok'); };
+    inp.addEventListener('input', check); check();
+    on(el, { back: () => { el.close(); if (!editing && !Auth.current().username) Auth.signOut(); back(); } });
+    $('form', el).addEventListener('submit', e => {
+      e.preventDefault();
+      try { Auth.setUsername(inp.value); el.close(); editing ? profile(back) : afterSignIn(); } catch (err) { chk.textContent = err.message; chk.className = 'u-check bad'; }
+    });
+    setTimeout(() => inp.focus(), 50);
+  }
+  function profile(back) {
+    const a = Auth.current();
+    const jobs = window.SCRIPTS.jobs ? window.SCRIPTS.jobs(S.flags) : [];
+    const papersDone = Object.keys(S.papers).length;
+    const st = Object.values(S.stats).reduce((t, x) => ({ r: t.r + x.right, w: t.w + x.wrong }), { r: 0, w: 0 });
+    const via = { google: 'Google', apple: 'Apple', email: 'email' }[a.provider] || a.provider;
+    const el = authPanel('<div class="profile-head"><img src="' + Sprites.portrait('player') + '" alt=""><div><h2 class="auth-h">' + esc(a.username) + '</h2><p class="muted">Signed in with ' + esc(via) + (a.email ? ' · ' + esc(a.email) : '') + '</p></div></div>' +
+      '<div class="stat-grid"><div><b>' + (S.started ? 'Ch ' + (S.flags.chapter || 0) : '—') + '</b><span>story</span></div><div><b>LV ' + level() + '</b><span>level</span></div>' +
+      '<div><b>' + S.pages.length + '/15</b><span>notebook pages</span></div><div><b>' + jobs.filter(j => j.done).length + '/' + jobs.length + '</b><span>side quests</span></div>' +
+      '<div><b>' + papersDone + '</b><span>papers sat</span></div><div><b>' + streak() + '</b><span>day streak</span></div>' +
+      '<div><b>' + (st.r + st.w ? Math.round(100 * st.r / (st.r + st.w)) + '%' : '—') + '</b><span>steps right first time</span></div></div>' +
+      '<div class="row"><button class="btn small" data-a="rename">✎ Change username</button><button class="btn small danger" data-a="out">Log out</button></div>', back);
+    on(el, {
+      back: () => { el.close(); back(); },
+      rename: () => { el.close(); chooseUsername(back, true); },
+      out: async () => { await Auth.signOut(); el.close(); loadSave(); UI.toast('Signed out.'); title(); },
+    });
+  }
+
   // ───────── results ─────────
   function results(R, mode, back, share, total) {
     const pct = mode === 'daily' ? R.depth / 700 : mode === 'exam' ? R.marks / total : R.right / Math.max(1, R.steps);
-    const el = overlayPanel('<div class="results"><h2 class="p5"><span>' + (mode === 'daily' ? 'DIVE LOG' : mode === 'exam' ? 'PAPER MARKED' : 'DRILL COMPLETE') + '</span></h2>' +
+    const el = overlayPanel('<div class="results"><h2 class="p5"><span>' + (mode === 'daily' ? 'CHALLENGE LOG' : mode === 'exam' ? 'PAPER MARKED' : 'DRILL COMPLETE') + '</span></h2>' +
       (mode === 'daily' ? '<div class="rank">' + R.depth + 'm</div><div class="depth-note">' + esc(depthNote(R.depth)) + '</div>' : mode === 'exam' ? '<div class="rank">' + R.marks + '<small>/' + total + '</small></div>' : '<div class="rank">' + (pct >= 0.9 ? 'S' : pct >= 0.72 ? 'A' : pct >= 0.5 ? 'B' : 'C') + '</div>') +
       '<div class="stat-grid"><div><b>' + R.right + '/' + R.steps + '</b><span>steps right</span></div><div><b>' + Math.round(pct * 100) + '%</b><span>score</span></div><div><b>' + R.hints + '</b><span>hints</span></div><div><b>' + Math.floor(R.time / 60) + ':' + String(Math.round(R.time % 60)).padStart(2, '0') + '</b><span>time</span></div></div>' +
       (R.byQ && R.byQ.length ? '<table class="tbl marks"><tr><th>Q</th><th>marks</th></tr>' + R.byQ.map(b => '<tr><td>' + esc(b.num) + '</td><td>' + b.got + ' / ' + b.of + '</td></tr>').join('') + '</table>' : '') +
@@ -500,7 +663,7 @@
   window.Game = {
     get save() { return S; },
     CAST: null, G, ITEMS, fmt, topicLabel: id => (topic(id) ? topic(id).name : ''), topic, showLesson,
-    record, level, maxHP, depthNote, openMenu, askRook, persist, scratch, grapher,
+    record, level, maxHP, depthNote, openMenu, askRook, persist, scratch, grapher, scratchTip,
     daily: back => dailyIntro(back), drills: back => drillsMenu(back), papers: back => papersMenu(back), notebook: back => notebook(back, true),
   };
 
@@ -508,7 +671,8 @@
     window.Game.CAST = window.CAST;
     World.init(document.getElementById('game'));
     touchControls();
-    document.getElementById('scratchBtn').addEventListener('click', () => scratch(() => {}));
+    document.getElementById('scratchBtn').addEventListener('click', () => { if (!World.locked) { World.locked = true; scratch(() => { World.locked = false; }); } });
+    document.getElementById('hud').addEventListener('click', e => { if (e.target.closest('.hud-menu')) openMenu(); });
     title();
   });
 })();

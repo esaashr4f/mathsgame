@@ -29,7 +29,7 @@
     [f => !f.stillSeen, 'Go into the marsh, to the Still', 'The marsh is north-west, through the gap in the trees off the west road. The fog has pulled back to its heart. Mira\'s in there. I know it.'],
     [f => !(f.echo1Done && f.echo2Done && f.echo3Done), 'Find the three echoes of Mira in the marsh', 'Her thoughts are scattered round the marsh. Three of them, all half-finished proofs. Finish them for her.'],
     [f => !f.miraFreed, 'Free Mira at the Still', 'Go to Mira at the centre of the stones. Whatever is holding her, it hates proof.'],
-    [f => true, 'Explore Lowmarsh · practise · get ready for your exam', 'We did it, {name}. Now go and do it again in the exam hall. Drills, past papers, the Daily Dive — they\'re all in the menu.'],
+    [f => true, 'Explore Lowmarsh · practise · get ready for your exam', 'We did it, {name}. Now go and do it again in the exam hall. Drills, past papers, the Daily Challenge — they\'re all in the menu.'],
   ];
 
   // Side quests: [chapter it opens, done flag, title, where to look].

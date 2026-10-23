@@ -376,7 +376,7 @@
     },
     {
       id: 'sp-4', topic: 'trig', source: 'Original (exam style)', marks: 3,
-      context: 'The lantern\'s shutter opens where $\tan x = \sqrt3$.',
+      context: R`The lantern's shutter opens where $\tan x = \sqrt3$.`,
       prompt: R`Solve $\tan x = \sqrt{3}$ for $0 \le x < 360°$.`,
       steps: [
         { ask: 'Find the principal value (degrees).', type: 'num', answer: 60,
@@ -684,7 +684,7 @@
     },
     {
       id: 'so-2', topic: 'data', source: 'Original (exam style)', marks: 3,
-      context: 'Fish weights: $Q_1 = 20$ g, $Q_3 = 32$ g. Outliers are more than $1.5 \times \text{IQR}$ beyond the quartiles.',
+      context: R`Fish weights: $Q_1 = 20$ g, $Q_3 = 32$ g. Outliers are more than $1.5 \times \text{IQR}$ beyond the quartiles.`,
       prompt: 'Is a fish weighing 51 g an outlier?',
       steps: [
         { ask: 'Find the IQR.', type: 'num', answer: 12,

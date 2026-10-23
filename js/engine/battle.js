@@ -1,5 +1,5 @@
 // Undertale-style encounters. You can't hit a problem until it goes away: ACT → "Work it out" solves the
-// creature's real problem one step per turn (on a Krillion clock). Each solved step calms them; slips make
+// creature's real problem one step per turn (on an exam-pace clock). Each solved step calms them; slips make
 // their attacks fiercer. Once every step is done their name turns yellow and you can SPARE them.
 (function () {
   'use strict';
@@ -125,7 +125,7 @@
         $('.blueprint', el).open = true;
         let clock = null;
         const r = await Solver.oneStep(box, enc.problem, S.step, {
-          timed: 25 + S.hourglass * 15, hint: S.slips >= 1, taught: S.slips >= 2, clockRef: c => (clock = c),
+          timed: true, extra: S.hourglass * 30, hint: S.slips >= 1, taught: S.slips >= 2, clockRef: c => (clock = c),
         });
         S.hourglass = 0;
         if (r.ok) {
@@ -162,12 +162,12 @@
         const inv = Game.save.items;
         const list = [
           { id: 'flapjack', label: 'Fen\'s Flapjack (heal 10) ×' + (inv.flapjack || 0), off: !inv.flapjack },
-          { id: 'hourglass', label: 'Moss\'s Hourglass (+15 s next step) ×' + (inv.hourglass || 0), off: !inv.hourglass },
+          { id: 'hourglass', label: 'Moss\'s Hourglass (+30 s next step) ×' + (inv.hourglass || 0), off: !inv.hourglass },
         ];
         const i = await sub(list);
         if (i === -1 || list[i].off) return 'back';
         if (list[i].id === 'flapjack') { inv.flapjack--; S.hp = Math.min(S.max, S.hp + 10); updateHP(); await text('* You eat the flapjack. Still warm. HP restored.'); }
-        else { inv.hourglass--; S.hourglass++; await text('* The sand glitters. Your next step gets 15 extra seconds.'); }
+        else { inv.hourglass--; S.hourglass++; await text('* The sand glitters. Your next step gets 30 extra seconds.'); }
         return 'turn';
       }
 

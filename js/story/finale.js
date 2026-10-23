@@ -152,7 +152,7 @@
   };
 
   SC.miraHome = async G => G.say('mira', [
-    'Drills, past papers, the Daily Dive. Use them. Doing it again in the exam hall is a different kind of brave.',
+    'Drills, past papers, the Daily Challenge. Use them. Doing it again in the exam hall is a different kind of brave.',
     'Rook tells me you got stuck on hypothesis tests the same way I did at your age. "Proves" is not the word. Ever.',
     'Show your working. Not for the examiner. For you, three weeks later.',
     'I\'ve started mending the theodolite. When the road north opens properly, we\'ll need it.',

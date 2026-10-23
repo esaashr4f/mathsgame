@@ -394,8 +394,8 @@
   SC.stall2 = async G => G.say('tomas', 'That stall\'s my sister\'s. She sells rope, string and "assorted knots". Business has been good since you fixed Moss\'s crossing.');
 
   SC.board = async G => {
-    await G.narr('* THE LOWMARSH LEDGER — notice board.', '* "LOST: one surveyor. Answers to Mira. Reward: our everlasting gratitude."', '* "Evening classes CANCELLED due to fog (and nobody remembering what they were about)."', '* "THE DAILY DIVE: how deep can you go down the old well? Seven puzzles a day."');
-    const c = await G.choose(['Take the Daily Dive', 'Practise a topic (Drills)', 'Try a past paper', 'Leave']);
+    await G.narr('* THE LOWMARSH LEDGER — notice board.', '* "LOST: one surveyor. Answers to Mira. Reward: our everlasting gratitude."', '* "Evening classes CANCELLED due to fog (and nobody remembering what they were about)."', '* "THE DAILY CHALLENGE: how deep can you go down the old well? Seven new puzzles every day."');
+    const c = await G.choose(['Take the Daily Challenge', 'Practise a topic (Drills)', 'Try a past paper', 'Leave']);
     if (c === 3) return;
     await new Promise(res => [Game.daily, Game.drills, Game.papers][c](res));
   };

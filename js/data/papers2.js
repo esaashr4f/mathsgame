@@ -449,7 +449,7 @@
   ];
 
   const add = (id, title, minutes, qs) => {
-    const p = { id, title, board: 'OCR AS Level Mathematics A', paper: 'Pure Mathematics and Statistics', minutes, questions: qs };
+    const p = { id, title, board: 'OCR', level: 'AS', paper: 'Pure Mathematics and Statistics', minutes, questions: qs };
     window.PAPERS.push(p);
     qs.forEach(q => { q.source = title + ' Q' + q.num; q.steps.forEach(s => { s.type = s.type || 'num'; }); window.PAPER_Q[q.id] = q; });
   };
