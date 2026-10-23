@@ -136,8 +136,8 @@
     el.onclick = e => { const t = e.target.closest('[data-a]'); if (t && handlers[t.dataset.a]) { Sfx.select(); handlers[t.dataset.a](t.dataset.v, t); } };
   }
 
-  // The title screen: a pixel-art canvas (js/engine/titlescreen.js) with "PRESS Z OR ENTER", then a framed
-  // menu with a heart cursor. A hidden list of real buttons mirrors it for screen readers.
+  // The title screen: a pixel-art canvas (js/engine/titlescreen.js) whose sky follows the real time of day,
+  // "Press Z or Enter", then a menu with a heart cursor. A hidden list of real buttons mirrors it for screen readers.
   let titleSel = null, titleSeen = false, titleUI = null;
   function title() {
     const items = (S.started ? [{ id: 'cont', label: 'Continue' }] : [])
@@ -165,9 +165,8 @@
     TitleScreen.ready().then(() => {
       if (!el.contains($('.title-cv', el))) return;
       TitleScreen.clearCache();
-      const variant = (new URLSearchParams(location.search).get('title')) || 'cozy';
       titleUI = TitleScreen.mount($('.title-cv', el), {
-        items, skipIntro: titleSeen, variant,
+        items, skipIntro: titleSeen,
         selected: Math.max(0, items.findIndex(it => it.id === titleSel)),
         account: () => (Auth.current() && Auth.current().username ? Auth.current().username : 'Log in'),
         onSelect: i => { titleSel = items[i].id; },
