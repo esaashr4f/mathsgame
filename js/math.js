@@ -203,6 +203,8 @@
 
   function closeEnough(given, expected, step) {
     if (!isFinite(given) || !isFinite(expected)) return false;
+    if (step && step.strict) return Math.abs(given - expected) < 0.5;
+    if (step && step.tol != null && Math.abs(given - expected) <= step.tol + 1e-9) return true;
     const tight = Math.max(1e-6 * Math.abs(expected), 1e-9);
     if (Math.abs(given - expected) <= tight) return true;
     if (step && step.dp != null) return Math.abs(given - expected) <= 0.5 * Math.pow(10, -step.dp) + 1e-9;
