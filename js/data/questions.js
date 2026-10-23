@@ -8,10 +8,10 @@
   const R = String.raw;
 
   window.QUESTIONS = [
-    // ───────────────────────── SUNLIT SHALLOWS — Indices & Surds ─────────────────────────
+    // ── Indices & Surds ──
     {
-      id: 'sh-1', zone: 'shallows', source: 'Original (exam style)', marks: 3,
-      context: 'The dome\'s pressure valve needs a scaling factor before it will seal.',
+      id: 'sh-1', topic: 'indices', source: 'Original (exam style)', marks: 3,
+      context: 'Old Wick\'s lamp regulator needs a scaling factor before it will light.',
       prompt: R`Evaluate $\dfrac{8^{\frac{2}{3}} \times 4^{-\frac{1}{2}}}{2^{-3}}$ without a calculator.`,
       steps: [
         { ask: R`Find $8^{\frac{2}{3}}$.`, type: 'num', answer: 4,
@@ -26,8 +26,8 @@
       ],
     },
     {
-      id: 'sh-2', zone: 'shallows', source: 'Original (exam style)', marks: 4,
-      context: 'A glass panel for the dome must be cut to an exact width.',
+      id: 'sh-2', topic: 'indices', source: 'Original (exam style)', marks: 4,
+      context: 'A glass pane for the lighthouse lantern must be cut to an exact width.',
       prompt: R`Write $\dfrac{6}{3-\sqrt{3}}$ in the form $a + b\sqrt{3}$, where $a$ and $b$ are integers.`,
       steps: [
         { ask: 'What should you multiply the top and bottom by?', type: 'choice',
@@ -43,8 +43,8 @@
       ],
     },
     {
-      id: 'sh-3', zone: 'shallows', source: 'Original (exam style)', marks: 3,
-      context: 'Radixa wraps itself into a knot of powers. Untangle it.',
+      id: 'sh-3', topic: 'indices', source: 'Original (exam style)', marks: 3,
+      context: 'A page of Mira\'s notes has a knot of powers on it. Untangle it.',
       prompt: R`Write $\dfrac{2x^3 - \sqrt{x}}{x}$ in the form $2x^p - x^q$.`,
       steps: [
         { ask: R`Write $\sqrt{x}$ as a power of $x$. Enter the power.`, type: 'num', answer: '1/2',
@@ -59,8 +59,8 @@
       ],
     },
     {
-      id: 'sh-4', zone: 'shallows', source: 'Original (exam style)', marks: 2,
-      context: 'Two dome struts have lengths $(2+\sqrt5)$ and $(3-\sqrt5)$. Their product sets the brace tension.',
+      id: 'sh-4', topic: 'indices', source: 'Original (exam style)', marks: 2,
+      context: 'Two bridge struts have lengths $(2+\sqrt5)$ and $(3-\sqrt5)$ metres. Their product sets the brace size.',
       prompt: R`Expand and simplify $(2+\sqrt{5})(3-\sqrt{5})$.`,
       steps: [
         { ask: R`Expand fully. What is $\sqrt5 \times (-\sqrt5)$?`, type: 'num', answer: -5,
@@ -72,8 +72,8 @@
       ],
     },
     {
-      id: 'sh-5', zone: 'shallows', source: 'Original (exam style)', marks: 3,
-      context: 'The dome\'s inner hatch opens when the exponent is right.',
+      id: 'sh-5', topic: 'indices', source: 'Original (exam style)', marks: 3,
+      context: 'Mira\'s strongbox has a combination written as an equation.',
       prompt: R`Solve $4^{x+1} = 8^{x}$.`,
       steps: [
         { ask: R`Write $4^{x+1}$ as a power of 2. Enter the power (in terms of $x$).`, type: 'expr', answer: '2(x+1)',
@@ -88,10 +88,10 @@
       ],
     },
 
-    // ───────────────────────── KELP REEF — Quadratics ─────────────────────────
+    // ── Quadratics ──
     {
-      id: 'rf-1', zone: 'reef', source: 'Original (exam style)', marks: 4,
-      context: 'A kelp pen\'s cost curve is $C = x^2 - 6x + 11$. The farm wants the cheapest design.',
+      id: 'rf-1', topic: 'quadratics', source: 'Original (exam style)', marks: 4,
+      context: 'A fence-maker\'s cost curve is $C = x^2 - 6x + 11$. She wants the cheapest design.',
       prompt: R`Write $x^2 - 6x + 11$ in the form $(x-p)^2 + q$, and hence find the minimum point of $y = x^2 - 6x + 11$.`,
       steps: [
         { ask: R`Find $p$.`, type: 'num', answer: 3,
@@ -106,8 +106,8 @@
       ],
     },
     {
-      id: 'rf-2', zone: 'reef', source: 'Original (exam style)', marks: 3,
-      context: 'A supply pod should just touch the reef floor — one landing point, not two.',
+      id: 'rf-2', topic: 'quadratics', source: 'Original (exam style)', marks: 3,
+      context: 'A rope should just touch a post — one contact point, not two.',
       prompt: R`The equation $x^2 + kx + 9 = 0$ has equal roots. Find the possible values of $k$.`,
       steps: [
         { ask: 'Equal roots means the discriminant is...', type: 'choice',
@@ -123,9 +123,9 @@
       ],
     },
     {
-      id: 'rf-3', zone: 'reef', source: 'Original (exam style)', marks: 4,
-      context: 'A supply pod is launched from a ledge 20 m above the reef. Its height after $t$ seconds is $h = 20 + 15t - 5t^2$.',
-      prompt: R`Find when the pod lands on the reef ($h = 0$).`,
+      id: 'rf-3', topic: 'quadratics', source: 'Original (exam style)', marks: 4,
+      context: 'A supply crate is catapulted from a cliff 20 m above the river. Its height after $t$ seconds is $h = 20 + 15t - 5t^2$.',
+      prompt: R`Find when the crate lands in the river ($h = 0$).`,
       steps: [
         { ask: R`Set $h = 0$ and divide by $-5$. Which equation do you get?`, type: 'choice',
           choices: [R`$t^2 - 3t - 4 = 0$`, R`$t^2 + 3t - 4 = 0$`, R`$t^2 - 3t + 4 = 0$`, R`$t^2 - 15t - 20 = 0$`], answer: 0,
@@ -134,15 +134,15 @@
         { ask: R`Solve $t^2 - 3t - 4 = 0$. Give both roots.`, type: 'set', answer: [4, -1],
           hint: 'Two numbers that multiply to −4 and add to −3.',
           explain: R`$(t-4)(t+1) = 0 \Rightarrow t = 4$ or $t = -1$` },
-        { ask: 'So when does the pod land? (seconds)', type: 'num', answer: 4, marks: 2,
+        { ask: 'So when does the crate land? (seconds)', type: 'num', answer: 4, marks: 2,
           hint: 'One root is before the launch even happened.',
           explain: R`$t = 4$ s. <b>Reject $t = -1$</b> because time can't be negative — say this in the exam!` },
       ],
     },
     {
-      id: 'rf-4', zone: 'reef', source: 'Original (exam style)', marks: 4,
-      context: 'Same pod: $h = 20 + 15t - 5t^2$. Quadrabble wants to know how high it flies.',
-      prompt: R`By completing the square, find the maximum height of the pod and when it occurs.`,
+      id: 'rf-4', topic: 'quadratics', source: 'Original (exam style)', marks: 4,
+      context: 'Same crate: $h = 20 + 15t - 5t^2$. How high does it fly?',
+      prompt: R`By completing the square, find the maximum height of the crate and when it occurs.`,
       steps: [
         { ask: R`Complete the square: $-5t^2 + 15t + 20 = -5(t - a)^2 + b$. Find $a$.`, type: 'num', answer: 1.5,
           hint: R`Factor out $-5$: $-5(t^2 - 3t) + 20$. Halve the $-3$.`,
@@ -156,10 +156,10 @@
       ],
     },
 
-    // ───────────────────────── MIRROR LAGOON — Equations, Inequalities, Graphs ─────────────────────────
+    // ── Equations, Inequalities, Graphs ──
     {
-      id: 'lg-1', zone: 'lagoon', source: 'Original (exam style)', marks: 5,
-      context: 'A sonar ray $y = x + 1$ crosses the circular lagoon wall $x^2 + y^2 = 25$.',
+      id: 'lg-1', topic: 'graphs', source: 'Original (exam style)', marks: 5,
+      context: 'A straight path $y = x + 1$ crosses the circular pond wall $x^2 + y^2 = 25$.',
       prompt: R`Solve the simultaneous equations $y = x + 1$ and $x^2 + y^2 = 25$.`,
       steps: [
         { ask: R`Substitute and simplify. Which quadratic do you get?`, type: 'choice',
@@ -178,8 +178,8 @@
       ],
     },
     {
-      id: 'lg-2', zone: 'lagoon', source: 'Original (exam style)', marks: 4,
-      context: 'The sonar only works where the signal $x^2 - 5x - 14$ is positive.',
+      id: 'lg-2', topic: 'graphs', source: 'Original (exam style)', marks: 4,
+      context: 'The pump only works where the pressure $x^2 - 5x - 14$ is positive.',
       prompt: R`Find the set of values of $x$ for which $x^2 - 5x - 14 > 0$.`,
       steps: [
         { ask: 'Find the critical values.', type: 'set', answer: [7, -2],
@@ -192,8 +192,8 @@
       ],
     },
     {
-      id: 'lg-3', zone: 'lagoon', source: 'Original (exam style)', marks: 3,
-      context: 'The sonar curve $y = f(x)$ has a maximum (peak echo) at $(2, 5)$. Inversa transforms the signal.',
+      id: 'lg-3', topic: 'graphs', source: 'Original (exam style)', marks: 3,
+      context: 'The tide curve $y = f(x)$ has a maximum (high water) at $(2, 5)$. The curve is transformed.',
       prompt: R`Find the coordinates of the maximum on each transformed curve.`,
       steps: [
         { ask: R`$y = f(x + 3)$`, type: 'point', answer: [-1, 5],
@@ -208,8 +208,8 @@
       ],
     },
     {
-      id: 'lg-4', zone: 'lagoon', source: 'Original (exam style)', marks: 2,
-      context: 'Inversa claims you can divide by a negative and keep the sign. Prove it wrong.',
+      id: 'lg-4', topic: 'graphs', source: 'Original (exam style)', marks: 2,
+      context: 'Someone claims you can divide by a negative and keep the sign. Avoid the trap.',
       prompt: R`Solve $3(x - 2) < 5x + 4$.`,
       steps: [
         { ask: R`Expand and collect: $-6 - 4 < 5x - 3x$ gives $-10 < 2x$. What is the critical value?`, type: 'num', answer: -5,
@@ -222,10 +222,10 @@
       ],
     },
 
-    // ───────────────────────── CORAL GRID — Coordinate Geometry ─────────────────────────
+    // ── Coordinate Geometry ──
     {
-      id: 'gd-1', zone: 'grid', source: 'Original (exam style)', marks: 5,
-      context: 'A pipeline runs straight from junction A(2, 5) to junction B(6, −3).',
+      id: 'gd-1', topic: 'coord', source: 'Original (exam style)', marks: 5,
+      context: 'A drainage pipe runs straight from junction A(2, 5) to junction B(6, −3).',
       prompt: R`Find the equation of line $AB$, and the gradient of its perpendicular bisector.`,
       steps: [
         { ask: R`Find the gradient of $AB$.`, type: 'num', answer: -2,
@@ -243,8 +243,8 @@
       ],
     },
     {
-      id: 'gd-2', zone: 'grid', source: 'Original (exam style)', marks: 4,
-      context: 'Circulus\'s sonar ring follows $x^2 + y^2 - 6x + 4y - 12 = 0$.',
+      id: 'gd-2', topic: 'coord', source: 'Original (exam style)', marks: 4,
+      context: 'The lighthouse\'s range circle follows $x^2 + y^2 - 6x + 4y - 12 = 0$.',
       prompt: R`Find the centre and radius of the circle $x^2 + y^2 - 6x + 4y - 12 = 0$.`,
       steps: [
         { ask: R`Complete the square: $x^2 - 6x = (x - a)^2 - a^2$. Find $a$.`, type: 'num', answer: 3,
@@ -262,8 +262,8 @@
       ],
     },
     {
-      id: 'gd-3', zone: 'grid', source: 'Original (exam style)', marks: 4,
-      context: 'A straight pipe must just touch the sonar ring $(x-3)^2 + (y+2)^2 = 25$ at P(6, 2).',
+      id: 'gd-3', topic: 'coord', source: 'Original (exam style)', marks: 4,
+      context: 'A straight wall must just touch the circular pond $(x-3)^2 + (y+2)^2 = 25$ at P(6, 2).',
       prompt: R`Find the equation of the tangent to the circle at $P(6, 2)$.`,
       steps: [
         { ask: R`Find the gradient of the radius from the centre $C(3, -2)$ to $P$.`, type: 'num', answer: '4/3',
@@ -278,10 +278,10 @@
       ],
     },
 
-    // ───────────────────────── JELLY NURSERY — Binomial ─────────────────────────
+    // ── Binomial ──
     {
-      id: 'nu-1', zone: 'nursery', source: 'Original (exam style)', marks: 4,
-      context: 'The jelly population multiplies by $(1 + 2x)$ each cycle. After 5 cycles...',
+      id: 'nu-1', topic: 'binomial', source: 'Original (exam style)', marks: 4,
+      context: 'A savings pot grows by a factor of $(1 + 2x)$ each year. After 5 years...',
       prompt: R`Find the first three terms, in ascending powers of $x$, of $(1 + 2x)^5$. Hence estimate $1.02^5$.`,
       steps: [
         { ask: R`Find the coefficient of $x$.`, type: 'num', answer: 10,
@@ -296,8 +296,8 @@
       ],
     },
     {
-      id: 'nu-2', zone: 'nursery', source: 'Original (exam style)', marks: 3,
-      context: 'Binomia splits into $(3 - x)^6$. One term matters.',
+      id: 'nu-2', topic: 'binomial', source: 'Original (exam style)', marks: 3,
+      context: 'An expansion of $(3 - x)^6$ — only one term matters.',
       prompt: R`Find the coefficient of $x^3$ in the expansion of $(3 - x)^6$.`,
       steps: [
         { ask: R`Find $\binom{6}{3}$.`, type: 'num', answer: 20,
@@ -312,7 +312,7 @@
       ],
     },
     {
-      id: 'nu-3', zone: 'nursery', source: 'Original (exam style)', marks: 4,
+      id: 'nu-3', topic: 'binomial', source: 'Original (exam style)', marks: 4,
       context: 'In the expansion of $(2 + kx)^4$, the coefficient of $x$ is 96.',
       prompt: R`Find $k$, and hence the coefficient of $x^2$.`,
       steps: [
@@ -328,9 +328,9 @@
       ],
     },
 
-    // ───────────────────────── TWILIGHT SPIRE — Trigonometry ─────────────────────────
+    // ── Trigonometry ──
     {
-      id: 'sp-1', zone: 'spire', source: 'Original (exam style)', marks: 4,
+      id: 'sp-1', topic: 'trig', source: 'Original (exam style)', marks: 4,
       context: 'Triangle ABC maps a boat, a buoy and the lighthouse. $A = 40°$, $a = 8$ km, $b = 10$ km.',
       prompt: R`Find the possible values of angle $B$, to 1 d.p.`,
       steps: [
@@ -346,7 +346,7 @@
       ],
     },
     {
-      id: 'sp-2', zone: 'spire', source: 'Original (exam style)', marks: 4,
+      id: 'sp-2', topic: 'trig', source: 'Original (exam style)', marks: 4,
       context: 'Two lighthouse beams of length 7 km and 9 km are $60°$ apart.',
       prompt: R`Find the distance between the beam ends, and the area of the triangle they make.`,
       steps: [
@@ -362,7 +362,7 @@
       ],
     },
     {
-      id: 'sp-3', zone: 'spire', source: 'Original (exam style)', marks: 5,
+      id: 'sp-3', topic: 'trig', source: 'Original (exam style)', marks: 5,
       context: 'The lighthouse beam must stop at every angle where the signal equation holds.',
       prompt: R`Solve $2\sin^2 x + \sin x - 1 = 0$ for $0 \le x < 360°$.`,
       steps: [
@@ -375,8 +375,8 @@
       ],
     },
     {
-      id: 'sp-4', zone: 'spire', source: 'Original (exam style)', marks: 3,
-      context: 'Sinéad tries one more song: $\tan x = \sqrt3$.',
+      id: 'sp-4', topic: 'trig', source: 'Original (exam style)', marks: 3,
+      context: 'The lantern\'s shutter opens where $\tan x = \sqrt3$.',
       prompt: R`Solve $\tan x = \sqrt{3}$ for $0 \le x < 360°$.`,
       steps: [
         { ask: 'Find the principal value (degrees).', type: 'num', answer: 60,
@@ -388,10 +388,10 @@
       ],
     },
 
-    // ───────────────────────── PRESSURE VENTS — Exponentials & Logs ─────────────────────────
+    // ── Exponentials & Logs ──
     {
-      id: 'vt-1', zone: 'vents', source: 'Original (exam style)', marks: 4,
-      context: 'A plankton bed grows as $P = 500e^{0.2t}$, where $t$ is in days.',
+      id: 'vt-1', topic: 'explog', source: 'Original (exam style)', marks: 4,
+      context: 'Algae in the reservoir grow as $P = 500e^{0.2t}$, where $t$ is in days.',
       prompt: R`Find the initial population, and how long until it reaches 2000.`,
       steps: [
         { ask: 'Initial population?', type: 'num', answer: 500,
@@ -406,8 +406,8 @@
       ],
     },
     {
-      id: 'vt-2', zone: 'vents', source: 'Original (exam style)', marks: 2,
-      context: 'A vent valve needs $3^x = 20$.',
+      id: 'vt-2', topic: 'explog', source: 'Original (exam style)', marks: 2,
+      context: 'A valve setting needs $3^x = 20$.',
       prompt: R`Solve $3^x = 20$, giving your answer to 3 s.f.`,
       steps: [
         { ask: R`Taking logs gives $x \ln 3 = \ln 20$. Find $x$ (3 s.f.).`, type: 'num', answer: 'ln20/ln3', sf: 3, marks: 2,
@@ -416,8 +416,8 @@
       ],
     },
     {
-      id: 'vt-3', zone: 'vents', source: 'Original (exam style)', marks: 5,
-      context: 'Logjaw has scrambled the vent settings into a log equation.',
+      id: 'vt-3', topic: 'explog', source: 'Original (exam style)', marks: 5,
+      context: 'The lock\'s settings are scrambled into a log equation.',
       prompt: R`Solve $\log_2 x + \log_2 (x - 2) = 3$.`,
       steps: [
         { ask: 'Combine the logs. Which is correct?', type: 'choice',
@@ -436,8 +436,8 @@
       ],
     },
     {
-      id: 'vt-4', zone: 'vents', source: 'Original (exam style)', marks: 4,
-      context: 'Vent pressure data fits $y = ab^x$. A graph of $\log_{10} y$ against $x$ is a straight line with intercept $0.3$ and gradient $0.6$.',
+      id: 'vt-4', topic: 'explog', source: 'Original (exam style)', marks: 4,
+      context: 'Flood data fits $y = ab^x$. A graph of $\log_{10} y$ against $x$ is a straight line with intercept $0.3$ and gradient $0.6$.',
       prompt: R`Find $a$ and $b$ to 2 decimal places.`,
       steps: [
         { ask: R`Taking logs of $y = ab^x$ gives...`, type: 'choice',
@@ -453,10 +453,10 @@
       ],
     },
 
-    // ───────────────────────── GRADIENT FALLS — Differentiation ─────────────────────────
+    // ── Differentiation ──
     {
-      id: 'fl-1', zone: 'falls', source: 'Original (exam style)', marks: 4,
-      context: 'The waterfall\'s profile is $y = 4x^3 - \dfrac{6}{x} + 5$.',
+      id: 'fl-1', topic: 'diff', source: 'Original (exam style)', marks: 4,
+      context: 'The weir\'s profile is $y = 4x^3 - \dfrac{6}{x} + 5$.',
       prompt: R`Find $\dfrac{dy}{dx}$ and the gradient at $x = 1$.`,
       steps: [
         { ask: R`Write $\dfrac{6}{x}$ as a power of $x$: $6x^n$. Find $n$.`, type: 'num', answer: -1,
@@ -471,8 +471,8 @@
       ],
     },
     {
-      id: 'fl-2', zone: 'falls', source: 'Original (exam style)', marks: 6,
-      context: 'The falls\' riverbed is $y = x^3 - 6x^2 + 9x + 2$. The foundry is built at the stationary points.',
+      id: 'fl-2', topic: 'diff', source: 'Original (exam style)', marks: 6,
+      context: 'A riverbed profile is $y = x^3 - 6x^2 + 9x + 2$. Posts go at the stationary points.',
       prompt: R`Find the stationary points of $y = x^3 - 6x^2 + 9x + 2$ and determine their nature.`,
       steps: [
         { ask: R`Find $\dfrac{dy}{dx}$.`, type: 'expr', answer: '3x^2-12x+9',
@@ -494,8 +494,8 @@
       ],
     },
     {
-      id: 'fl-3', zone: 'falls', source: 'Original (exam style)', marks: 7,
-      context: 'An open-top oxygen tank has a square base of side $x$ m, height $h$ m, and volume 32 m³. Metal is expensive.',
+      id: 'fl-3', topic: 'diff', source: 'Original (exam style)', marks: 7,
+      context: 'An open-top water tank has a square base of side $x$ m, height $h$ m, and volume 32 m³. Metal is expensive.',
       prompt: R`Find the value of $x$ that minimises the surface area, and the minimum area.`,
       steps: [
         { ask: R`Use the volume to write $h$ in terms of $x$.`, type: 'expr', answer: '32/x^2',
@@ -516,8 +516,8 @@
       ],
     },
     {
-      id: 'fl-4', zone: 'falls', source: 'Original (exam style)', marks: 4,
-      context: 'The Leviathan\'s spine follows $y = x^2 - 3x + 1$. A harpoon line must touch it at $x = 4$.',
+      id: 'fl-4', topic: 'diff', source: 'Original (exam style)', marks: 4,
+      context: 'A hillside follows $y = x^2 - 3x + 1$. A straight ramp must touch it at $x = 4$.',
       prompt: R`Find the equation of the tangent to $y = x^2 - 3x + 1$ at $x = 4$.`,
       steps: [
         { ask: R`Find $y$ when $x = 4$.`, type: 'num', answer: 5,
@@ -532,8 +532,8 @@
       ],
     },
     {
-      id: 'fl-5', zone: 'falls', source: 'Original (exam style)', marks: 4,
-      context: 'Elder Theta wants to see you differentiate from first principles — no shortcuts.',
+      id: 'fl-5', topic: 'diff', source: 'Original (exam style)', marks: 4,
+      context: 'Rook wants to see you differentiate from first principles — no shortcuts.',
       prompt: R`Prove from first principles that the derivative of $x^2$ is $2x$.`,
       steps: [
         { ask: R`Expand $(x+h)^2 - x^2$.`, type: 'expr', vars: ['x', 'h'], answer: '2xh+h^2',
@@ -548,10 +548,10 @@
       ],
     },
 
-    // ───────────────────────── HOLLOW BASIN — Integration ─────────────────────────
+    // ── Integration ──
     {
-      id: 'hb-1', zone: 'hollowbasin', source: 'Original (exam style)', marks: 3,
-      context: 'Integra hovers over a function, trying to remember what it once was.',
+      id: 'hb-1', topic: 'integ', source: 'Original (exam style)', marks: 3,
+      context: 'A function has lost its constant. Find what it once was.',
       prompt: R`Find $\displaystyle\int (6x^2 - 4x + 3)\,dx$.`,
       steps: [
         { ask: R`Integrate $6x^2$.`, type: 'antideriv', answer: '2x^3',
@@ -563,8 +563,8 @@
       ],
     },
     {
-      id: 'hb-2', zone: 'hollowbasin', source: 'Original (exam style)', marks: 4,
-      context: 'Coral needs $\displaystyle\int_1^3 (3x^2 - 2x)\,dx$ units of nutrient.',
+      id: 'hb-2', topic: 'integ', source: 'Original (exam style)', marks: 4,
+      context: 'The meadow needs $\displaystyle\int_1^3 (3x^2 - 2x)\,dx$ tonnes of soil.',
       prompt: R`Evaluate $\displaystyle\int_1^3 (3x^2 - 2x)\,dx$.`,
       steps: [
         { ask: R`Integrate $3x^2 - 2x$ (no $+c$ needed for a definite integral).`, type: 'antideriv', answer: 'x^3-x^2',
@@ -582,8 +582,8 @@
       ],
     },
     {
-      id: 'hb-3', zone: 'hollowbasin', source: 'Original (exam style)', marks: 4,
-      context: 'The basin\'s slope is $f\'(x) = 4x - 3$. The basin passes through the marker at $(2, 5)$.',
+      id: 'hb-3', topic: 'integ', source: 'Original (exam style)', marks: 4,
+      context: 'A slope has gradient $f\'(x) = 4x - 3$ and passes through the marker at $(2, 5)$.',
       prompt: R`Find $f(x)$.`,
       steps: [
         { ask: R`Integrate $f'(x) = 4x - 3$.`, type: 'integral', answer: '2x^2-3x',
@@ -598,9 +598,9 @@
       ],
     },
     {
-      id: 'hb-4', zone: 'hollowbasin', source: 'Original (exam style)', marks: 5,
-      context: 'A coral field is bounded by the curve $y = x(4 - x)$ and the seabed ($x$-axis).',
-      prompt: R`Find the exact area of the coral field.`,
+      id: 'hb-4', topic: 'integ', source: 'Original (exam style)', marks: 5,
+      context: 'A flower bed is bounded by the curve $y = x(4 - x)$ and a straight path (the $x$-axis).',
+      prompt: R`Find the exact area of the flower bed.`,
       steps: [
         { ask: R`Where does the curve meet the $x$-axis?`, type: 'set', answer: [0, 4],
           hint: R`$x(4 - x) = 0$`,
@@ -614,10 +614,10 @@
       ],
     },
 
-    // ───────────────────────── CURRENT LABYRINTH — Vectors ─────────────────────────
+    // ── Vectors ──
     {
-      id: 'cu-1', zone: 'currents', source: 'Original (exam style)', marks: 4,
-      context: 'A current flows with velocity $(3\mathbf{i} + 4\mathbf{j})$ m/s.',
+      id: 'cu-1', topic: 'vectors', source: 'Original (exam style)', marks: 4,
+      context: 'The river current flows with velocity $(3\mathbf{i} + 4\mathbf{j})$ m/s.',
       prompt: R`Find the speed of the current and the angle it makes with $\mathbf{i}$.`,
       steps: [
         { ask: 'Find the speed (m/s).', type: 'num', answer: 5,
@@ -632,8 +632,8 @@
       ],
     },
     {
-      id: 'cu-2', zone: 'currents', source: 'Original (exam style)', marks: 3,
-      context: 'A submarine sails from beacon A(1, 2) to beacon B(7, −6).',
+      id: 'cu-2', topic: 'vectors', source: 'Original (exam style)', marks: 3,
+      context: 'A boat sails from buoy A(1, 2) to buoy B(7, −6).',
       prompt: R`Find $\overrightarrow{AB}$ and the distance $AB$.`,
       steps: [
         { ask: R`Find $\overrightarrow{AB}$.`, type: 'vector', answer: [6, -8],
@@ -645,8 +645,8 @@
       ],
     },
     {
-      id: 'cu-3', zone: 'currents', source: 'Original (exam style)', marks: 3,
-      context: 'Two currents push a drifting mine: $\mathbf{F}_1 = (2\mathbf{i} + 5\mathbf{j})$ and $\mathbf{F}_2 = (4\mathbf{i} - 13\mathbf{j})$.',
+      id: 'cu-3', topic: 'vectors', source: 'Original (exam style)', marks: 3,
+      context: 'Two ropes pull a log: $\mathbf{F}_1 = (2\mathbf{i} + 5\mathbf{j})$ and $\mathbf{F}_2 = (4\mathbf{i} - 13\mathbf{j})$.',
       prompt: R`Find the resultant and its magnitude.`,
       steps: [
         { ask: 'Find the resultant.', type: 'vector', answer: [6, -8],
@@ -662,9 +662,9 @@
       ],
     },
 
-    // ───────────────────────── SHOAL CENSUS — Data & Sampling ─────────────────────────
+    // ── Data & Sampling ──
     {
-      id: 'so-1', zone: 'shoal', source: 'Original (exam style)', marks: 4,
+      id: 'so-1', topic: 'data', source: 'Original (exam style)', marks: 4,
       context: 'Five fish were measured (cm): 4, 7, 7, 9, 13.',
       prompt: 'Find the mean and standard deviation of the lengths.',
       steps: [
@@ -683,7 +683,7 @@
       ],
     },
     {
-      id: 'so-2', zone: 'shoal', source: 'Original (exam style)', marks: 3,
+      id: 'so-2', topic: 'data', source: 'Original (exam style)', marks: 3,
       context: 'Fish weights: $Q_1 = 20$ g, $Q_3 = 32$ g. Outliers are more than $1.5 \times \text{IQR}$ beyond the quartiles.',
       prompt: 'Is a fish weighing 51 g an outlier?',
       steps: [
@@ -700,8 +700,8 @@
       ],
     },
     {
-      id: 'so-3', zone: 'shoal', source: 'Original (exam style)', marks: 2,
-      context: 'Meanace wants to sample 50 of the 500 tagged fish fairly.',
+      id: 'so-3', topic: 'data', source: 'Original (exam style)', marks: 2,
+      context: 'The census clerk wants to sample 50 of the 500 households fairly.',
       prompt: 'Identify the sampling method.',
       steps: [
         { ask: 'Every fish is numbered 1–500, and a random number generator picks 50 distinct numbers. This is...', type: 'choice',
@@ -715,10 +715,10 @@
       ],
     },
 
-    // ───────────────────────── NULL COURT — Probability & Hypothesis Testing ─────────────────────────
+    // ── Probability & Hypothesis Testing ──
     {
-      id: 'co-1', zone: 'court', source: 'Original (exam style)', marks: 4,
-      context: '30% of reactor rods are faulty. Ten rods are tested. $X \sim B(10, 0.3)$.',
+      id: 'co-1', topic: 'prob', source: 'Original (exam style)', marks: 4,
+      context: '30% of lamp wicks are faulty. Ten are tested. $X \sim B(10, 0.3)$.',
       prompt: R`Find $P(X = 2)$ and $P(X \le 1)$ to 4 d.p.`,
       steps: [
         { ask: R`Find $P(X = 2)$ (4 d.p.).`, type: 'num', answer: '45*0.3^2*0.7^8', dp: 4, marks: 2,
@@ -730,8 +730,8 @@
       ],
     },
     {
-      id: 'co-2', zone: 'court', source: 'Original (exam style)', marks: 6,
-      context: 'Historically 40% of fish in the trench are tagged. Justice Null suspects fewer are now. In a sample of 20 fish, 3 are tagged.',
+      id: 'co-2', topic: 'prob', source: 'Original (exam style)', marks: 6,
+      context: 'Historically 40% of fish in the Wend are tagged. The magistrate suspects fewer are now. In a sample of 20 fish, 3 are tagged.',
       prompt: 'Test, at the 5% significance level, whether the proportion of tagged fish has decreased.',
       steps: [
         { ask: 'Choose the hypotheses.', type: 'choice',
@@ -753,8 +753,8 @@
       ],
     },
     {
-      id: 'co-3', zone: 'court', source: 'Original (exam style)', marks: 3,
-      context: 'Events: A = "the reactor overheats", B = "the pump stalls". $P(A) = 0.4$, $P(B) = 0.5$, A and B independent.',
+      id: 'co-3', topic: 'prob', source: 'Original (exam style)', marks: 3,
+      context: 'Events: A = "the mill overheats", B = "the pump stalls". $P(A) = 0.4$, $P(B) = 0.5$, A and B independent.',
       prompt: R`Find $P(A \cap B)$ and $P(A \cup B)$.`,
       steps: [
         { ask: R`Find $P(A \cap B)$.`, type: 'num', answer: 0.2,
@@ -766,10 +766,10 @@
       ],
     },
 
-    // ───────────────────────── SINKING LIFT — Kinematics ─────────────────────────
+    // ── Kinematics ──
     {
-      id: 'li-1', zone: 'lift', source: 'Original (exam style)', marks: 5,
-      context: 'The great lift starts from rest, accelerates at 2 m/s² for 5 s, then decelerates uniformly to rest in 4 s.',
+      id: 'li-1', topic: 'kinematics', source: 'Original (exam style)', marks: 5,
+      context: 'The cliff lift starts from rest, accelerates at 2 m/s² for 5 s, then decelerates uniformly to rest in 4 s.',
       prompt: 'Find the total distance travelled by the lift.',
       steps: [
         { ask: 'Find the speed after 5 s (m/s).', type: 'num', answer: 10,
@@ -787,7 +787,7 @@
       ],
     },
     {
-      id: 'li-2', zone: 'lift', source: 'Original (exam style)', marks: 4,
+      id: 'li-2', topic: 'kinematics', source: 'Original (exam style)', marks: 4,
       context: 'A distress flare is fired vertically upwards at 14.7 m/s. Take $g = 9.8$ m/s².',
       prompt: 'Find the time to reach the highest point and the maximum height.',
       steps: [
@@ -803,7 +803,7 @@
       ],
     },
     {
-      id: 'li-3', zone: 'lift', source: 'Original (exam style)', marks: 5,
+      id: 'li-3', topic: 'kinematics', source: 'Original (exam style)', marks: 5,
       context: 'A maintenance drone moves in a straight line with $v = 3t^2 - 4t$ m/s.',
       prompt: R`Find its acceleration, and its displacement from $t = 0$ to $t = 2$.`,
       steps: [
@@ -820,10 +820,10 @@
       ],
     },
 
-    // ───────────────────────── TITAN'S FORGE — Forces ─────────────────────────
+    // ── Forces ──
     {
-      id: 'fo-1', zone: 'forge', source: 'Original (exam style)', marks: 2,
-      context: 'A 5 kg crate is pulled along the forge floor by a horizontal 30 N force. Friction is 10 N.',
+      id: 'fo-1', topic: 'forces', source: 'Original (exam style)', marks: 2,
+      context: 'A 5 kg crate is pulled along the boathouse floor by a horizontal 30 N force. Friction is 10 N.',
       prompt: 'Find the acceleration of the crate.',
       steps: [
         { ask: 'Find the resultant force (N).', type: 'num', answer: 20,
@@ -835,7 +835,7 @@
       ],
     },
     {
-      id: 'fo-2', zone: 'forge', source: 'Original (exam style)', marks: 3,
+      id: 'fo-2', topic: 'forces', source: 'Original (exam style)', marks: 3,
       context: 'A 600 kg lift accelerates upwards at 0.5 m/s². Take $g = 9.8$.',
       prompt: 'Find the tension in the lift cable.',
       steps: [
@@ -849,7 +849,7 @@
       ],
     },
     {
-      id: 'fo-3', zone: 'forge', source: 'Original (exam style)', marks: 5,
+      id: 'fo-3', topic: 'forces', source: 'Original (exam style)', marks: 5,
       context: 'Block A (3 kg) sits on a smooth table, tied by a light inextensible string over a smooth pulley to block B (5 kg) hanging freely. $g = 9.8$.',
       prompt: 'Find the acceleration of the system and the tension in the string.',
       steps: [

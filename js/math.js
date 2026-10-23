@@ -281,7 +281,9 @@
             const close = closeEnough(numValue(raw), expectedNum(step.answer), { sf: 3 });
             return { ok: false, message: close ? 'Right value, but the question wants an exact answer (surds/fractions, no decimals).' : undefined, code: close ? 'inexact' : undefined };
           }
-          return { ok: closeEnough(numValue(raw), expectedNum(step.answer), step) };
+          const v = numValue(raw);
+          if (step.range) return { ok: v >= step.range[0] && v <= step.range[1] };
+          return { ok: closeEnough(v, expectedNum(step.answer), step) };
         }
         case 'set': {
           const given = splitList(raw).map(numValue);
@@ -290,6 +292,11 @@
           if (!ok && given.length < expected.length && given.every(g => expected.some(e => closeEnough(g, e, step))))
             return { ok: false, message: 'Correct so far — but there ' + (expected.length - given.length === 1 ? 'is another value' : 'are more values') + '. Separate them with commas.', code: 'missing' };
           return { ok };
+        }
+        case 'tuple': {
+          const given = splitList(raw).map(numValue);
+          const expected = step.answer.map(expectedNum);
+          return { ok: given.length === expected.length && given.every((g, k) => closeEnough(g, expected[k], step)) };
         }
         case 'point': {
           const [x, y] = parsePoint(raw);
@@ -343,7 +350,7 @@
   function preview(step, input) {
     if (!input || !String(input).trim()) return '';
     try {
-      if (step.type === 'set') return splitList(input).map(x => toTex(parse(x))).join(',\\; ');
+      if (step.type === 'set' || step.type === 'tuple') return splitList(input).map(x => toTex(parse(x))).join(',\\; ');
       if (step.type === 'point' || (step.type === 'vector' && input.includes(','))) {
         const m = /^\s*\(?\s*([^,]+?)\s*,\s*([^,]+?)\s*\)?\s*$/.exec(stripLhs(input));
         return m ? '\\left(' + toTex(parse(m[1])) + ',\\ ' + toTex(parse(m[2])) + '\\right)' : '';

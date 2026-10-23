@@ -10,12 +10,18 @@ const vm = require('vm');
 const root = path.join(__dirname, '..');
 const MathIn = require(path.join(root, 'js/math.js'));
 
-const sandbox = { window: {} };
+const sandbox = { window: {}, console };
+sandbox.window.MathIn = MathIn;
+sandbox.window.Graph = require(path.join(root, 'js/engine/graph.js'));
+sandbox.Graph = sandbox.window.Graph;
 vm.createContext(sandbox);
-for (const f of ['js/data/characters.js', 'js/data/story.js', 'js/data/zones.js', 'js/data/questions.js']) {
-  vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), sandbox, { filename: f });
-}
-const { ZONES, QUESTIONS, STORY } = sandbox.window;
+const load = f => vm.runInContext('(function(window){' + fs.readFileSync(path.join(root, f), 'utf8') + '\n})(window)', sandbox, { filename: f });
+// Data files expect browser globals; expose window.X as bare names for later files.
+const files = ['js/data/topics.js', 'js/data/questions.js', 'js/data/papers.js', 'js/story/cast.js'];
+files.forEach(load);
+Object.assign(sandbox, sandbox.window);
+fs.readdirSync(path.join(root, 'js/story')).filter(f => /^ch\d|^finale/.test(f)).sort().forEach(f => { load('js/story/' + f); Object.assign(sandbox, sandbox.window); });
+const { TOPICS, QUESTIONS, PAPERS, STORY_PROBLEMS, ENCOUNTERS } = sandbox.window;
 
 let failures = 0;
 const fail = (msg) => { failures++; console.error('  ✗ ' + msg); };
@@ -62,32 +68,28 @@ for (const [step, input, want] of cases) {
 }
 
 // ---------- data validation ----------
-console.log('Question bank');
-const zoneIds = new Set(ZONES.map(z => z.id));
+console.log('Question bank, past papers, story problems');
+const topicIds = new Set(TOPICS.map(t => t.id));
 const ids = new Set();
 
 function canonicalInput(step) {
   const a = step.answer;
   switch (step.type) {
     case 'choice': return a;
-    case 'set': return a.join(', ');
+    case 'set': case 'tuple': return a.join(', ');
     case 'point': case 'vector': return '(' + a.join(', ') + ')';
     case 'integral': return a + ' + c';
-    default: {
-      if (step.exact || typeof a !== 'number') return String(a);
-      return String(a);
-    }
+    default: return String(a);
   }
 }
 
-for (const q of QUESTIONS) {
-  const where = q.id || '(no id)';
-  if (!q.id) fail('question missing id');
+function checkQuestion(q, where, needTopic) {
+  if (!q.id) fail(where + ': missing id');
   if (ids.has(q.id)) fail(`${where}: duplicate id`);
   ids.add(q.id);
-  if (!zoneIds.has(q.zone)) fail(`${where}: unknown zone "${q.zone}"`);
+  if (needTopic && !topicIds.has(q.topic)) fail(`${where}: unknown topic "${q.topic}"`);
   if (!q.prompt) fail(`${where}: missing prompt`);
-  if (!Array.isArray(q.steps) || !q.steps.length) { fail(`${where}: no steps`); continue; }
+  if (!Array.isArray(q.steps) || !q.steps.length) { fail(`${where}: no steps`); return; }
   q.steps.forEach((s, i) => {
     const at = `${where} step ${i + 1}`;
     if (!s.ask) fail(`${at}: missing ask`);
@@ -98,25 +100,43 @@ for (const q of QUESTIONS) {
       if (!Array.isArray(s.choices) || s.answer == null || s.answer >= s.choices.length) fail(`${at}: bad choice data`);
       return;
     }
-    const res = MathIn.check(s, canonicalInput(s));
+    const res = MathIn.check(Object.assign({ type }, s), canonicalInput(Object.assign({ type }, s)));
     if (!res.ok) fail(`${at}: canonical answer "${canonicalInput(s)}" rejected ${res.message ? '(' + res.message + ')' : ''}`);
-    // A clearly wrong answer must not pass.
-    if (type === 'num') {
+    if (type === 'num' && !s.range) {
       const wrong = MathIn.check(s, String(MathIn.evaluate(MathIn.parse(String(s.answer)), {}) + 1));
       if (wrong.ok) fail(`${at}: answer+1 accepted`);
     }
   });
 }
 
-for (const z of ZONES) {
-  const n = QUESTIONS.filter(q => q.zone === z.id).length;
-  if (!z.final && n < 2) fail(`zone ${z.id} has only ${n} questions`);
-  if (!z.boss || !z.boss.intro || !z.boss.defeat) fail(`zone ${z.id} boss missing dialogue`);
-}
-if (!STORY.prologue.length) fail('missing prologue');
+QUESTIONS.forEach(q => checkQuestion(q, 'bank ' + q.id, true));
+PAPERS.forEach(p => {
+  let total = 0;
+  p.questions.forEach(q => {
+    checkQuestion(q, p.id + ' Q' + q.num, true);
+    const stepMarks = q.steps.reduce((t, s) => t + (s.marks || 1), 0);
+    if (stepMarks !== q.marks) fail(`${p.id} Q${q.num}: steps give ${stepMarks} marks, question says ${q.marks}`);
+    total += q.marks;
+  });
+  if (total !== 75) fail(`${p.id}: total ${total}, expected 75`);
+  console.log(`  ${p.title}: ${p.questions.length} parts, ${total} marks`);
+});
+Object.values(STORY_PROBLEMS || {}).forEach(q => {
+  ids.delete(q.id);
+  checkQuestion(Object.assign({}, q, { id: 'story-' + q.id }), 'story ' + q.id, true);
+});
+Object.entries(ENCOUNTERS || {}).forEach(([k, e]) => {
+  if (!e.problem || !e.attacks || !e.taunts || !e.angry || !e.talk) fail('encounter ' + k + ' incomplete');
+});
 
-const totalMarks = QUESTIONS.reduce((t, q) => t + q.steps.reduce((m, s) => m + (s.marks || 1), 0), 0);
-console.log(`  ${QUESTIONS.length} questions, ${QUESTIONS.reduce((t, q) => t + q.steps.length, 0)} steps, ${totalMarks} marks across ${ZONES.length} zones`);
+for (const t of TOPICS) {
+  const n = QUESTIONS.concat(PAPERS.flatMap(p => p.questions)).filter(q => q.topic === t.id).length;
+  if (n < 2) fail(`topic ${t.id} has only ${n} questions`);
+}
+
+const allQ = QUESTIONS.concat(PAPERS.flatMap(p => p.questions));
+const totalMarks = allQ.reduce((t, q) => t + q.steps.reduce((m, s) => m + (s.marks || 1), 0), 0);
+console.log(`  ${allQ.length} practice questions (${totalMarks} marks), ${Object.keys(STORY_PROBLEMS || {}).length} story problems, ${Object.keys(ENCOUNTERS || {}).length} encounters, ${TOPICS.length} topics`);
 
 if (failures) {
   console.error(`\n${failures} problem(s) found.`);
