@@ -273,7 +273,10 @@
       // ── west
       if (!f.westOpen) E.push({ id: 'log', x: 29, y: 26.5, draw: drawLog, talk: S('log'), w: 8, tall: 30 });
       E.push({ id: 'lockgate', x: 16, y: 57, draw: drawGate(!!f.lockOpen), talk: S('lockgate'), solid: false, tall: 70 });
-      E.push({ id: 'cog', x: 15, y: 51, sprite: 'cog', talk: S('cog'), w: 7, tall: 18 });
+      E.push({ id: 'cog', x: f.lockOpen ? 12 : 15, y: 51, sprite: 'cog', talk: S('cog'), w: 7, tall: 18 });
+      E.push({ id: 'sluice', x: 18, y: 51, sprite: 'sign', talk: S('sluice') });
+      // ── the marsh (finale): Mira's scattered thoughts
+      [[1, 17, 14], [2, 4, 19], [3, 14, 23]].forEach(([n, x, y]) => E.push({ id: 'echo' + n, x, y, sprite: 'mira', talk: S('echo' + n), alpha: 0.45, bob: 2, solid: false, hidden: !(f.marshOpen && !f['echo' + n + 'Done']) }));
       E.push({ id: 'wendSerpent', x: 10.8, y: 38, sprite: 'wend', talk: S('wend'), w: 9, tall: 14, bob: 2, hidden: !(f.chapter >= 4 && !f.drained) });
       // ── the meadows (chapter 4)
       const ch4 = f.chapter === 4 && !f.drained;
@@ -310,7 +313,8 @@
           { x: 80, y: 26, h: 2, run: S('arriveGullPoint'), when: f => f.eastOpen && !f.gullPointSeen },
           { x: 24, y: 26, h: 5, run: S('arriveMeadows'), when: f => f.westOpen && !f.meadowsSeen },
           { x: 19, y: 37, run: S('farmDoor') },
-          { x: 12, y: 18, h: 6, run: S('enterStill'), when: f => f.marshOpen && !f.miraFreed },
+          { x: 12, y: 18, h: 6, run: S('enterStill'), when: f => f.marshOpen && !f.stillSeen },
+          { x: 10, y: 24, w: 2, run: S('enterStill'), when: f => f.marshOpen && !f.stillSeen },
         ],
       };
     },
@@ -357,6 +361,7 @@
         rows: rows(g), fog: 0,
         entities: [
           { id: 'desk', x: 6, y: 4, sprite: 'page', talk: S('miraDesk'), solid: false, w: 10 },
+          { id: 'miraHome', x: 7.5, y: 5.5, sprite: 'mira', talk: S('miraHome'), hidden: !f.miraFreed },
           { id: 'photo', x: 10, y: 4, sprite: 'page', talk: S('photo'), solid: false },
           { id: 'mapwall', x: 6, y: 2, sprite: 'page', talk: S('mapWall'), hidden: true },
           { id: 'stand', x: 2, y: 4, sprite: 'lamp', talk: S('theodoliteStand') },
@@ -423,13 +428,14 @@
 
   window.MAPS.lockhouse = {
     name: 'The Lockhouse', rook: true,
-    build() {
+    build(f) {
       const g = room(11, 9);
       rect(g, 1, 2, 4, 1, 'B'); rect(g, 7, 2, 3, 1, 'd');
       set(g, 5, 8, 'X');
       return {
         rows: rows(g), fog: 0.1,
-        entities: [{ id: 'lockLog', x: 8, y: 3, sprite: 'page', talk: S('lockLog'), solid: false }, { id: 'winch', x: 3, y: 4, sprite: 'barrel', talk: S('winch') }],
+        entities: [{ id: 'lockLog', x: 8, y: 3, sprite: 'page', talk: S('lockLog'), solid: false }, { id: 'winch', x: 3, y: 4, sprite: 'barrel', talk: S('winch') },
+          { id: 'dilys', x: 6, y: 5, sprite: 'dilys', talk: S('dilys'), hidden: !f.drained }].filter(e => !e.hidden),
         triggers: [exit(5, 8, 9, 49)],
       };
     },

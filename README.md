@@ -1,43 +1,60 @@
-# 🦐 THE DESCENT
+# Lowmarsh
 
-**An A-level maths RPG.** Wake up as a krill in the drowned city of Bathys. Every district's guardian believes one classic maths mistake. Beat them with your working, sink 700 m to the Hadal Gate, and get home before your exam.
+**An Undertale-style RPG that teaches OCR AS Mathematics (H230).** You arrive in Lowmarsh, a fog-bound fen village, for two weeks with your Aunt Fen. Since the great storm the fog has made everyone forget how to work things out. Mira Hale, the village surveyor, walked into the marsh and never came back. Her crow Rook can still talk, and still remembers her methods.
 
-Inspired by Krillion (the daily dive and depth scoring), Undertale (FIGHT/ACT/ITEM/MERCY and dodging the boss's attacks), Pokémon Mystery Dungeon (the stranded hero and their partner), and Persona 5 (the calendar countdown, the hub room, changing hearts).
+You put Lowmarsh back together one real problem at a time: a gangplank, a bridge, a lighthouse, a census, a flood, a lock. Every one of them is real AS maths, and most are real OCR exam questions, solved step by step with Rook's help.
+
+Inspired by Undertale (talk your way through encounters, FIGHT never works, spare your enemies), Krillion (the 25-second step timer and the Daily Dive), Pokémon Mystery Dungeon (a stranded hero and a partner who believes in them) and Persona 5 (the countdown to your exam).
 
 ## Play
 
-No build step. Open `index.html` in a browser, or serve the folder:
+No build step. Serve the folder and open it in a browser:
 
 ```bash
 python3 -m http.server 8000   # then open http://localhost:8000
 ```
 
-It also works when published as-is on GitHub Pages. Progress saves in your browser.
+Progress saves in your browser. Controls: arrows or WASD to move, Z or Enter to talk and confirm, C or Esc for the menu, R to ask Rook. On a phone, use the on-screen pad.
 
-## Modes
+## Part One: AS level (complete)
 
-- **Descend (story).** 14 AS districts plus the final Gate. Each boss fight is 3 multi-step exam-style questions with a 25 s Krillion timer per step. A wrong answer means dodging the boss's attacks.
-- **Practice.** Any topic, no damage, optional timer, free hints, and worked solutions for every step.
-- **Daily Dive.** 7 problems, same for everyone each day, one shot per step. 100 m per problem; 700 m is the trench floor. Gives you a shareable result grid.
-- **Codex.** Elder Theta's lesson for every topic: method, worked example, the trap.
-- **Calendar.** Set your exam date to see the countdown.
+| Chapter | Place | Maths | Encounter |
+|---|---|---|---|
+| Prologue & 1. Stranded | the ferry, the village, the gorge | surds, indices, quadratics, the discriminant, inequalities | Bramble the bridge troll |
+| 2. The Dark Lighthouse | Gull Point | trig, sine and cosine rules, circles, coordinate geometry, probability | Ottoline the keeper's ghost |
+| 3. The Census | the Town Hall | sampling, the Large Data Set, histograms, probability, binomial, hypothesis tests | Magistrate Strix |
+| 4. The Rising | the flooded west meadows | first principles, rates of change, stationary points, optimisation, integration, exponentials and logs | the Wend, river spirit |
+| 5. The Lock | the Wend Lock, the gorge | forces, F = ma, pulleys, variable and constant acceleration; vectors, data and moments for the bridge | Cog the lock golem |
+| 6. The Still | the marsh | proof: counter-example, deduction, exhaustion, implication | the Hush |
 
-## Content
+There are 34 side quests, all listed in the pause menu under Side Quests. They come from OCR papers and from the OCR topic question packs.
 
-AS Maths: Pure (indices & surds, quadratics, equations/inequalities/graphs, coordinate geometry, binomial, trig, exponentials & logs, differentiation, integration, vectors), Statistics (data & sampling, probability, binomial, hypothesis testing), Mechanics (kinematics, forces). There are 51 original exam-style questions, 150 steps and 192 marks.
+Part Two (the rest of A level, on a new map up the road north) will be built once the A level material is in.
+
+## Everything else in the menu
+
+- **Mira's Notebook.** One page per topic, collected through the story. Each has a lesson, a worked example and the usual trap.
+- **Past Papers.** All twelve OCR AS papers (H230/01 and H230/02, 2018 to 2023). Sit them under exam conditions with a clock, work through them guided step by step, or pick out single questions.
+- **Drills.** Practise by topic. Mixed and weak-topic drills too.
+- **Daily Dive.** The Krillion mode: 7 problems down the Lowmarsh well, 25 seconds a step, 700 m to the bottom.
+- **Scratch Pad, Grapher, Formula Book.** Space to work things out, a grapher that plots anything you type, and the OCR formula booklet.
 
 ## Project layout
 
 ```
-index.html            entry point
-css/style.css         all styles
-js/math.js            answer parser and checker (2√3, 3x^2-4/x, (3,-2), 6i-8j, + c …)
-js/game.js            engine: screens, dialogue, battle, dodge, timer, daily dive
-js/audio.js           WebAudio blips
-js/data/zones.js      districts, bosses, misconceptions, lessons
-js/data/questions.js  question bank
-js/data/story.js      prologue and story beats
-tools/validate.js     node tools/validate.js — checks every answer in the bank
-docs/DESIGN.md        story, mechanics, inspirations, roadmap
-docs/ADDING_QUESTIONS.md  question format + past-paper import guide
+index.html               entry point (load order matters)
+css/style.css            all styles
+js/math.js               answer parser and checker (2√3, 3x^2-4/x, (3,-2), 6i-8j, + c, line equations …)
+js/audio.js              WebAudio blips
+js/engine/               graph.js (SVG plots), sprites.js, tiles.js, ui.js, world.js (overworld),
+                         solver.js (step-by-step notebook, sessions), battle.js (encounters)
+js/data/                 topics.js, questions.js (drill bank), papers.js / papers2.js (H230/01), papers3.js (H230/02)
+js/story/                cast.js, maps.js, ch1–ch5.js, finale.js, sides.js (topic-pack side quests), guide.js (objectives, Rook's hints, side-quest list)
+js/main.js               game shell: saves, menus, the G scripting API
+tools/validate.js        node tools/validate.js checks every answer, paper total and story problem
+docs/                    DESIGN.md (story bible and structure), ADDING_QUESTIONS.md
 ```
+
+## Note on content
+
+Past-paper questions are © OCR, used here for personal revision. Keep the repository private if you don't want to share them.

@@ -296,3 +296,4 @@ canvas.dodge { display: block; margin: 0 auto; background: #000; border: 3px sol
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
 
 .item-list li.job-done { opacity: 0.55; }
+.job-list { list-style: none; padding-left: 0; }

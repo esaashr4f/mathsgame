@@ -20,7 +20,7 @@ const load = f => vm.runInContext('(function(window){' + fs.readFileSync(path.jo
 const files = ['js/data/topics.js', 'js/data/questions.js', 'js/data/papers.js', 'js/data/papers2.js', 'js/data/papers3.js', 'js/story/cast.js'];
 files.forEach(load);
 Object.assign(sandbox, sandbox.window);
-fs.readdirSync(path.join(root, 'js/story')).filter(f => /^ch\d|^finale/.test(f)).sort().forEach(f => { load('js/story/' + f); Object.assign(sandbox, sandbox.window); });
+fs.readdirSync(path.join(root, 'js/story')).filter(f => /^ch\d|^finale|^sides/.test(f)).sort().forEach(f => { load('js/story/' + f); Object.assign(sandbox, sandbox.window); });
 const { TOPICS, QUESTIONS, PAPERS, STORY_PROBLEMS, ENCOUNTERS } = sandbox.window;
 
 let failures = 0;
@@ -34,6 +34,11 @@ const cases = [
   [{ type: 'num', answer: '2*sqrt(3)' }, 'sqrt12', true],
   [{ type: 'num', answer: '2*sqrt(3)', exact: true }, '3.464', false],
   [{ type: 'num', answer: 0.5 }, '1/2', true],
+  [{ type: 'line', answer: 'x+2y-19' }, 'x + 2y - 19 = 0', true],
+  [{ type: 'line', answer: 'x+2y-19' }, '2x+4y=38', true],
+  [{ type: 'line', answer: 'x+2y-19' }, 'y = -x/2 + 9.5', true],
+  [{ type: 'line', answer: 'x+2y-19' }, 'x + 2y + 19 = 0', false],
+  [{ type: 'line', answer: 'x+2y-19' }, '2x + y - 19 = 0', false],
   [{ type: 'num', answer: 0.5 }, 'x = 0.5', true],
   [{ type: 'num', answer: 6180 }, '6180 N', true],
   [{ type: 'num', answer: 'ln4/0.2', dp: 2 }, '6.93', true],

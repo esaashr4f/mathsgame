@@ -14,6 +14,7 @@
     expr: 'An expression — use ^ for powers: 3x^2 - 4/x',
     integral: 'Indefinite integral — the + c matters!',
     antideriv: 'An expression (no + c needed here)',
+    line: 'An equation of a line: x + 2y - 19 = 0, or y = 3x + 1',
   };
 
   function texInline(tex) {

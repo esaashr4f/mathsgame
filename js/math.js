@@ -320,6 +320,25 @@
           const exp = step.answer.map(expectedNum);
           return { ok: comps.every((c, k) => closeEnough(c, exp[k], step)) };
         }
+        case 'line': {
+          // Any equation of the same straight line: x + 2y - 19 = 0, 2y = 19 - x, y = -x/2 + 9.5 ...
+          const sides = String(raw).split('=');
+          if (sides.length > 2) return { ok: false };
+          const given = parse(sides.length === 2 ? '(' + sides[0] + ')-(' + sides[1] + ')' : sides[0]);
+          const unknown = [...varsIn(given)].filter(v => !['x', 'y'].includes(v.toLowerCase()));
+          if (unknown.length) return { ok: false, message: 'Use x and y only.', format: true };
+          const expected = parse(step.answer);
+          let ratio = null, valid = 0;
+          for (let k = 0; k < SAMPLE_POINTS.length; k++) {
+            const v = { x: SAMPLE_POINTS[k], y: SAMPLE_POINTS[(k + 3) % SAMPLE_POINTS.length] + 0.29 };
+            const e = evaluate(expected, v), g = evaluate(given, v);
+            if (Math.abs(e) < 1e-9) continue;
+            if (ratio === null) ratio = g / e;
+            if (!isFinite(ratio) || Math.abs(ratio) < 1e-9 || Math.abs(g - ratio * e) > 1e-6 * Math.max(1, Math.abs(g))) return { ok: false };
+            valid++;
+          }
+          return { ok: valid >= 4 };
+        }
         case 'expr':
         case 'antideriv':
         case 'integral': {
@@ -357,6 +376,7 @@
         const m = /^\s*\(?\s*([^,]+?)\s*,\s*([^,]+?)\s*\)?\s*$/.exec(stripLhs(input));
         return m ? '\\left(' + toTex(parse(m[1])) + ',\\ ' + toTex(parse(m[2])) + '\\right)' : '';
       }
+      if (step.type === 'line') return String(input).split('=').map(x => toTex(parse(x))).join(' = ');
       return toTex(parse(stripUnits(stripLhs(input))));
     } catch (e) {
       return null;

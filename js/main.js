@@ -339,7 +339,7 @@
     const open = jobs.filter(j => !j.done), done = jobs.filter(j => j.done);
     const li = j => '<li class="' + (j.done ? 'job-done' : '') + '"><b>' + (j.done ? '✓ ' : '◇ ') + esc(fmtPlain(j.title)) + '</b><br><span class="muted">' + esc(fmtPlain(j.where)) + '</span></li>';
     overlayPanel('<h2 class="p5"><span>SIDE QUESTS</span></h2><p class="muted">Optional problems around Lowmarsh. Real exam questions, every one. ' + done.length + ' of ' + jobs.length + ' done.</p>' +
-      (jobs.length ? '<ul class="item-list">' + open.concat(done).map(li).join('') + '</ul>' : '<p class="muted">Nobody needs anything yet. Give it time.</p>'), back);
+      (jobs.length ? '<ul class="item-list job-list">' + open.concat(done).map(li).join('') + '</ul>' : '<p class="muted">Nobody needs anything yet. Give it time.</p>'), back);
   }
 
   function settings(back) {

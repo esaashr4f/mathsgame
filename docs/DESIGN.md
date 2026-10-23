@@ -1,114 +1,60 @@
-# THE DESCENT — design & brainstorm
+# Lowmarsh: design notes and story bible
 
-> *To go up, you must go down.*
+## The core idea
 
-An RPG that teaches AS (then full A level) Maths. It takes the dive loop from **Krillion**, the battles and talking bosses from **Undertale**, the stranded-hero-plus-partner story from **Pokémon Mystery Dungeon**, and the calendar, hub room and boss-confession structure from **Persona 5**.
+Problems are never handed to you as an exam. Someone in Lowmarsh needs something: a plank long enough, a lamp lit, a verdict that's fair, a river back in its banks. The maths is how you help them. Most of the problems are real OCR AS questions with real numbers, so the game doubles as complete exam preparation.
 
----
+Three rules:
 
-## 1. What we took from each inspiration
+1. **Every problem changes the world.** A plank appears, a light comes on, a causeway rises out of the flood, a lock opens.
+2. **Working is the whole point.** Every problem is split into the steps a mark scheme rewards. Rook hints, "Talk me through it" explains, and the scratch pad and grapher are always there.
+3. **No fighting.** FIGHT never works. Every encounter is a frightened or confused creature, and you spare it by solving its problem, one step per turn on a 25-second timer.
 
-| Source | What Krillion / the game does | How The Descent uses it |
-|---|---|---|
-| **Krillion** (krillion.io) | 7 daily prompts, 25 s each, same for everyone. Every point sinks you 10 m; 700 m is the trench. Depth markers on the way down ("the Titanic rests here — 3,800 m"). Archive, themed packs, unlimited mode. Emoji share grid. | **Daily Dive**: 7 seeded problems, 25 s a step, 100 m per problem, 700 m = perfect. The story mode is also a descent: each district is 50 m deeper, and the sea gets darker as you clear them. **Endless Dive** is Krillion's unlimited mode. Share grid: 🟦🟩🟨🟥. |
-| **Undertale** | FIGHT / ACT / ITEM / MERCY. Bosses talk and have personalities. On the enemy's turn you dodge bullets in a box. You can *spare* enemies. | FIGHT = submit your working. ACT = Check the boss (shows its misconception) or ask Pip for a hint. ITEM = Kelp Snack (heal) and Time Pearl (+15 s). MERCY = Elder Theta teaches the step (you do no damage, but you still type the answer yourself). **A wrong answer starts the boss's turn**: you dodge its misconceptions as bullets (`√a+√b`, `no +c`, `x=3 only`…). |
-| **Pokémon Mystery Dungeon** | You wake up as a creature with no memory, and a nervous partner takes you in. Bit by bit the partner's own story comes out. | You wake up as a **krill** in the drowned city of Bathys. **Pip** the pufferfish is your partner: a junior cartographer whose mum went down the trench and never came back. Pip's arc runs through the whole AS story. |
-| **Persona 5** | A calendar counting down to a deadline. The Velvet Room hub. "Changing hearts" by beating the distorted version of a person. Stylish red/black UI. Your Shadow self. | **The Tide Room** (hub) and its attendant **Lumen** the lanternfish. Your real **exam date** is the countdown. Bosses are guardians whose hearts were distorted by **one specific misconception**. Win, and the results screen says HEART CHANGED. **The final boss is your Shadow**, who says "I'm just not a maths person." |
+## The world
 
-## 2. Story
+Lowmarsh is a fen village on the river Wend. To the north is the gorge and its broken bridge, to the east the cliff road to Gull Point, to the south the jetty, and to the west the meadows, the Wend Lock and the marsh. At the heart of the marsh is the Still, a ring of standing stones.
 
-**Premise.** It's 02:47. A Year 12 student falls asleep on a maths textbook that has been open at Chapter 1 for three weeks, muttering *"I'm just not a maths person."* They wake up as a krill in **Bathys**, an underwater city that runs entirely on mathematics: pumps, lifts, sonar, lighthouses.
+## The fog and the Hush
 
-**The threat: the Hollow.** A fog that whispers convenient lies: "just square each bit", "the minus doesn't matter", "you'll never get this anyway". Each district's guardian breathed it in and now believes one classic error, so that district's machine is failing. **You can't beat a misconception with claws. Only with working.**
+The great storm cracked the stones of the Still. What had been held there got out: the Hush, the part of every mind that says *don't bother asking why, just accept it*. It settled over Lowmarsh as fog, and everyone stopped checking and stopped working things out. People even got harder to count (chapter 3).
 
-**The goal.** The way home is the **Hadal Gate** at the trench floor, 700 m down. It opens on one day only: **your exam day**.
+Mira Hale, the surveyor, measured where the fog came from (bearing 290° from Gull Point, chapter 2), told Cog to shut the lock, warned the Wend to remember her shape, and walked into the Still to put the Hush back. It caught her halfway through a proof. Since then she has been holding it at the Still, and the fog is her holding the door.
 
-**Cast**
+Before she went, she wrote on her census card asking Fen to send for "your [niece/nephew], the one with the maths book. Rook will need someone who still asks why." The player isn't special because they know the answers. They are special because they work them out, and the Hush can't take that.
 
-- 🦐 **You.** A krill. Your HP grows as you free districts.
-- 🐡 **Pip.** Pufferfish partner who puffs up when scared. Gives the hints. Is looking for their missing mum.
-- 🐢 **Elder Theta.** A 400-year-old turtle and the teacher. Every lesson is in her voice, and MERCY calls her in.
-- 🏮 **Lumen.** Lanternfish attendant of the Tide Room. Keeps the calendar, reads your weak topics, runs the Daily Dive.
-- 🌫️ **The Hollow.** It speaks more as you get stronger. In the end it turns out to be your own self-doubt.
-- 👤 **Shadow You.** The final AS boss.
+Each problem solved is someone in Lowmarsh remembering how to think, so the fog thins chapter by chapter (`fogLevel`). Once the lock is open and the bridge is built, the fog has nothing left to feed on and pulls back to the Still. Proof is the one thing the Hush can't stand, because a proof is nothing but the reason *why*.
 
-**Story beats (AS)**
+## Cast
 
-1. Prologue: you wake up as a krill, meet Pip, Theta and Lumen.
-2. Shallows → Reef → Lagoon: the city starts to light up. Pip: "A maths person is just a person who did the working."
-3. After the Coral Grid: Pip tells you about their mum.
-4. After the Twilight Spire: the Hollow speaks for the first time.
-5. After the Hollow Basin: Pip finds their mum's waterlogged working. *"Need more. Going deeper."*
-6. Statistics districts: the Hollow tries to use probability against you ("insufficient evidence to reject you… for now").
-7. After Titan's Forge: someone who looks exactly like you is standing at the Gate.
-8. **The Hadal Gate**: Shadow You. Mixed questions from every topic, like the real paper. Once beaten, the Shadow admits that "not a maths person" was a way to make failing not your fault. On the Gate is Pip's mum's map, which goes **even deeper**.
+- **Rook**: Mira's crow and your partner. Sarcastic and loyal. Knows every method but has no thumbs.
+- **Aunt Fen**: baker, worrier, feeds stray crows.
+- **Mira Hale**: town surveyor, missing until the finale.
+- **Bramble**: the bridge troll (ch1 encounter), later your builder.
+- **Ottoline**: the lighthouse keeper's ghost, since 1923 (ch2 encounter).
+- **Magistrate Strix**: owl, judge, too decisive (ch3 encounter).
+- **The Wend**: the river spirit, who has forgotten her own shape (ch4 encounter).
+- **Cog**: lock golem, built 1887, frightened into keeping everything shut (ch5 encounter).
+- **The Hush**: the fog's voice (finale).
+- **Villagers**: Moss, Old Wick, Tomas, the Mayor, Nell, Old Jan, Pim, Dr Sorrel, Gran Ivy, Rowan and Tansy (and Pythagoras, Hypatia and Gerald the goats), Dilys the lock-keeper.
 
-**Full A level sequel: THE HADAL DEEP** (ideas)
+## Chapter structure
 
-- Below 700 m the map shows a second trench: Year 13 content. Proof by contradiction, functions and modulus, sequences and series, further trig (sec/cosec/cot, compound angles, R-form), parametrics, chain/product/quotient rule, integration by parts and substitution, differential equations, numerical methods, 3D vectors. Statistics: normal distribution, regression, conditional probability. Mechanics: projectiles, moments, friction on slopes, variable-acceleration vectors.
-- **Pip's mum, Marina**, is alive at the bottom, trapped in a pressure bubble that differential equations can model. That's the emotional climax of the sequel.
-- **The Hollow's true form**: the Examiner, a giant figure made of crossed-out working. The last fight is a full mixed paper.
-- **Confidants** (Persona social links): ranking up a district's freed guardian gives perks. Radixa gives +1 Time Pearl, Logjaw shows logs in the formula sheet, Quadrabble auto-rejects a negative root once per battle.
+Each chapter has:
 
-## 3. Maths that does a real job
+- a place that opens up;
+- a main chain of 4–8 problems that changes that place;
+- an encounter whose problem is the chapter's hardest idea;
+- side quests across the village.
 
-Every district is a **system the city needs**, and every question is framed as fixing it.
+Objectives and Rook's hints come from the `STEPS` table in `js/story/guide.js`, in story order.
 
-| District | Topic | Real job |
-|---|---|---|
-| Sunlit Shallows | Indices & surds | Cutting dome panels to exact surd ratios. Decimals leave gaps. |
-| Kelp Reef | Quadratics | When and where launched supply pods land. Rejecting t = −1. |
-| Mirror Lagoon | Graphs & transformations | Moving the sonar curve to aim the echo. |
-| Coral Grid | Coordinate geometry | Straight pipelines and tangents to circular sonar ranges. |
-| Jelly Nursery | Binomial | Quick population growth estimates. |
-| Twilight Spire | Trigonometry | Lighthouse angles; triangulating a lost diver. |
-| Pressure Vents | Exponentials & logs | Plankton growth; pressure decay; "when will it reach 2000?" |
-| Gradient Falls | Differentiation | Designing the oxygen tank with the least metal. |
-| Hollow Basin | Integration | Coral area; total oxygen used. |
-| Current Labyrinth | Vectors | Steering subs through currents. |
-| Shoal Census | Data & sampling | A fair fish census; spotting outliers. |
-| Null Court | Probability & hypothesis tests | Is the reactor actually faulty or just unlucky? |
-| Sinking Lift | Kinematics | Where the lift is at every second. |
-| Titan's Forge | Forces | Cable tension, pulleys, F = ma. |
+## Part Two (A level), not started
 
-**More ideas for real-world maths**
+Mira's last words set it up: the Still wasn't the only one. There are older, bigger ones up the valley, past the new bridge, and the mathematics is harder up there. Part Two gets a new map north of the gorge (`SC.crossBridge` is the hook). It is waiting on the A level material.
 
-- **Repair quests** (PMD rescue missions): townsfolk post jobs on a board. "My lift cable keeps snapping. Mass 600 kg, acceleration 0.5…" Solving them earns kelp and Time Pearls.
-- **Engineering puzzles**: you place a pipe that has to be tangent to a circle. You *see* your answer drawn on the map, and a wrong gradient visibly misses.
-- **Data you collect**: in the Shoal, your own results across sessions (times, accuracy) become the dataset for stats questions. "Is your mean step time under 15 s significantly lower than last week's?"
+## Engine notes
 
-## 4. Teaching design
-
-The core rule: **the game never shows only the answer. It shows the working.**
-
-- **Every question is split into steps** (`steps[]`), the way a mark scheme gives M1 A1 marks. You answer one step at a time.
-- **Each correct step is written into the solution on the question card**, so finishing a question leaves a complete model answer on screen.
-- **First wrong attempt → boss attack + Pip's hint.** Second wrong attempt → the full explanation, added as a ✗ line in the working.
-- **The checker accepts maths the way you'd write it**: `2√3`, `sqrt12`, `3x^2 - 4/x`, `(3, -2)`, `6i - 8j`, `x = 3 or x = -4`. It tells you when the value is right but the form is wrong ("the question wants an exact answer", "you forgot + c"). A live "reads as:" preview shows how your input was understood.
-- **Every boss has one misconception**, taken from the classic examiner-report errors. Losing to it is how you learn to avoid it.
-- **Lessons (Codex)**: key ideas, a worked example, **⚠ the trap**, and why it matters.
-- **Weakness tracking**: accuracy per topic. Lumen tells you your weakest current, and "🩹 Weakest topics" practice targets it.
-
-## 5. Modes
-
-| Mode | Timer | HP / dodge | Attempts | Help |
-|---|---|---|---|---|
-| **Story boss** | 25 s/step (Time Pearls) | yes | 2 | hint (½ damage), teach (0 damage) |
-| **Practice** | optional toggle | no | 3 | everything free, lesson peek |
-| **Daily Dive** | 25 s/step, strict | no | 1 | none. Pure test. |
-| **Endless Dive** | 25 s/step | no | 1 | none |
-
-**Ranks** (Persona-style results): S ≥ 90% of max damage, A ≥ 72%, B ≥ 50%, else C. A fast first-try answer (> 60% of the timer left) is a **DEEP HIT**: ×1.25 damage, and it sinks you deeper in the Daily Dive.
-
-## 6. Roadmap
-
-- [x] Engine: dialogue, depth map, battles, dodge phase, timer, practice, daily, codex, calendar, save
-- [x] AS content: 14 districts + the final gate, 51 original exam-style questions, 15 lessons
-- [ ] **Import past papers**: see `ADDING_QUESTIONS.md`. Tag each question with board/year/paper/question number, and add a "Past Paper" mode that plays a whole paper under exam timing.
-- [ ] Mark-scheme mode: show the M1/A1/B1 breakdown next to each step
-- [ ] Spaced repetition: missed steps come back 1, 3 and 7 days later in the Daily Dive
-- [ ] Graph widget: sketch and transformation questions drawn live (Desmos-style canvas)
-- [ ] Pixel-art sprites and portraits to replace the emoji
-- [ ] Music: one chiptune loop per depth band
-- [ ] The Hadal Deep (full A level), confidants, the repair-quest board
-- [ ] Optional cloud sync / PWA offline install
+- The overworld is 100×72 tiles of 16 px, built procedurally in `maps.js` from story flags, so the world visibly changes as you play.
+- Scripts are plain async functions using the `G` API in `main.js`: `say`, `choose`, `solve`, `battle`, `go`, `set`, `give`, `page`, `card` and so on.
+- Side quests wrap an NPC's existing script so that it takes over their next conversation until done.
+- Playthroughs are automated with Playwright: a test drives each chapter end to end, answering with the canonical answers.

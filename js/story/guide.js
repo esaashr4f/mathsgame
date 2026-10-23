@@ -21,9 +21,14 @@
     [f => !f.shelterDone, 'Help Tansy on the farm island', 'Tansy\'s by the barn. She needs a roof for the goats. Optimisation: write the volume as one variable, differentiate, set it to zero.'],
     [f => !f.riverbedDone, "Read Mira's survey stake (top corner of the island)", 'Mira\'s stake is at the top-right corner of the island. Factorise, differentiate, find the stationary points: that\'s a sketch.'],
     [f => !f.drained, 'Face the Wend (from the causeway)', 'Take the launch back, then face the Wend from the causeway. Second derivatives tell you max or min. Then integrate.', 'In the encounter: ACT, then "Work it out". Use the hourglass if you need time.'],
-    [f => !f.lockOpen, 'Open the Wend Lock and get the steel cable', 'The lock is at the far west end of the river. There\'s a golem. Forces and motion. Draw a force diagram first.'],
-    [f => !f.bridgeBuilt, 'Bring the cable to Bramble at the gorge', 'Take the cable to Bramble. The timber boats are arriving now the light\'s on.'],
-    [f => !f.miraFreed, 'Go into the marsh — to the Still', 'The marsh is north-west, beyond the meadows. The fog has pulled back to its heart. Mira\'s in there. I know it.'],
+    [f => !f.cogMet, 'Go to the Wend Lock (south-west, past the lockhouse)', 'Through the drained meadows, down the causeway, past the lockhouse to the lock. There\'s a golem. Forces and motion. Draw a force diagram first.'],
+    [f => !f.weightDone, 'Help Dilys in the lockhouse', 'Dilys the lock-keeper is in the lockhouse. Equilibrium: forces in every direction balance. Then F = ma for the crane, and the cable\'s limit.'],
+    [f => !f.chamberDone, 'Check the surge at the sluice board by the lock', 'The sluice board is by the gates. The acceleration varies with time: integrate to get the velocity, and watch for when it changes sign.'],
+    [f => !f.lockOpen, 'Convince Cog to open the lock', 'Now Cog. Connected particles: one equation of motion for each particle, or one for the whole system. When the string goes slack, only gravity is left.'],
+    [f => !f.bridgeBuilt, 'Bring the cable to Bramble at the gorge', 'Take the cable to Bramble at the gorge, north of the village. Vectors, then data, then moments. He wants proof.'],
+    [f => !f.stillSeen, 'Go into the marsh, to the Still', 'The marsh is north-west, through the gap in the trees off the west road. The fog has pulled back to its heart. Mira\'s in there. I know it.'],
+    [f => !(f.echo1Done && f.echo2Done && f.echo3Done), 'Find the three echoes of Mira in the marsh', 'Her thoughts are scattered round the marsh. Three of them, all half-finished proofs. Finish them for her.'],
+    [f => !f.miraFreed, 'Free Mira at the Still', 'Go to Mira at the centre of the stones. Whatever is holding her, it hates proof.'],
     [f => true, 'Explore Lowmarsh · practise · get ready for your exam', 'We did it, {name}. Now go and do it again in the exam hall. Drills, past papers, the Daily Dive — they\'re all in the menu.'],
   ];
 
@@ -53,8 +58,8 @@
     [4, 'ditchDone', "Moss's drainage ditch", 'Moss'],
     [4, 'algaeDone', 'The bloom in the rock pools', 'Nell at Gull Point'],
   ];
+  JOBS.push(...(SC.extraJobs || []));
   SC.jobs = f => JOBS.filter(j => (f.chapter || 0) >= j[0]).map(j => ({ title: j[2], where: j[3], done: !!f[j[1]] }));
-  SC.addJobs = list => JOBS.push(...list);
 
   SC.objective = f => STEPS.find(s => s[0](f))[1];
   SC.rookHint = f => {
