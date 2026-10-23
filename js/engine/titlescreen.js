@@ -167,7 +167,7 @@
     // the side menu (☰, top left): everything around the game that isn't in the story
     const drawer = opts.drawer || [];
     const dPick = drawer.map((d, i) => (d.id ? i : -1)).filter(i => i >= 0);
-    let dOpen = !!opts.drawerOpen, dAnim = dOpen ? 1 : 0, dSel = Math.max(0, dPick.indexOf(opts.drawerSel)), hoverIcon = false, dChosen = -1;
+    let dOpen = !!opts.drawerOpen, dAnim = dOpen ? 1 : 0, dSel = Math.max(0, dPick.indexOf(opts.drawerSel)), hoverIcon = false, dChosen = -1, dScroll = 0, dDrag = null;
     const items = opts.items;
     const touch = matchMedia('(pointer: coarse)').matches;
     const forced = parseFloat(new URLSearchParams(location.search).get('hour'));
@@ -314,11 +314,16 @@
     const ICON = { x: 6, y: 6, w: 16, h: 13 };
     function drawerLayout() {
       const pw = Math.min(W - 16, Math.max(150, ...drawer.map(d => (d.id ? textW(d.label, MENU) + (d.soon ? textW('soon', MENU) + 14 : 0) : textW(d.head, MENU)) + 44)));
+      // roomy spacing when there's height for it, tighter on short (laptop) screens, and scrolling beyond that
+      const heads = drawer.filter(d => d.head).length, links = drawer.length - heads;
+      const roomy = 34 + heads * 22 + links * 18 + 8 <= H;
+      const rowH = roomy ? 18 : 16, headH = roomy ? 16 : 15, gap = roomy ? 6 : 3;
       const rows = [];
-      let y = 34;
-      drawer.forEach((d, i) => { if (d.head) { y += i ? 6 : 0; rows.push({ i, y, head: true }); y += 16; } else { rows.push({ i, y }); y += 18; } });
-      const scroll = Math.max(0, y + 8 - H);
-      return { pw, rows, scroll };
+      let y = 32;
+      drawer.forEach((d, i) => { if (d.head) { y += i ? gap : 0; rows.push({ i, y, head: true }); y += headH; } else { rows.push({ i, y, h: rowH }); y += rowH; } });
+      const maxScroll = Math.max(0, y + 6 - H);
+      dScroll = Math.max(0, Math.min(maxScroll, dScroll));
+      return { pw, rows, maxScroll, rowH };
     }
     function drawDrawer(dt) {
       dAnim = Math.max(0, Math.min(1, dAnim + (dOpen ? dt : -dt) * 7));
@@ -339,20 +344,31 @@
       drawText(c, 'Menu', x0 + 26, 5, MENU, COLORS.sub, COLORS.shadow);
       for (let i = 0; i < 3; i++) { c.fillStyle = COLORS.sel; c.fillRect(x0 + 6, 6 + i * 5, 14, 3); }
       c.save(); c.beginPath(); c.rect(x0, 26, D.pw - 3, H - 26); c.clip();
-      const sy = Math.min(D.scroll, Math.max(0, (D.rows.find(r => r.i === dPick[dSel]) || { y: 0 }).y - H + 40));
+      const sy = Math.round(dScroll);
       D.rows.forEach(r => {
         const d = drawer[r.i], y = r.y - sy;
         if (r.head) { drawText(c, d.head, x0 + 10, y, MENU, '#a88aa0', COLORS.shadow); c.fillStyle = '#3a2a4a'; c.fillRect(x0 + 10, y + 14, D.pw - 24, 1); return; }
         const isSel = dPick[dSel] === r.i, flash = dChosen === r.i && Math.floor((t - chosenAt) * 14) % 2 === 0;
-        if (isSel) { c.fillStyle = '#33244a'; c.fillRect(x0 + 4, y - 2, D.pw - 10, 17); }
+        if (isSel) { c.fillStyle = '#33244a'; c.fillRect(x0 + 4, y - 2, D.pw - 10, r.h - 1); }
         drawText(c, d.label, x0 + 24, y, MENU, flash ? '#ffffff' : isSel ? COLORS.sel : (d.soon ? '#b9a6b8' : COLORS.text), COLORS.shadow);
         if (d.soon) drawText(c, 'soon', x0 + D.pw - 14 - textW('soon', MENU), y, MENU, '#8a6a88', COLORS.shadow);
         if (isSel) c.drawImage(Sprites.get('heart'), x0 + 10, y + 3 + (Math.floor(t * 2.2) % 2));
       });
       c.restore();
+      // little arrows when there's more to scroll to
+      const arrow = (cx, cy, up) => { c.fillStyle = COLORS.sel; for (let j = 0; j < 4; j++) c.fillRect(cx - j, cy + (up ? j : -j), j * 2 + 1, 1); };
+      if (dScroll > 0) arrow(x0 + D.pw - 12, 29, true);
+      if (dScroll < D.maxScroll) arrow(x0 + D.pw - 12, H - 4, false);
     }
     function toggleDrawer(v) { dOpen = v == null ? !dOpen : v; Sfx.select(); }
-    function dMove(d) { dSel = (dSel + d + dPick.length) % dPick.length; Sfx.move(); }
+    function dMove(d, fromPointer) {
+      dSel = (dSel + d + dPick.length) % dPick.length; Sfx.move();
+      if (fromPointer) return;
+      const D = drawerLayout(), row = D.rows.find(r => r.i === dPick[dSel]);          // keep the heart in view
+      if (row.y - dScroll < 30) dScroll = row.y - 30;
+      if (row.y + row.h - dScroll > H - 6) dScroll = row.y + row.h - H + 6;
+      if (dSel === 0) dScroll = 0;
+    }
     function dChoose(k) {
       if (dChosen >= 0) return;
       dSel = k; dChosen = dPick[k]; chosenAt = t; Sfx.confirm();
@@ -364,8 +380,8 @@
       if (!dOpen) return null;
       const D = drawerLayout();
       if (p.x > D.pw) return 'outside';
-      const sy = Math.min(D.scroll, Math.max(0, (D.rows.find(r => r.i === dPick[dSel]) || { y: 0 }).y - H + 40));
-      const row = D.rows.find(r => !r.head && p.y + sy >= r.y - 3 && p.y + sy < r.y + 15);
+      if (p.y < 26) return 'panel';
+      const row = D.rows.find(r => !r.head && p.y + dScroll >= r.y - 2 && p.y + dScroll < r.y + r.h - 2);
       return row ? dPick.indexOf(row.i) : 'panel';
     }
 
@@ -405,7 +421,8 @@
     function onMove(e) {
       const p = toLogical(e), dh = dHit(p);
       hoverIcon = dh === 'icon';
-      if (dOpen) { if (typeof dh === 'number' && dh !== dSel) dMove(dh - dSel); cv.style.cursor = typeof dh === 'number' || dh === 'icon' || dh === 'outside' ? 'pointer' : 'default'; return; }
+      if (dOpen && dDrag) { const dy = dDrag.y - p.y; if (Math.abs(dy) > 2) dDrag.moved = true; dScroll = dDrag.s + dy; return; }
+      if (dOpen) { if (typeof dh === 'number' && dh !== dSel) dMove(dh - dSel, true); cv.style.cursor = typeof dh === 'number' || dh === 'icon' || dh === 'outside' ? 'pointer' : 'default'; return; }
       if (hoverIcon) { cv.style.cursor = 'pointer'; return; }
       const h = hit(p);
       hoverAcct = h === 'account';
@@ -413,6 +430,8 @@
       cv.style.cursor = h != null ? 'pointer' : 'default';
     }
     function onClick(e) {
+      if (dDrag && dDrag.moved) { dDrag = null; return; }
+      dDrag = null;
       const p = toLogical(e), dh = dHit(p);
       if (dh === 'icon') return toggleDrawer();
       if (dOpen) { if (dh === 'outside') toggleDrawer(false); else if (typeof dh === 'number') dChoose(dh); return; }
@@ -432,6 +451,10 @@
     document.addEventListener('keydown', onKey, true);
     cv.addEventListener('pointermove', onMove);
     cv.addEventListener('click', onClick);
+    // scroll the side menu with a wheel, a trackpad or a finger
+    cv.addEventListener('wheel', e => { if (!dOpen) return; e.preventDefault(); dScroll += e.deltaY / scale * 0.6; }, { passive: false });
+    cv.addEventListener('pointerdown', e => { if (dOpen && e.pointerType !== 'mouse') dDrag = { y: toLogical(e).y, s: dScroll, moved: false }; });
+    cv.addEventListener('pointerup', () => { if (dDrag && !dDrag.moved) dDrag = null; });
     raf = requestAnimationFrame(frame);
     return { cleanup, start, openDrawer: () => toggleDrawer(true), chooseDrawer: id => { const k = dPick.findIndex(i => drawer[i].id === id); if (k >= 0) { dOpen = true; dAnim = 1; dChoose(k); } }, choose: id => { const i = items.findIndex(it => it.id === id); if (i >= 0) { phase = 'menu'; open = 1; choose(i); } } };
   }
