@@ -136,25 +136,21 @@
     el.onclick = e => { const t = e.target.closest('[data-a]'); if (t && handlers[t.dataset.a]) { Sfx.select(); handlers[t.dataset.a](t.dataset.v, t); } };
   }
 
-  function accountChip() {
-    const a = Auth.current();
-    return a && a.username
-      ? '<button class="account-chip" data-a="account" title="Your profile"><img src="' + Sprites.portrait('player') + '" alt=""><span>' + esc(a.username) + '</span></button>'
-      : '<button class="account-chip login" data-a="account">LOG IN</button>';
-  }
-
-  // The title screen: a classic RPG menu. Plain pixel text, a heart cursor, arrow keys to move, Z to choose.
-  let titleKeys = null, titleSel = null;
+  // The title screen: a pixel-art canvas (js/engine/titlescreen.js) with "PRESS Z OR ENTER", then a framed
+  // menu with a heart cursor. A hidden list of real buttons mirrors it for screen readers.
+  let titleSel = null, titleSeen = false, titleUI = null;
   function title() {
-    const items = (S.started ? [['cont', 'CONTINUE', esc(S.name) + ' · CH ' + (S.flags.chapter || 0)]] : [])
-      .concat([['new', 'NEW GAME'], ['papers', 'PAST PAPERS'], ['drills', 'DRILLS & NOTEBOOK'], ['daily', 'DAILY CHALLENGE', '#' + diveNumber()], ['settings', 'SETTINGS']]);
-    const el = screen(accountChip() +
-      '<div class="logo">LOWMARSH<small>a story about showing your working</small></div>' +
-      '<canvas class="title-canvas" width="200" height="80" aria-hidden="true"></canvas>' +
-      '<nav class="title-menu" aria-label="Main menu">' +
-      items.map(([a, label, sub], i) => '<button class="tm-item" data-a="' + a + '" data-i="' + i + '"><span class="tm-label">' + label + '</span>' + (sub ? '<span class="tm-sub">' + sub + '</span>' : '') + '</button>').join('') +
-      '</nav><div class="title-foot">' + (matchMedia('(pointer: coarse)').matches ? '<span>TAP TO SELECT</span>' : '<span>↑↓ CHOOSE</span><span>Z / ENTER SELECT</span>') + '</div>');
-    drawTitleScene($('.title-canvas', el));
+    const items = (S.started ? [{ id: 'cont', label: 'CONTINUE', sub: 'CH ' + (S.flags.chapter || 0), hint: 'CARRY ON AS ' + S.name.toUpperCase() }] : [])
+      .concat([
+        { id: 'new', label: 'NEW GAME', hint: 'START THE STORY FROM THE LAST FERRY' },
+        { id: 'papers', label: 'PAST PAPERS', hint: 'SIT REAL EXAM PAPERS' },
+        { id: 'drills', label: 'DRILLS', hint: 'PRACTISE ANY TOPIC, STEP BY STEP' },
+        { id: 'daily', label: 'DAILY CHALLENGE', sub: '#' + diveNumber(), hint: 'SEVEN NEW PROBLEMS EVERY DAY' },
+        { id: 'settings', label: 'SETTINGS', hint: 'SOUND AND SAVE DATA' },
+      ]);
+    const el = screen('<canvas class="title-cv" aria-hidden="true"></canvas>' +
+      '<nav class="sr-only" aria-label="Main menu">' + items.map(it => '<button data-a="' + it.id + '">' + esc(it.label) + '</button>').join('') +
+      '<button data-a="account">' + (Auth.current() && Auth.current().username ? 'Profile' : 'Log in') + '</button></nav>', 'canvas-title');
     const actions = {
       cont: () => startWorld(),
       new: () => {
@@ -169,70 +165,20 @@
       settings: () => settings(title),
       account: () => (Auth.current() && Auth.current().username ? profile(title) : login(title)),
     };
-    const btns = Array.from(el.querySelectorAll('.tm-item'));
-    // The cursor remembers where it was when you come back from a submenu.
-    let sel = Math.max(0, btns.findIndex(b => b.dataset.a === titleSel)), busy = false;
-    btns[sel].classList.add('sel');
-    const pick = (i, quiet) => {
-      i = (i + btns.length) % btns.length;
-      if (i === sel) return;
-      btns[sel].classList.remove('sel');
-      sel = i;
-      btns[sel].classList.add('sel');
-      titleSel = btns[sel].dataset.a;
-      if (!quiet) Sfx.move();
-    };
-    // Choosing an option: the classic confirm chirp and a quick flash, then go.
-    const choose = i => {
-      if (busy) return;
-      pick(i, true);
-      titleSel = btns[sel].dataset.a;
-      busy = true;
-      Sfx.confirm();
-      btns[sel].classList.add('chosen');
-      setTimeout(() => { busy = false; btns[sel].classList.remove('chosen'); actions[btns[sel].dataset.a](); }, 380);
-    };
-    btns.forEach((b, i) => {
-      b.addEventListener('mouseenter', () => pick(i));
-      b.addEventListener('focus', () => pick(i, true));
-      b.addEventListener('click', e => { e.stopPropagation(); choose(i); });
+    on(el, actions);
+    if (titleUI) titleUI.cleanup();
+    titleUI = null;
+    TitleScreen.ready().then(() => {
+      if (!el.contains($('.title-cv', el))) return;
+      TitleScreen.clearCache();
+      titleUI = TitleScreen.mount($('.title-cv', el), {
+        items, skipIntro: titleSeen,
+        selected: Math.max(0, items.findIndex(it => it.id === titleSel)),
+        account: () => (Auth.current() && Auth.current().username ? Auth.current().username.toUpperCase() : 'LOG IN'),
+        onSelect: i => { titleSel = items[i].id; },
+        onChoose: id => { titleSeen = true; if (id !== 'account') titleSel = id; actions[id](); },
+      });
     });
-    el.onclick = e => { const t = e.target.closest('[data-a=account]'); if (t) { Sfx.select(); actions.account(); } };
-    if (titleKeys) document.removeEventListener('keydown', titleKeys, true);
-    titleKeys = e => {
-      const ts = document.getElementById('title');
-      if (!btns[0].isConnected) { document.removeEventListener('keydown', titleKeys, true); titleKeys = null; return; }
-      if (ts.classList.contains('hidden') || document.querySelector('.panel-screen') || document.activeElement && document.activeElement.tagName === 'INPUT') return;
-      const k = e.key.toLowerCase();
-      if (k === 'arrowup' || k === 'w') { e.preventDefault(); pick(sel - 1); }
-      else if (k === 'arrowdown' || k === 's') { e.preventDefault(); pick(sel + 1); }
-      else if (k === 'enter' || k === 'z' || k === ' ') { e.preventDefault(); choose(sel); }
-    };
-    document.addEventListener('keydown', titleKeys, true);
-  }
-
-  // A little pixel scene for the title: the dark lighthouse, the sea, and Rook on a post.
-  function drawTitleScene(cv) {
-    const c = cv.getContext('2d');
-    c.imageSmoothingEnabled = false;
-    let t = 0;
-    const frame = () => {
-      if (!cv.isConnected) return;
-      t += 0.03;
-      c.clearRect(0, 0, 200, 80);
-      c.fillStyle = '#16324f'; c.fillRect(0, 58, 200, 22);
-      for (let i = 0; i < 12; i++) { c.fillStyle = '#2f5d7c'; c.fillRect((i * 23 + Math.floor(t * 8)) % 200, 62 + (i % 3) * 5, 6, 1); }
-      c.fillStyle = '#41414c'; c.fillRect(20, 52, 40, 8);
-      for (let i = 0; i < 5; i++) { c.fillStyle = i % 2 ? '#c0403a' : '#d8d2c4'; c.fillRect(32 + i, 44 - i * 8, 16 - i * 2, 9); }
-      c.fillStyle = '#2d2d3a'; c.fillRect(34, 8, 12, 3);
-      const flick = Math.sin(t * 3) > 0.2;
-      c.fillStyle = flick ? '#ffe9a0' : '#5a5060'; c.fillRect(36, 0, 8, 8);
-      if (flick) { c.globalAlpha = 0.12; c.fillStyle = '#fff6c8'; c.beginPath(); c.moveTo(40, 4); c.lineTo(200, -10 + Math.sin(t) * 20); c.lineTo(200, 26 + Math.sin(t) * 20); c.fill(); c.globalAlpha = 1; }
-      c.fillStyle = '#4f3420'; c.fillRect(150, 44, 4, 20);
-      c.drawImage(Sprites.get('rook', 'left'), 146, 34 + Math.round(Math.sin(t * 2)));
-      requestAnimationFrame(frame);
-    };
-    frame();
   }
 
   function nameEntry() {
@@ -703,6 +649,7 @@
     get save() { return S; },
     CAST: null, G, ITEMS, fmt, topicLabel: id => (topic(id) ? topic(id).name : ''), topic, showLesson,
     record, level, maxHP, depthNote, openMenu, askRook, persist, scratch, grapher, scratchTip,
+    titleChoose: id => (titleUI ? titleUI.choose(id) : null),
     daily: back => dailyIntro(back), drills: back => drillsMenu(back), papers: back => papersMenu(back), notebook: back => notebook(back, true),
   };
 
