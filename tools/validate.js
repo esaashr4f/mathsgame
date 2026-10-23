@@ -17,7 +17,7 @@ sandbox.Graph = sandbox.window.Graph;
 vm.createContext(sandbox);
 const load = f => vm.runInContext('(function(window){' + fs.readFileSync(path.join(root, f), 'utf8') + '\n})(window)', sandbox, { filename: f });
 // Data files expect browser globals; expose window.X as bare names for later files.
-const files = ['js/data/topics.js', 'js/data/questions.js', 'js/data/papers.js', 'js/data/papers2.js', 'js/story/cast.js'];
+const files = ['js/data/topics.js', 'js/data/questions.js', 'js/data/papers.js', 'js/data/papers2.js', 'js/data/papers3.js', 'js/story/cast.js'];
 files.forEach(load);
 Object.assign(sandbox, sandbox.window);
 fs.readdirSync(path.join(root, 'js/story')).filter(f => /^ch\d|^finale/.test(f)).sort().forEach(f => { load('js/story/' + f); Object.assign(sandbox, sandbox.window); });
