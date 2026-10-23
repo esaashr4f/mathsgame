@@ -195,7 +195,7 @@
       E.push({ id: 'barrel1', x: 48, y: 51, sprite: 'barrel', talk: S('barrel') });
       E.push({ id: 'net', x: 46, y: 52, sprite: 'net', talk: S('net'), solid: false });
       // ── village people
-      E.push({ id: 'mayor', x: 51, y: 24, sprite: 'mayor', talk: S('mayor') });
+      if (!(f.chapter >= 3)) E.push({ id: 'mayor', x: 51, y: 24, sprite: 'mayor', talk: S('mayor') });
       E.push({ id: 'board', x: 46, y: 22, sprite: 'board', talk: S('board'), tall: 12, w: 7 });
       E.push({ id: 'stall1', x: 57, y: 23, draw: drawStall('#3f6fb0'), talk: S('stall'), w: 12, tall: 30 });
       E.push({ id: 'stall2', x: 61, y: 23, draw: drawStall('#c0403a'), talk: S('stall2'), w: 12, tall: 30 });
@@ -232,6 +232,7 @@
       E.push({ id: 'gull1', x: 86, y: 14, sprite: 'seagull', wander: 6, fly: true, speed: 30, solid: false });
       E.push({ id: 'gull2', x: 80, y: 36, sprite: 'seagull', wander: 6, fly: true, speed: 30, solid: false });
       E.push({ id: 'jan', x: 78, y: 22, sprite: 'jan', talk: S('jan') });
+      E.push({ id: 'pebble', x: 82, y: 24, sprite: 'kid', talk: S('kidKite'), wander: 2 });
       // ── clinic, cottages, allotments
       E.push({ id: 'ivy', x: 57, y: 45, sprite: 'ivy', talk: S('ivy') });
       E.push({ id: 'kid2', x: 40, y: 45, sprite: 'kid', talk: S('kid2'), wander: 3 });
@@ -390,18 +391,40 @@
     name: 'Gull Point Lighthouse', rook: true,
     build(f) {
       const g = room(11, 10);
-      rect(g, 4, 2, 3, 1, 'B');
-      set(g, 8, 2, 'F');
+      rect(g, 1, 2, 2, 1, 'B'); rect(g, 4, 2, 3, 1, 'G'); set(g, 8, 2, 'H'); set(g, 9, 2, 'W');
       set(g, 5, 9, 'X');
       return {
-        rows: rows(g), fog: 0.1, dark: f.lightOn ? 0 : 0.35,
+        rows: rows(g), fog: 0.1, dark: f.lightOn ? 0 : 0.3,
         entities: [
-          { id: 'ottoline', x: 5, y: 5, sprite: 'ottoline', talk: S('ottoline'), alpha: 0.8, bob: 2, hidden: !!f.ottolineSpared },
-          { id: 'ottoline2', x: 3, y: 4, sprite: 'ottoline', talk: S('ottolineAfter'), alpha: 0.8, bob: 2, hidden: !f.ottolineSpared },
-          { id: 'logbook', x: 8, y: 3, sprite: 'page', talk: S('keeperLog'), solid: false },
-          { id: 'stairs', x: 8, y: 2.5, sprite: 'page', talk: S('stairs'), solid: false, hidden: true },
+          { id: 'ottoline', x: 7.5, y: 4, sprite: 'ottoline', talk: S('ottoline'), alpha: 0.8, bob: 2, hidden: !!f.gearsDone },
+          { id: 'gears', x: 5, y: 2.9, sprite: 'page', talk: S('gears'), solid: false, w: 12 },
+          { id: 'logbook', x: 2, y: 2.9, sprite: 'page', talk: S('keeperLog'), solid: false },
         ].filter(e => !e.hidden),
-        triggers: [exit(5, 9, 85, 20)],
+        triggers: [exit(5, 9, 85, 20), { x: 8, y: 2, run: S('stairs') }],
+      };
+    },
+  };
+
+  window.MAPS.lamproom = {
+    name: 'The Lamp Room', rook: true,
+    build(f) {
+      const g = room(13, 11);
+      set(g, 6, 5, 'L');
+      set(g, 2, 2, 'M'); set(g, 10, 2, 'M');
+      rect(g, 1, 3, 1, 6, 'W'); rect(g, 11, 3, 1, 6, 'W');
+      set(g, 6, 10, 'H');
+      return {
+        rows: rows(g), fog: 0.05, dark: f.lightOn ? 0 : 0.4,
+        entities: [
+          { id: 'lamp', x: 6, y: 5, sprite: 'page', talk: S('lamp'), solid: false, hidden: true },
+          { id: 'lampCore', x: 6, y: 5.6, draw: () => {}, talk: S('lampCore'), w: 8 },
+          { id: 'shutters', x: 3, y: 4, sprite: 'page', talk: S('shutters'), solid: false },
+          { id: 'frame', x: 9, y: 4, sprite: 'page', talk: S('lensFrame'), solid: false },
+          { id: 'mirrors', x: 6, y: 2.6, sprite: 'page', talk: S('mirrors'), solid: false },
+          { id: 'ottolineTop', x: 6, y: 7.5, sprite: 'ottoline', talk: S('ottolineTop'), alpha: 0.8, bob: 2, hidden: !!f.ottolineSpared },
+          { id: 'ottolineAfter', x: 4, y: 6, sprite: 'ottoline', talk: S('ottolineAfter'), alpha: 0.85, bob: 2, hidden: !f.ottolineSpared },
+        ].filter(e => !e.hidden),
+        triggers: [{ x: 6, y: 10, run: G => G.go('lighthouse', 7, 2, 'down') }],
       };
     },
   };
