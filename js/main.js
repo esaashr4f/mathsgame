@@ -222,7 +222,7 @@
     privacy: back => textPage(back, 'PRIVACY', ['strix', 'The court has examined the evidence. It is brief. Hoo.'],
       '<ul><li><b>Your progress</b> (story, answers, stats, streak) is stored in your browser on this device. It isn\'t sent anywhere.</li><li><b>Accounts:</b> email accounts are kept on this device. Passwords are never stored, only a salted hash of them. If online sign-in (Google, Apple) is switched on, it\'s handled by Firebase Authentication.</li><li><b>No adverts and no tracking.</b></li><li><b>Fonts and maths rendering</b> load from Google Fonts and cdnjs.</li><li>To erase everything, use <b>Settings → Erase all save data</b>.</li></ul>'),
     credits: back => textPage(back, 'CREDITS', ['bramble', 'Built it with my own two hands. Well. Somebody\'s hands. Here are the names.'],
-      '<ul><li><b>Exam questions:</b> past papers and topic questions © OCR, used for revision.</li><li><b>Fonts:</b> Pixelify Sans, VT323, Press Start 2P, Inter, Patrick Hand and Anton, all under the SIL Open Font License.</li><li><b>Maths rendering:</b> KaTeX.</li><li><b>Inspired by</b> Undertale, Stardew Valley, Pokémon Mystery Dungeon and Krillion.</li><li><b>Pixel art, story and code:</b> made for Lowmarsh.</li></ul>'),
+      '<ul><li><b>Exam questions:</b> past papers and topic questions © OCR, used for revision.</li><li><b>Fonts:</b> Pixelify Sans, Inter and Patrick Hand, all under the SIL Open Font License.</li><li><b>Maths rendering:</b> KaTeX.</li><li><b>Inspired by</b> Undertale, Stardew Valley, Pokémon Mystery Dungeon and Krillion.</li><li><b>Pixel art, story and code:</b> made for Lowmarsh.</li></ul>'),
   };
 
   let titleSel = null, titleSeen = false, titleUI = null, titleDrawer = null;
@@ -271,7 +271,7 @@
   }
 
   function nameEntry() {
-    const el = screen('<div class="name-screen"><h2>What\'s your name?</h2><input id="nm" maxlength="12" autocomplete="off" spellcheck="false"><div><button class="btn primary" data-a="go">THAT\'S ME</button></div></div>');
+    const el = screen('<div class="name-screen win"><h2>What\'s your name?</h2><input id="nm" maxlength="12" autocomplete="off" spellcheck="false"><div><button class="btn primary" data-a="go">THAT\'S ME</button></div></div>');
     const inp = $('#nm', el);
     inp.focus();
     const go = async () => {

@@ -118,7 +118,7 @@
     return new Promise(r => setTimeout(r, ms || 400));
   }
 
-  // Black-screen narration, one line at a time (used for the prologue and chapter cards).
+  // Full-screen narration over the dusk, one line at a time (used for the prologue and big moments).
   function narrate(lines) {
     return new Promise(async resolve => {
       const el = document.createElement('div');
@@ -144,8 +144,14 @@
     return new Promise(resolve => {
       const el = document.createElement('div');
       el.className = 'chapter-card';
-      el.innerHTML = '<div class="cc-slash"></div><div class="cc-title">' + esc(title) + '</div><div class="cc-sub">' + esc(sub || '') + '</div>' +
-        '<button class="btn primary">' + esc(button || 'CONTINUE ▸') + '</button>';
+      // a window rising out of the dusk: a small kicker, the title in amber like the logo, a heart.
+      // card('CHAPTER 4', 'THE RISING') reads as "Chapter 4" over "The Rising".
+      const tc = t => String(t).toLowerCase().replace(/(^|\s|-)([a-z])/g, (_, a, c) => a + c.toUpperCase());
+      const ch = /^CHAPTER (\d+)$/i.exec(title.trim());
+      const kicker = ch && sub ? 'Chapter ' + ch[1] : 'Lowmarsh', big = ch && sub ? tc(sub) : tc(title), small = ch && sub ? '' : sub || '';
+      el.innerHTML = '<div class="cc-win win"><div class="cc-kicker">' + esc(kicker) + '</div><div class="cc-title">' + esc(big) + '</div>' +
+        (small ? '<div class="cc-sub">' + esc(small) + '</div>' : '') + '<div class="cc-heart"></div>' +
+        '<button class="btn primary">' + esc(button || 'Continue ▸') + '</button></div>';
       document.getElementById('screens').appendChild(el);
       Sfx.win();
       const done = () => { pop(); el.remove(); resolve(); };

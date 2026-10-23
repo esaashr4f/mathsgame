@@ -111,9 +111,9 @@
     taunts: ['DEEPER', 'WIDER', 'MINE', 'ALL OF IT', '~~~'],
     angry: ['DROWN', 'RISE', 'OVER THE BANK', 'NO EDGES'],
     attacks: [
-      { pattern: 'rain', bullets: ['~', 'dy/dx', '~'], speed: 62, every: 340 },
-      { pattern: 'sweep', bullets: ['RISE', '+4t', '~~'], speed: 66, every: 360 },
-      { pattern: 'arc', bullets: ['∫', '~', '∫'], speed: 58, every: 300 },
+      { pattern: 'rain', bullets: ['FLOOD', 'dy/dx', 'SPILL'], speed: 62, every: 340 },
+      { pattern: 'sweep', bullets: ['RISE', '+4t', 'WIDER'], speed: 66, every: 360 },
+      { pattern: 'arc', bullets: ['∫', 'OVERFLOW', '∫'], speed: 58, every: 300 },
       { pattern: 'spiral', bullets: ['x³', '−6x²', '+9x'], speed: 54, every: 250 },
     ],
     spareHint: '* The Wend sinks a little in the water. She is looking down at her own reflection. (The Wend can be SPARED.)',

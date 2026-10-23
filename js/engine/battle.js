@@ -203,7 +203,7 @@
           cv.addEventListener('pointerdown', e => { touch = pt(e); cv.setPointerCapture(e.pointerId); });
           cv.addEventListener('pointermove', e => { if (touch) touch = pt(e); });
           cv.addEventListener('pointerup', () => (touch = null));
-          cx.font = '12px VT323, monospace';
+          cx.font = '500 11px "Pixelify Sans", monospace';
           const speed = (atk.speed || 60) * intensity, every = (atk.every || 380) / intensity;
 
           function spawn() {
@@ -233,14 +233,14 @@
             p.x = Math.max(4, Math.min(BW - 4, p.x + dx * 110 * dt));
             p.y = Math.max(4, Math.min(BH - 4, p.y + dy * 110 * dt));
             p.inv = Math.max(0, p.inv - dt);
-            cx.fillStyle = '#000'; cx.fillRect(0, 0, BW, BH);
+            cx.fillStyle = '#120a18'; cx.fillRect(0, 0, BW, BH);
             for (let i = bullets.length - 1; i >= 0; i--) {
               const b = bullets[i];
               b.t += dt; if (b.g) b.vy += b.g * dt;
               b.x += b.vx * dt; b.y += b.vy * dt;
               if (b.x < -80 || b.x > BW + 80 || b.y < -40 || b.y > BH + 40) { bullets.splice(i, 1); continue; }
               const live = !(b.safe && b.t < b.safe);
-              cx.fillStyle = live ? '#fff' : '#555';
+              cx.fillStyle = live ? '#fff1d6' : '#5a3a62';
               cx.fillText(b.word, b.x, b.y);
               if (live && !p.inv && p.x + 3 > b.x && p.x - 3 < b.x + b.w && p.y + 3 > b.y - b.h && p.y - 3 < b.y) {
                 S.hp = Math.max(0, S.hp - (enc.atk || 3)); p.inv = 0.8; Sfx.hurt(); updateHP();
@@ -248,7 +248,7 @@
               }
             }
             if (!p.inv || Math.floor(p.inv * 10) % 2 === 0) cx.drawImage(heart, Math.round(p.x - 3), Math.round(p.y - 3));
-            cx.fillStyle = '#ff8c1a'; cx.fillRect(0, BH - 2, BW * (1 - t / dur), 2);
+            cx.fillStyle = '#ffd166'; cx.fillRect(0, BH - 2, BW * (1 - t / dur), 2);
             if (t >= dur) return end();
             requestAnimationFrame(frame);
           }
