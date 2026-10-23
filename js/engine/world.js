@@ -1,7 +1,9 @@
 // The overworld: input, tile maps, movement and collision, NPCs, triggers, camera, the companion and the fog.
 (function () {
   'use strict';
-  const TS = Tiles.TS, VW = 384, VH = 288;
+  const TS = Tiles.TS;
+  // The view in game pixels. 384×288 on a desktop; on a phone it takes the screen's shape (see World.setView).
+  let VW = 384, VH = 288;
 
   // ───────── input ─────────
   const keys = {};
@@ -24,7 +26,7 @@
   let fogCanvas = null;
   function makeFog() {
     const c = document.createElement('canvas');
-    c.width = VW * 2; c.height = VH * 2;
+    c.width = 768; c.height = 576;
     const x = c.getContext('2d');
     for (let i = 0; i < 60; i++) {
       const fx = Tiles.hash(i, 1) * c.width, fy = Tiles.hash(i, 2) * c.height, r = 30 + Tiles.hash(i, 3) * 70;
@@ -56,6 +58,17 @@
       };
       requestAnimationFrame(loop);
     },
+
+    // Resize the view (in game pixels). The canvas is scaled up by CSS.
+    setView(w, h) {
+      w = Math.round(w); h = Math.round(h);
+      if (w === VW && h === VH) return;
+      VW = w; VH = h;
+      this.canvas.width = w; this.canvas.height = h;
+      this.ctx.imageSmoothingEnabled = false;
+      if (this.map) { this.updateCamera(); this.draw(); }
+    },
+    get view() { return { w: VW, h: VH }; },
 
     flags() { return Game.save.flags; },
 
@@ -230,9 +243,9 @@
       }
       if (this.fog > 0) {
         c.globalAlpha = this.fog;
-        const ox = (this.t * 6 + cam.x * 0.5) % VW, oy = (cam.y * 0.5) % VH;
-        c.drawImage(fogCanvas, -ox, -oy);
-        c.drawImage(fogCanvas, VW - ox, -oy);
+        const fw = fogCanvas.width, fh = fogCanvas.height;
+        const ox = (this.t * 6 + cam.x * 0.5) % fw, oy = (cam.y * 0.5) % fh;
+        for (let y = -oy; y < VH; y += fh) for (let x = -ox; x < VW; x += fw) c.drawImage(fogCanvas, x, y);
         c.globalAlpha = 1;
       }
       if (this.dark > 0) { c.fillStyle = 'rgba(10,10,30,' + this.dark + ')'; c.fillRect(0, 0, VW, VH); }

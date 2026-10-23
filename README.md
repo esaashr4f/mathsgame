@@ -14,7 +14,9 @@ No build step. Serve the folder and open it in a browser:
 python3 -m http.server 8000   # then open http://localhost:8000
 ```
 
-Progress saves in your browser, per account if you sign in (see [docs/ACCOUNTS.md](docs/ACCOUNTS.md)). Controls: arrows or WASD to move, Z or Enter to talk and confirm, C or Esc (or the ☰ MENU button, top left) for the menu, R to ask Rook. On a phone, use the on-screen pad.
+Progress saves in your browser, per account if you sign in (see [docs/ACCOUNTS.md](docs/ACCOUNTS.md)). Controls: arrows or WASD to move, Z or Enter to talk and confirm, C or Esc (or the ☰ MENU button, top left) for the menu, R to ask Rook. On a phone, use the on-screen pad, or switch to a floating joystick in Settings.
+
+On phones the game takes the screen's shape: held sideways, the game fills the height with the pad on the left and the buttons on the right; held upright, the game fills the top and the controls fill the rest. There's a full-screen button (⛶) where the browser allows it, and the game can be added to the home screen to play full screen (`manifest.webmanifest`, `icons/`).
 
 ## Part One: AS level (complete)
 

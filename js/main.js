@@ -11,7 +11,7 @@
   const fresh = () => ({
     name: '', started: false, map: 'world', x: 50, y: 58, dir: 'up',
     flags: { chapter: 0, fogLevel: 0.55 }, items: {}, pages: [], solved: {}, stats: {}, daily: {}, papers: {},
-    sound: true, timedDrills: false, paperFilter: { board: 'OCR', level: 'AS' },
+    sound: true, timedDrills: false, pad: 'buttons', paperFilter: { board: 'OCR', level: 'AS' },
   });
   const saveKey = () => { const a = Auth.current(); return a ? KEY + ':' + a.uid : KEY; };
   let S = fresh();
@@ -115,15 +115,28 @@
     const hud = document.getElementById('hud');
     if (!World.active) { hud.innerHTML = ''; return; }
     const obj = window.SCRIPTS.objective ? window.SCRIPTS.objective(S.flags) : '';
-    hud.innerHTML = '<button class="hud-menu" title="Menu (C or Esc)">☰ MENU <kbd>C</kbd></button><span class="hud-loc">' + esc(World.map.name) + '</span>' + (obj ? '<span class="hud-obj">📜 ' + esc(fmtPlain(obj)) + '</span>' : '');
+    const text = obj ? fmtPlain(obj) : '';
+    hud.innerHTML = '<button class="hud-menu" title="Menu (C or Esc)">☰<span class="lbl"> MENU <kbd>C</kbd></span></button><span class="hud-loc">' + esc(World.map.name) + '</span>' +
+      (obj ? '<span class="hud-obj" title="Objective">📜<span class="lbl"> ' + esc(text) + '</span></span>' : '');
+    // On a small screen the objective folds down to its scroll: tap to read it. A new one shows itself for a few seconds.
+    if (text && text !== hudObj) { hudObj = text; peekObjective(4000); }
+  }
+  let hudObj = '', peekTimer = 0;
+  function peekObjective(ms) {
+    const o = $('#hud .hud-obj');
+    if (!o) return;
+    o.classList.add('open');
+    clearTimeout(peekTimer);
+    peekTimer = setTimeout(() => { const n = $('#hud .hud-obj'); if (n) n.classList.remove('open'); }, ms);
   }
 
   // ───────── title & new game ─────────
   function screen(html, cls) {
     World.active = false;
     World.locked = false;
-    document.body.classList.remove('in-world');
+    document.body.classList.remove('in-world', 'touch', 'land', 'port');
     document.getElementById('frame').classList.add('hidden');
+    document.getElementById('frame').removeAttribute('style');
     document.getElementById('touch').classList.add('hidden');
     const s = document.getElementById('title');
     s.className = 'title-screen ' + (cls || '');
@@ -291,10 +304,16 @@
     document.body.classList.add('in-world');
     document.getElementById('title').classList.add('hidden');
     document.getElementById('frame').classList.remove('hidden');
-    if (matchMedia('(pointer: coarse)').matches) document.getElementById('touch').classList.remove('hidden');
+    if (isTouch()) {
+      document.body.classList.add('touch');
+      document.getElementById('touch').classList.remove('hidden');
+    }
+    applyPad();
+    layout();
     World.load(S.map, S.x, S.y, S.dir);
     World.active = true;
     updateHud();
+    rotateHint();
     if (fresh) World.run(G => window.SCRIPTS.prologue(G));
   }
 
@@ -463,10 +482,16 @@
     const a = Auth.current();
     const el = overlayPanel('<h2 class="p5"><span>SETTINGS</span></h2>' +
       '<label class="toggle"><input type="checkbox" id="snd"' + (S.sound ? ' checked' : '') + '> Sound effects</label>' +
+      '<div class="pad-pick"><span>On a touch screen, walk with</span><div class="tabs"><button data-a="pad" data-v="buttons"' + (S.pad !== 'stick' ? ' class="on"' : '') + '>✚ Buttons</button><button data-a="pad" data-v="stick"' + (S.pad === 'stick' ? ' class="on"' : '') + '>◉ Joystick</button></div>' +
+      '<p class="muted small-note">Joystick: put your thumb down anywhere on the left half of the screen and slide.</p></div>' +
       '<hr><p class="muted">' + (a && a.username ? 'Signed in as <b>' + esc(a.username) + '</b>.' : 'Not signed in. Your progress is saved on this device.') + '</p>' +
       '<hr><p class="muted">Controls: arrows/WASD move · Z/Enter talk & confirm · C/Esc menu · R ask Rook. On phones use the on-screen pad.</p>' +
       '<button class="btn danger small" data-a="wipe">Erase ALL save data</button>', back);
     $('#snd', el).addEventListener('change', e => { S.sound = e.target.checked; Sfx.setEnabled(S.sound); persist(); });
+    el.querySelectorAll('[data-a=pad]').forEach(b => b.addEventListener('click', () => {
+      S.pad = b.dataset.v; persist(); applyPad();
+      el.querySelectorAll('[data-a=pad]').forEach(x => x.classList.toggle('on', x === b));
+    }));
     el.querySelector('[data-a=wipe]').addEventListener('click', () => { if (confirm('Erase everything, including practice stats?')) { S = fresh(); persist(); location.reload(); } });
   }
 
@@ -722,6 +747,70 @@
   const maxHP = () => 16 + 2 * Math.min(level(), 20);
   const depthNote = d => DEPTHS.slice().reverse().find(x => x[0] <= d + 1)[1];
 
+  // ───────── phones: the view, the controls, full screen ─────────
+  const isTouch = () => matchMedia('(pointer: coarse)').matches;
+  // Safe-area insets (the notch, the home bar), read off a probe element.
+  let probe = null;
+  function insets() {
+    if (!probe) {
+      probe = document.createElement('div');
+      probe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
+      document.body.appendChild(probe);
+    }
+    const c = getComputedStyle(probe);
+    return { t: parseFloat(c.paddingTop) || 0, r: parseFloat(c.paddingRight) || 0, b: parseFloat(c.paddingBottom) || 0, l: parseFloat(c.paddingLeft) || 0 };
+  }
+  // On a desktop the game is a 4:3 window. On a phone the view takes the screen's shape instead: sideways, the
+  // game fills the height and the controls sit either side of it; upright, the game fills the top and the
+  // controls fill the rest. The picture is the same size in tiles either way, just a wider or taller slice.
+  function layout() {
+    const frame = document.getElementById('frame');
+    const body = document.body;
+    if (!body.classList.contains('touch')) { frame.removeAttribute('style'); World.setView(384, 288); return; }
+    const W = innerWidth, H = innerHeight, ins = insets(), land = W > H;
+    body.classList.toggle('land', land);
+    body.classList.toggle('port', !land);
+    let fw, fh, left, top, vw, vh;
+    if (land) {
+      const side = Math.min(176, W * 0.22);              // room for a thumb either side
+      fh = H; top = 0;
+      const scale = fh / 256;                              // 16 tiles tall
+      vw = Math.max(320, Math.min(576, (W - 2 * side) / scale));
+      fw = Math.min(W, vw * scale); vw = fw / scale; vh = 256;
+      left = (W - fw) / 2;
+    } else {
+      const ctrl = Math.min(232, H * 0.36) + ins.b;     // the controls take the bottom
+      fw = W; left = 0; top = ins.t;
+      fh = H - ctrl - top;
+      const scale = fw / 256;                              // 16 tiles wide
+      vw = 256; vh = Math.max(192, Math.min(480, fh / scale));
+      fh = vh * scale;
+    }
+    // where the controls reach over the game's edges, keep the dialogue box clear of them
+    frame.style.setProperty('--ov', land ? Math.max(0, Math.min(176, W * 0.22) - left - 6) + 'px' : '0px');
+    Object.assign(frame.style, { position: 'fixed', margin: 0, aspectRatio: 'auto', left: left + 'px', top: top + 'px', width: fw + 'px', height: fh + 'px' });
+    document.getElementById('touch').style.setProperty('--game-bottom', (top + fh) + 'px');
+    World.setView(vw, vh);
+  }
+  addEventListener('resize', () => { if (World.active || document.body.classList.contains('in-world')) layout(); });
+  addEventListener('orientationchange', () => setTimeout(layout, 200));
+
+  // Upright on a phone, suggest turning it sideways (once, and only if it would help).
+  function rotateHint() {
+    if (!document.body.classList.contains('port') || seenTip('rotate')) return;
+    markTip('rotate');
+    const t = document.createElement('div');
+    t.className = 'rotate-hint win';
+    t.innerHTML = '<span class="phone">📱</span><span>Tip: turn your phone sideways for a wider view.</span><button aria-label="Close">✕</button>';
+    document.body.appendChild(t);
+    const close = () => t.remove();
+    t.querySelector('button').addEventListener('click', close);
+    addEventListener('resize', function once() { if (innerWidth > innerHeight) { close(); removeEventListener('resize', once); } });
+    setTimeout(close, 7000);
+  }
+
+  function applyPad() { document.body.classList.toggle('stick-mode', S.pad === 'stick'); }
+
   // ───────── touch controls ─────────
   function touchControls() {
     const t = document.getElementById('touch');
@@ -732,6 +821,55 @@
       b.addEventListener('pointerdown', e => { e.preventDefault(); send('keydown', key); if (!isMove) send('keyup', key); });
       if (isMove) ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, () => send('keyup', key)));
     });
+
+    // Full screen, where the browser allows it (Android; iPhones use Add to Home Screen instead).
+    const fs = t.querySelector('[data-fs]');
+    const root = document.documentElement;
+    if (!(root.requestFullscreen || root.webkitRequestFullscreen)) fs.remove();
+    else fs.addEventListener('click', () => {
+      if (document.fullscreenElement || document.webkitFullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      else (root.requestFullscreen || root.webkitRequestFullscreen).call(root).catch(() => {});
+    });
+
+    // The floating joystick: thumb down anywhere on the left half of the screen, slide to walk.
+    const stick = t.querySelector('.stick'), knob = stick.querySelector('i');
+    const DIRS = { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' };
+    let sid = null, ox = 0, oy = 0;
+    const held = new Set();
+    const hold = want => Object.entries(DIRS).forEach(([d, key]) => {
+      if (want.has(d) && !held.has(d)) { held.add(d); send('keydown', key); }
+      if (!want.has(d) && held.has(d)) { held.delete(d); send('keyup', key); }
+    });
+    document.addEventListener('pointerdown', e => {
+      if (sid !== null || S.pad !== 'stick' || !document.body.classList.contains('touch') || !World.active || World.locked) return;
+      if (e.clientX > innerWidth / 2 || e.target.closest('button, input, a, #ui > *, #hud, #screens, .rotate-hint')) return;
+      sid = e.pointerId; ox = e.clientX; oy = e.clientY;
+      Object.assign(stick.style, { left: ox + 'px', top: oy + 'px' });
+      knob.style.transform = '';
+      stick.classList.add('on');
+      e.preventDefault();
+    });
+    document.addEventListener('pointermove', e => {
+      if (e.pointerId !== sid) return;
+      let dx = e.clientX - ox, dy = e.clientY - oy;
+      const d = Math.hypot(dx, dy), R = 40;
+      if (d > R) { dx *= R / d; dy *= R / d; }
+      knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+      const want = new Set();
+      if (d > 10) {
+        // eight directions, so diagonals walk diagonally
+        const a = Math.atan2(dy, dx), s8 = Math.round(a / (Math.PI / 4));
+        if ([-3, -2, -1].includes(s8)) want.add('up');
+        if ([1, 2, 3].includes(s8)) want.add('down');
+        if ([-1, 0, 1].includes(s8)) want.add('right');
+        if ([3, 4, -4, -3].includes(s8)) want.add('left');
+      }
+      hold(want);
+    });
+    const end = e => { if (e.pointerId !== sid) return; sid = null; stick.classList.remove('on'); hold(new Set()); };
+    document.addEventListener('pointerup', end);
+    document.addEventListener('pointercancel', end);
+    applyPad();
   }
 
   window.Game = {
@@ -748,7 +886,10 @@
     World.init(document.getElementById('game'));
     touchControls();
     document.getElementById('scratchBtn').addEventListener('click', () => { if (!World.locked) { World.locked = true; scratch(() => { World.locked = false; }); } });
-    document.getElementById('hud').addEventListener('click', e => { if (e.target.closest('.hud-menu')) openMenu(); });
+    document.getElementById('hud').addEventListener('click', e => {
+      if (e.target.closest('.hud-menu')) openMenu();
+      else if (e.target.closest('.hud-obj')) { const o = e.target.closest('.hud-obj'); if (o.classList.contains('open')) o.classList.remove('open'); else peekObjective(6000); }
+    });
     title();
   });
 })();

@@ -75,7 +75,7 @@ hr { border: none; border-top: 2px dashed var(--edge); margin: 16px 0; }
 #game { width: 100%; height: 100%; display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
 #frame.shake { animation: shake .4s; }
 #hud { position: absolute; left: 8px; top: 8px; right: 150px; display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none; font-family: var(--ui); font-size: clamp(13px, 1.8vw, 16px); }
-#hud span { background: rgba(30, 20, 40, .82); border: 2px solid var(--edge); border-radius: 3px; padding: 1px 8px; color: var(--cream); }
+#hud > span { background: rgba(30, 20, 40, .82); border: 2px solid var(--edge); border-radius: 3px; padding: 1px 8px; color: var(--cream); }
 .hud-obj { color: var(--gold) !important; }
 .hud-menu { pointer-events: auto; background: var(--plum); color: var(--cream); border: 2px solid var(--cream); border-radius: 3px; font-family: var(--ui); font-weight: 700; font-size: inherit; padding: 0 8px; }
 .hud-menu kbd { font-family: inherit; font-weight: 500; color: var(--soft); border: 1px solid var(--soft); border-radius: 2px; padding: 0 3px; margin-left: 3px; font-size: .8em; }
@@ -301,6 +301,21 @@ body.in-world #scratchBtn { display: block; }
 .bubble::before { content: ''; position: absolute; left: -10px; top: 14px; border: 6px solid transparent; border-right-color: var(--brown); }
 .enemy-name { text-align: center; font-size: 17px; font-weight: 700; color: var(--cream); letter-spacing: 1px; text-shadow: 2px 2px 0 var(--brown); }
 .enemy-name.spare { color: var(--gold); }
+/* a phone held sideways: the foe on the left, the problem and the commands on the right */
+@media (orientation: landscape) and (max-height: 520px) {
+  .battle { max-width: 980px; display: grid; grid-template-columns: minmax(170px, 34%) 1fr; grid-template-areas: "enemy bp" "name box" "stats box" "stats cmds"; grid-template-rows: auto auto 1fr auto; column-gap: 14px; row-gap: 6px; padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left); }
+  .enemy { grid-area: enemy; min-height: 0; } .enemy-name { grid-area: name; } .blueprint { grid-area: bp; } .btl-box { grid-area: box; min-height: 110px; } .btl-stats { grid-area: stats; align-self: start; justify-content: center; } .cmds { grid-area: cmds; }
+  .enemy-sprite { max-height: 46vh; }
+  .bubble { left: 50%; top: auto; bottom: 100%; transform: translateX(-50%); max-width: 90%; font-size: 15px; z-index: 2; }
+  .bubble::before { display: none; }
+  .btl-text { font-size: 17px; }
+  .cmd { font-size: 16px; padding: 4px 4px 4px 22px; }
+  canvas.dodge { width: min(100%, 360px); }
+  .blueprint { align-self: start; }
+  .menu-box { margin-top: 2vh; max-width: 640px; padding: 10px 14px; }
+  .menu-grid { grid-template-columns: 1fr 1fr 1fr; margin-bottom: 8px; }
+  .menu-grid button { font-size: 16px; padding: 4px 6px 4px 28px; }
+}
 .blueprint { background: var(--paper); color: var(--pencil); border-radius: 3px; font-family: var(--body); font-size: 15px; box-shadow: 0 0 0 2px var(--brown); }
 .blueprint summary { padding: 6px 10px; cursor: pointer; font-family: var(--hand); font-size: 19px; }
 .bp-body { padding: 0 12px 10px; }
@@ -338,11 +353,68 @@ canvas.dodge { display: block; margin: 0 auto; background: var(--night); border:
 /* ───────── touch controls ───────── */
 #touch { display: flex; justify-content: space-between; align-items: center; padding: 10px 18px calc(10px + env(safe-area-inset-bottom)); user-select: none; -webkit-user-select: none; touch-action: none; background: var(--night); }
 #touch button { background: var(--plum); border: 2px solid var(--cream); color: var(--cream); font-size: 20px; border-radius: 8px; box-shadow: 0 0 0 2px var(--brown); touch-action: none; }
+#touch .abtn button { border-radius: 50%; padding: 0; }
+#touch button:active { background: var(--plum-3); border-color: var(--gold); color: var(--gold); }
 .dpad { display: grid; grid-template-columns: 52px 52px 52px; grid-template-rows: 52px 52px 52px; gap: 2px; }
 .dpad .up { grid-column: 2; grid-row: 1; } .dpad .left { grid-column: 1; grid-row: 2; } .dpad .right { grid-column: 3; grid-row: 2; } .dpad .down { grid-column: 2; grid-row: 3; }
 .abtn { display: flex; gap: 10px; align-items: center; }
 .abtn .a { width: 68px; height: 68px; border-radius: 50%; font-family: var(--ui); font-weight: 700; font-size: 24px; background: #5a2414; border-color: var(--gold); color: var(--gold); }
 .abtn .b, .abtn .r { width: 50px; height: 50px; border-radius: 50%; }
+#touch .fs { display: none; }
+.stick { display: none; }
+
+/* phones: the game takes the screen's shape (main.js layout()), the controls go under the thumbs */
+body.touch { overflow: hidden; height: 100%; background: var(--night); overscroll-behavior: none; touch-action: none; }
+body.touch #game { touch-action: none; }
+body.touch .panel-screen { touch-action: pan-y; }
+body.touch #touch { position: fixed; inset: 0; z-index: 20; padding: 0; background: none; display: block; pointer-events: none; }
+body.touch #touch > * { pointer-events: auto; }
+body.touch #frame { z-index: 10; }
+body.touch #touch .fs { display: block; position: absolute; width: 38px; height: 38px; font-size: 18px; border-radius: 4px; padding: 0; }
+body.touch .dpad, body.touch .abtn { position: absolute; }
+/* sideways: the pad down the left edge, the buttons down the right, over the margins either side of the game */
+body.land .dpad { left: calc(12px + env(safe-area-inset-left)); bottom: calc(14px + env(safe-area-inset-bottom)); grid-template-columns: 50px 50px 50px; grid-template-rows: 50px 50px 50px; }
+body.land .abtn { right: calc(12px + env(safe-area-inset-right)); bottom: calc(20px + env(safe-area-inset-bottom)); display: grid; grid-template-columns: 54px 72px; grid-template-rows: 54px 72px; gap: 4px; }
+body.land .abtn .r { grid-column: 1; grid-row: 1; align-self: end; justify-self: end; } body.land .abtn .b { grid-column: 1; grid-row: 2; align-self: end; } body.land .abtn .a { grid-column: 2; grid-row: 2; }
+body.land #touch .fs { right: calc(12px + env(safe-area-inset-right)); top: 10px; }
+/* upright: the game on top, the controls fill everything under it */
+body.port #touch::before { content: ''; position: absolute; left: 0; right: 0; top: var(--game-bottom, 60%); bottom: 0; background: radial-gradient(ellipse at 50% 0%, #2a1d38 0%, var(--night) 70%); border-top: 3px solid var(--edge); pointer-events: none; }
+body.port .dpad { left: max(16px, calc(50% - 170px)); top: calc(var(--game-bottom, 60%) + (100% - var(--game-bottom, 60%) - env(safe-area-inset-bottom)) / 2); transform: translateY(-50%); grid-template-columns: 56px 56px 56px; grid-template-rows: 56px 56px 56px; }
+body.port .abtn { right: max(16px, calc(50% - 170px)); top: calc(var(--game-bottom, 60%) + (100% - var(--game-bottom, 60%) - env(safe-area-inset-bottom)) / 2); transform: translateY(-50%); display: grid; grid-template-columns: 54px 76px; grid-template-rows: 54px 76px; gap: 6px; }
+body.port .abtn .r { grid-column: 1; grid-row: 1; align-self: end; justify-self: end; } body.port .abtn .b { grid-column: 1; grid-row: 2; align-self: end; } body.port .abtn .a { grid-column: 2; grid-row: 2; width: 76px; height: 76px; }
+body.port #touch .fs { right: 10px; top: calc(var(--game-bottom, 60%) + 10px); }
+/* joystick mode: no pad; a stick appears wherever the thumb lands on the left half */
+body.stick-mode .dpad { display: none; }
+body.touch .stick { display: block; position: fixed; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; border: 2px solid rgba(255, 241, 214, .6); background: rgba(30, 20, 40, .45); box-shadow: 0 0 0 2px rgba(42, 20, 8, .5); opacity: 0; pointer-events: none !important; transition: opacity .12s; }
+body.touch .stick.on { opacity: 1; }
+.stick i { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; background: var(--plum); border: 2px solid var(--cream); box-shadow: 0 0 0 2px var(--brown); }
+body.port.stick-mode #touch::after { content: 'slide your thumb here to walk'; position: absolute; left: 0; width: 50%; top: calc(var(--game-bottom, 60%) + (100% - var(--game-bottom, 60%)) / 2); transform: translateY(-50%); text-align: center; font-family: var(--ui); font-size: 15px; color: var(--soft); opacity: .7; pointer-events: none; }
+
+/* the HUD folds down on a phone: ☰ for the menu, 📜 for the objective (tap to read it), ✏️ for the scratch pad */
+body.touch #hud { right: 52px; font-size: 14px; }
+body.touch .hud-menu .lbl, body.touch #scratchBtn span { display: none; }
+body.touch .hud-menu { font-size: 18px; padding: 0 9px; }
+body.touch .hud-loc { display: none; }
+body.touch .hud-obj { pointer-events: auto; cursor: pointer; font-size: 16px; padding: 1px 6px !important; max-width: 100%; }
+body.touch .hud-obj .lbl { display: none; }
+body.touch .hud-obj.open { font-size: 14px; }
+body.touch .hud-obj.open .lbl { display: inline; }
+body.touch #scratchBtn { font-size: 18px; padding: 0 8px; }
+/* the dialogue box sized to the game, not the page, on a phone */
+body.touch .dlg { padding: 8px 12px 14px; gap: 10px; min-height: 0; }
+body.touch .dlg-text { font-size: 17px; }
+body.touch .dlg-name { font-size: 13px; }
+body.touch .dlg-face { width: 64px; }
+body.land .dlg { left: max(3%, var(--ov, 0px)); right: max(3%, var(--ov, 0px)); }
+body.touch .choice-box button { font-size: 17px; }
+.pad-pick { margin: 10px 0 4px; font-family: var(--ui); }
+.pad-pick > span { display: block; color: var(--soft); margin-bottom: 6px; }
+.pad-pick .tabs { max-width: 340px; margin-bottom: 4px; }
+.pad-pick .small-note { text-align: left; }
+.rotate-hint { position: fixed; left: 0; right: 0; margin: 0 auto; top: calc(14px + env(safe-area-inset-top)); z-index: 60; display: flex; align-items: center; gap: 10px; width: max-content; max-width: calc(100vw - 32px); padding: 8px 10px 8px 12px; font-family: var(--ui); font-size: 15px; color: var(--cream); animation: rise .3s both; }
+.rotate-hint .phone { font-size: 22px; display: inline-block; animation: tilt 1.6s ease-in-out infinite; }
+.rotate-hint button { background: none; border: none; color: var(--soft); font-size: 18px; padding: 0 4px; }
+@keyframes tilt { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
 
 /* ───────── accounts ───────── */
 .auth { max-width: 440px; margin: 4vh auto 24px; padding: 18px 22px 22px; font-family: var(--ui); position: relative; background: var(--plum); border: 3px solid var(--cream); border-radius: 4px; box-shadow: 0 0 0 3px var(--brown), 8px 8px 0 3px rgba(18, 8, 20, .55); color: var(--cream); }
