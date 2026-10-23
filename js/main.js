@@ -140,14 +140,8 @@
   // menu with a heart cursor. A hidden list of real buttons mirrors it for screen readers.
   let titleSel = null, titleSeen = false, titleUI = null;
   function title() {
-    const items = (S.started ? [{ id: 'cont', label: 'CONTINUE', sub: 'CH ' + (S.flags.chapter || 0), hint: 'CARRY ON AS ' + S.name.toUpperCase() }] : [])
-      .concat([
-        { id: 'new', label: 'NEW GAME', hint: 'START THE STORY FROM THE LAST FERRY' },
-        { id: 'papers', label: 'PAST PAPERS', hint: 'SIT REAL EXAM PAPERS' },
-        { id: 'drills', label: 'DRILLS', hint: 'PRACTISE ANY TOPIC, STEP BY STEP' },
-        { id: 'daily', label: 'DAILY CHALLENGE', sub: '#' + diveNumber(), hint: 'SEVEN NEW PROBLEMS EVERY DAY' },
-        { id: 'settings', label: 'SETTINGS', hint: 'SOUND AND SAVE DATA' },
-      ]);
+    const items = (S.started ? [{ id: 'cont', label: 'Continue' }] : [])
+      .concat([{ id: 'new', label: 'New Game' }, { id: 'papers', label: 'Past Papers' }, { id: 'drills', label: 'Drills' }, { id: 'daily', label: 'Daily Challenge' }, { id: 'settings', label: 'Settings' }]);
     const el = screen('<canvas class="title-cv" aria-hidden="true"></canvas>' +
       '<nav class="sr-only" aria-label="Main menu">' + items.map(it => '<button data-a="' + it.id + '">' + esc(it.label) + '</button>').join('') +
       '<button data-a="account">' + (Auth.current() && Auth.current().username ? 'Profile' : 'Log in') + '</button></nav>', 'canvas-title');
@@ -171,10 +165,11 @@
     TitleScreen.ready().then(() => {
       if (!el.contains($('.title-cv', el))) return;
       TitleScreen.clearCache();
+      const variant = (new URLSearchParams(location.search).get('title')) || 'cozy';
       titleUI = TitleScreen.mount($('.title-cv', el), {
-        items, skipIntro: titleSeen,
+        items, skipIntro: titleSeen, variant,
         selected: Math.max(0, items.findIndex(it => it.id === titleSel)),
-        account: () => (Auth.current() && Auth.current().username ? Auth.current().username.toUpperCase() : 'LOG IN'),
+        account: () => (Auth.current() && Auth.current().username ? Auth.current().username : 'Log in'),
         onSelect: i => { titleSel = items[i].id; },
         onChoose: id => { titleSeen = true; if (id !== 'account') titleSel = id; actions[id](); },
       });
