@@ -250,7 +250,7 @@
         entities: E.filter(e => !e.hidden),
         triggers: [
           door(36, 18, 'bakery', 6, 8),
-          door(49, 18, 'townhall', 8, 10), door(50, 18, 'townhall', 9, 10),
+          { x: 49, y: 18, run: G => window.SCRIPTS.townhallDoor(G, 49) }, { x: 50, y: 18, run: G => window.SCRIPTS.townhallDoor(G, 50) },
           door(63, 18, 'workshop', 6, 8),
           door(36, 36, 'clinic', 5, 7),
           door(64, 36, 'wickhouse', 4, 6),
