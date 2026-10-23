@@ -29,7 +29,7 @@ On phones the game takes the screen's shape: held sideways, the game fills the h
 | 5. The Lock | the Wend Lock, the gorge | forces, F = ma, pulleys, variable and constant acceleration; vectors, data and moments for the bridge | Cog the lock golem |
 | 6. The Still | the marsh | proof: counter-example, deduction, exhaustion, implication | the Hush |
 
-There are 34 side quests, all listed in the pause menu under Side Quests. They come from OCR papers and from the OCR topic question packs.
+There are 34 side quests, all listed in the pause menu under Side Quests. They come from OCR papers and from the OCR topic question packs. You can back out of any side quest with **Not now** and pick it up later. Each one pays a flapjack, plus an hourglass if every step was right first time, and finishing 4, 8, 14, 20 and all 34 earns charms that help in encounters (more HP, more time, a free hit, slower attacks).
 
 Part Two (the rest of A level, on a new map up the road north) will be built once the A level material is in.
 

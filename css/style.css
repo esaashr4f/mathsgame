@@ -416,6 +416,28 @@ body.touch .choice-box button { font-size: 17px; }
 .rotate-hint button { background: none; border: none; color: var(--soft); font-size: 18px; padding: 0 4px; }
 @keyframes tilt { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
 
+/* ───────── side quest rewards ───────── */
+.reward-screen { display: flex; align-items: center; justify-content: center; }
+.reward { max-width: 460px; width: 100%; margin: auto; padding: 18px 22px 20px; font-family: var(--ui); text-align: center; animation: rise .3s both; }
+.rw-kicker { color: var(--soft); font-size: 14px; letter-spacing: 2px; text-transform: uppercase; }
+.rw-title { margin: 2px 0 12px; font-size: 28px; font-weight: 700; color: var(--amber); text-shadow: 2px 2px 0 var(--brown), 4px 4px 0 var(--rust); }
+.rw-list { list-style: none; padding: 0; margin: 0 0 12px; text-align: left; display: flex; flex-direction: column; gap: 6px; }
+.rw-list li { background: var(--plum-2); border: 2px solid var(--edge); border-radius: 3px; padding: 6px 10px; font-size: 18px; }
+.rw-list li span { margin-right: 6px; }
+.rw-list li b { color: var(--gold); float: right; }
+.rw-list li i { display: block; font-style: normal; font-size: 14px; color: var(--soft); }
+.rw-charm { display: flex; gap: 12px; align-items: center; text-align: left; border: 2px solid var(--gold); background: var(--plum-3); border-radius: 3px; padding: 8px 12px; margin-bottom: 12px; animation: glow 1.6s ease-in-out infinite alternate; }
+.rw-charm b { color: var(--gold); font-size: 18px; }
+.rw-charm-icon { font-size: 34px; }
+@keyframes glow { from { box-shadow: 0 0 0 0 rgba(255, 209, 102, .0); } to { box-shadow: 0 0 14px 2px rgba(255, 209, 102, .45); } }
+.rw-prog { display: flex; flex-direction: column; gap: 4px; margin: 0 0 14px; font-size: 15px; color: var(--soft); }
+.rw-prog .acc { height: 8px; }
+.job-h { font-family: var(--ui); color: var(--amber); font-size: 20px; margin: 14px 0 6px; }
+.job-reward { display: block; font-size: 14px; color: var(--gold); margin-top: 2px; }
+.charm-list .charm { display: flex; gap: 10px; align-items: center; opacity: .6; }
+.charm-list .charm.got { opacity: 1; border-color: var(--gold); }
+.charm .ci { font-size: 26px; width: 36px; text-align: center; font-family: var(--ui); color: var(--soft); }
+
 /* ───────── accounts ───────── */
 .auth { max-width: 440px; margin: 4vh auto 24px; padding: 18px 22px 22px; font-family: var(--ui); position: relative; background: var(--plum); border: 3px solid var(--cream); border-radius: 4px; box-shadow: 0 0 0 3px var(--brown), 8px 8px 0 3px rgba(18, 8, 20, .55); color: var(--cream); }
 .auth-logo { font-weight: 700; font-size: 40px; letter-spacing: 3px; text-align: center; line-height: 1; margin: 4px 0 14px; color: var(--amber); text-shadow: 2px 2px 0 var(--brown), 4px 4px 0 var(--rust); }

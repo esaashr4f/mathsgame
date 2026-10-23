@@ -272,10 +272,10 @@
   wrap('tansy', 5, G => !G.flag('ballDone') && !(G.has('soup') && !G.flag('soupDone')), SC.tansyBall);
   wrap('pim', 5, G => !G.flag('pimRideDone'), SC.pimBike);
   (SC.extraJobs = SC.extraJobs || []).push(...[
-    [5, 'raceDone', 'The towpath race', 'Rowan, out in the meadows'],
-    [5, 'shipDone', 'The model ship', 'a kid in the square'],
-    [5, 'goatPullDone', 'Three goats, one cart', 'Tansy at the farm'],
-    [5, 'ballDone', "Tansy's ball", 'Tansy at the farm'],
-    [5, 'pimRideDone', "Pim's bike ride", 'Pim in the Town Hall'],
+    [5, 'raceDone', 'The towpath race', 'Rowan, out in the meadows', 'race'],
+    [5, 'shipDone', 'The model ship', 'a kid in the square', 'modelShip'],
+    [5, 'goatPullDone', 'Three goats, one cart', 'Tansy at the farm', 'goatPull'],
+    [5, 'ballDone', "Tansy's ball", 'Tansy at the farm', 'ballThrow'],
+    [5, 'pimRideDone', "Pim's bike ride", 'Pim in the Town Hall', 'pimRide'],
   ]);
 })();

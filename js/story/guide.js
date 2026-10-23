@@ -32,34 +32,38 @@
     [f => true, 'Explore Lowmarsh · practise · get ready for your exam', 'We did it, {name}. Now go and do it again in the exam hall. Drills, past papers, the Daily Challenge — they\'re all in the menu.'],
   ];
 
-  // Side quests: [chapter it opens, done flag, title, where to look].
+  // Side quests: [chapter it opens, done flag, title, where to look, the problem it is].
   const JOBS = [
-    [1, 'wickDone', "Old Wick's lantern", 'Old Wick, wandering the square'],
-    [1, 'tomasDone', "Tomas's apples", 'the blue market stall'],
-    [1, 'kidCode', "Mira's strongbox code", 'a kid in the square'],
-    [2, 'nellDone', "Nell's net", 'Nell on the beach at Gull Point'],
-    [2, 'janDone', "Jan's kingfisher", 'Old Jan on the headland'],
-    [2, 'kiteDone', "Pebble's kite", 'a kid on the headland'],
-    [3, 'travelDone', 'The travel ledger', 'the Mayor in the Town Hall'],
-    [3, 'radarDone', 'School or care home?', 'the Mayor in the Town Hall'],
-    [3, 'vennDone', 'The evening classes', 'the Mayor in the Town Hall'],
-    [3, 'registerDone', 'The fog-day register', 'the register in the Town Hall'],
-    [3, 'ivyDone', "Gran Ivy's allotments", 'Gran Ivy, south of the square'],
-    [3, 'coffeeDone', "Fen's posters", 'Aunt Fen at the bakery'],
-    [3, 'goalsDone', "Moss's football team", 'Moss by the stream'],
-    [3, 'giftsDone', 'The free gift claim', 'the blue market stall'],
-    [3, 'spinnerDone', 'The fairground spinner', 'a kid in the square'],
-    [3, 'bandDone', 'Blue Rocking', 'a kid near the cottages'],
-    [4, 'soupDone', "Fen's soup run", 'Aunt Fen at the bakery, then Tansy'],
-    [4, 'leveeDone', "Bramble's flood bank", 'Bramble'],
-    [4, 'midgesDone', 'The midge plague', 'Dr Sorrel at the clinic'],
-    [4, 'lanternDone', "Wick's beam", 'Old Wick'],
-    [4, 'colonyDone', 'The shrinking colony', 'Old Jan at Gull Point'],
-    [4, 'ditchDone', "Moss's drainage ditch", 'Moss'],
-    [4, 'algaeDone', 'The bloom in the rock pools', 'Nell at Gull Point'],
+    [1, 'wickDone', "Old Wick's lantern", 'Old Wick, wandering the square', 'wick'],
+    [1, 'tomasDone', "Tomas's apples", 'the blue market stall', 'tomas'],
+    [1, 'kidCode', "Mira's strongbox code", 'a kid in the square', 'kidcode'],
+    [2, 'nellDone', "Nell's net", 'Nell on the beach at Gull Point', 'net'],
+    [2, 'janDone', "Jan's kingfisher", 'Old Jan on the headland', 'kingfisher'],
+    [2, 'kiteDone', "Pebble's kite", 'a kid on the headland', 'kite'],
+    [3, 'travelDone', 'The travel ledger', 'the Mayor in the Town Hall', 'travel'],
+    [3, 'radarDone', 'School or care home?', 'the Mayor in the Town Hall', 'radar'],
+    [3, 'vennDone', 'The evening classes', 'the Mayor in the Town Hall', 'venn'],
+    [3, 'registerDone', 'The fog-day register', 'the register in the Town Hall', 'register'],
+    [3, 'ivyDone', "Gran Ivy's allotments", 'Gran Ivy, south of the square', 'allotment'],
+    [3, 'coffeeDone', "Fen's posters", 'Aunt Fen at the bakery', 'coffee'],
+    [3, 'goalsDone', "Moss's football team", 'Moss by the stream', 'goals'],
+    [3, 'giftsDone', 'The free gift claim', 'the blue market stall', 'gifts'],
+    [3, 'spinnerDone', 'The fairground spinner', 'a kid in the square', 'spinner'],
+    [3, 'bandDone', 'Blue Rocking', 'a kid near the cottages', 'band'],
+    [4, 'soupDone', "Fen's soup run", 'Aunt Fen at the bakery, then Tansy', 'soup'],
+    [4, 'leveeDone', "Bramble's flood bank", 'Bramble', 'levee'],
+    [4, 'midgesDone', 'The midge plague', 'Dr Sorrel at the clinic', 'midges'],
+    [4, 'lanternDone', "Wick's beam", 'Old Wick', 'lantern'],
+    [4, 'colonyDone', 'The shrinking colony', 'Old Jan at Gull Point', 'colony'],
+    [4, 'ditchDone', "Moss's drainage ditch", 'Moss', 'ditch'],
+    [4, 'algaeDone', 'The bloom in the rock pools', 'Nell at Gull Point', 'algae'],
   ];
   JOBS.push(...(SC.extraJobs || []));
-  SC.jobs = f => JOBS.filter(j => (f.chapter || 0) >= j[0]).map(j => ({ title: j[2], where: j[3], done: !!f[j[1]] }));
+  SC.jobs = f => JOBS.filter(j => (f.chapter || 0) >= j[0]).map(j => ({ title: j[2], where: j[3], done: !!f[j[1]], problem: j[4] }));
+  // problem id -> its side quest, so the game knows which problems you can walk away from (and get rewarded for)
+  SC.sideQuests = {};
+  JOBS.forEach(j => (SC.sideQuests[j[4]] = { flag: j[1], title: j[2], where: j[3] }));
+  SC.sideQuestCount = JOBS.length;
 
   SC.objective = f => STEPS.find(s => s[0](f))[1];
   SC.rookHint = f => {

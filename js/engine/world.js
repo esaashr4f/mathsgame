@@ -201,7 +201,9 @@
       if (this.locked) return;
       this.locked = true;
       Object.keys(keys).forEach(k => (keys[k] = false));
-      try { await fn(Game.G); } catch (err) { console.error(err); }
+      // A side quest you walk away from ends the conversation early (Game.LEAVE); nothing is lost.
+      try { await fn(Game.G); } catch (err) { if (err !== Game.LEAVE) console.error(err); else if (Game.leftQuest) Game.leftQuest(); }
+      if (Game.afterScript) { try { await Game.afterScript(); } catch (err) { console.error(err); } }
       this.locked = false;
     },
 

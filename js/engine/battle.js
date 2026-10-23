@@ -28,7 +28,7 @@
       ec.width = spr.width * scale; ec.height = spr.height * scale;
       const ex = ec.getContext('2d'); ex.imageSmoothingEnabled = false; ex.drawImage(spr, 0, 0, ec.width, ec.height);
 
-      const S = { hp: Game.maxHP(), max: Game.maxHP(), step: 0, slips: 0, anger: 0, talk: 0, spareable: false, hourglass: 0 };
+      const S = { hp: Game.maxHP(), max: Game.maxHP(), step: 0, slips: 0, anger: 0, talk: 0, spareable: false, hourglass: 0, feather: Game.charm('feather') };
       const steps = enc.problem.steps;
 
       const updateHP = () => { $('.hpbar i', el).style.width = (100 * S.hp / S.max) + '%'; $('.hpnum', el).textContent = S.hp + ' / ' + S.max; };
@@ -125,7 +125,7 @@
         $('.blueprint', el).open = true;
         let clock = null;
         const r = await Solver.oneStep(box, enc.problem, S.step, {
-          timed: true, extra: S.hourglass * 30, hint: S.slips >= 1, taught: S.slips >= 2, clockRef: c => (clock = c),
+          timed: true, extra: S.hourglass * 30 + (Game.charm('sandglass') ? 15 : 0), hint: S.slips >= 1, taught: S.slips >= 2, clockRef: c => (clock = c),
         });
         S.hourglass = 0;
         if (r.ok) {
@@ -204,7 +204,7 @@
           cv.addEventListener('pointermove', e => { if (touch) touch = pt(e); });
           cv.addEventListener('pointerup', () => (touch = null));
           cx.font = '500 11px "Pixelify Sans", monospace';
-          const speed = (atk.speed || 60) * intensity, every = (atk.every || 380) / intensity;
+          const speed = (atk.speed || 60) * intensity * (Game.charm('lamp') ? 0.85 : 1), every = (atk.every || 380) / intensity;
 
           function spawn() {
             const word = atk.bullets[Math.floor(Math.random() * atk.bullets.length)];
@@ -243,7 +243,9 @@
               cx.fillStyle = live ? '#fff1d6' : '#5a3a62';
               cx.fillText(b.word, b.x, b.y);
               if (live && !p.inv && p.x + 3 > b.x && p.x - 3 < b.x + b.w && p.y + 3 > b.y - b.h && p.y - 3 < b.y) {
-                S.hp = Math.max(0, S.hp - (enc.atk || 3)); p.inv = 0.8; Sfx.hurt(); updateHP();
+                // Rook's Spare Feather takes the first hit of the encounter
+                if (S.feather) { S.feather = false; p.inv = 0.8; Sfx.select(); }
+                else { S.hp = Math.max(0, S.hp - (enc.atk || 3)); p.inv = 0.8; Sfx.hurt(); updateHP(); }
                 if (S.hp <= 0) t = dur;
               }
             }

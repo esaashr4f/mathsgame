@@ -81,8 +81,12 @@
     card: (t, s, b) => UI.card(t, s, b),
     narrate: lines => UI.narrate(lines.map(fmtPlain)),
     async solve(problem) {
-      const r = await Solver.story(problem);
+      const side = sideQuest(problem.id);
+      const r = await Solver.story(problem, side ? { quit: 'Not now: back to Lowmarsh' } : undefined);
+      if (r && r.quit) throw LEAVE;
+      const first = !S.solved[problem.id];
       S.solved[problem.id] = true; persist();
+      if (side && first) sideReward(problem, side, r);
       return r;
     },
     battle: enc => Battle.run(enc),
@@ -101,7 +105,7 @@
 
   const ITEMS = {
     flapjack: { name: "Fen's Flapjack", desc: 'Heals 10 HP in an encounter. Still warm, somehow.' },
-    hourglass: { name: "Moss's Hourglass", desc: '+15 seconds on your next step in an encounter.' },
+    hourglass: { name: "Moss's Hourglass", desc: '+30 seconds on your next step in an encounter.' },
     key: { name: 'Workshop Key', desc: 'Mira\'s key. It was under the third flowerpot. Of course it was.' },
     blueprint: { name: "Mira's Bridge Blueprint", desc: 'The original bridge design, in Mira\'s handwriting.' },
     lens: { name: 'Lens Notes', desc: 'Ottoline\'s notes on the lighthouse lens.' },
@@ -109,6 +113,51 @@
     soup: { name: "Fen's Soup Flask", desc: 'Leek and potato, 100 °C when it left the bakery. For Tansy.' },
     cable: { name: 'Steel Cable', desc: 'Forty metres of good steel cable from the lock.' },
   };
+
+  // ───────── side quests: leaving, rewards and charms ─────────
+  // Every side quest pays a flapjack, plus an hourglass if every step was right first time.
+  // Finishing enough of them earns charms from the village: lasting boosts in encounters.
+  const LEAVE = { leave: true };
+  const CHARMS = [
+    { id: 'shell', at: 4, icon: '🐚', name: "Nell's Lucky Shell", desc: '+4 max HP in encounters.' },
+    { id: 'sandglass', at: 8, icon: '⏳', name: "Moss's Sandglass", desc: '+15 seconds on every timed step in an encounter.' },
+    { id: 'feather', at: 14, icon: '🪶', name: "Rook's Spare Feather", desc: 'The first hit you take in each encounter does no damage.' },
+    { id: 'lamp', at: 20, icon: '🏮', name: "Ottoline's Lamp", desc: 'Lights up the dodge box: the words fly 15% slower.' },
+    { id: 'compass', at: 34, icon: '🧭', name: "Mira's Brass Compass", desc: 'Every side quest done. +4 more max HP, and the village calls you a Friend of Lowmarsh.' },
+  ];
+  const sideQuest = id => (window.SCRIPTS.sideQuests || {})[id];
+  const sideDone = () => Object.keys(window.SCRIPTS.sideQuests || {}).filter(id => S.solved[id]).length;
+  const charm = id => { const c = CHARMS.find(x => x.id === id); return !!c && sideDone() >= Math.min(c.at, window.SCRIPTS.sideQuestCount || c.at); };
+  let pending = null;
+  function sideReward(problem, side, r) {
+    const clean = r && r.firstTry === r.steps;
+    S.items.flapjack = (S.items.flapjack || 0) + 1;
+    if (clean) S.items.hourglass = (S.items.hourglass || 0) + 1;
+    persist();
+    const n = sideDone();
+    pending = { title: side.title, clean, n, charm: CHARMS.find(c => Math.min(c.at, window.SCRIPTS.sideQuestCount) === n) };
+  }
+  // Shown once the conversation that finished the quest is over.
+  function afterScript() {
+    if (!pending) return;
+    const p = pending; pending = null;
+    const total = window.SCRIPTS.sideQuestCount, next = CHARMS.find(c => c.at > p.n);
+    return new Promise(res => {
+      const el = UI.panel('<div class="reward win">' +
+        '<div class="rw-kicker">Side quest complete</div><h2 class="rw-title">' + esc(fmtPlain(p.title)) + '</h2>' +
+        '<ul class="rw-list"><li><span>🍪</span> Fen\'s Flapjack <b>+1</b></li>' +
+        (p.clean ? '<li><span>⏳</span> Moss\'s Hourglass <b>+1</b> <i>clean working: every step right first time</i></li>' : '') + '</ul>' +
+        (p.charm ? '<div class="rw-charm"><div class="rw-charm-icon">' + p.charm.icon + '</div><div><div class="rw-kicker">New charm</div><b>' + esc(p.charm.name) + '</b><br>' + esc(p.charm.desc) + '</div></div>' : '') +
+        '<div class="rw-prog"><div class="acc"><i style="width:' + Math.round(100 * p.n / total) + '%"></i></div><span>' + p.n + ' of ' + total + ' side quests' + (next ? ' · next charm at ' + Math.min(next.at, total) : '') + '</span></div>' +
+        '<button class="btn primary">OK ▸</button></div>', 'reward-screen');
+      if (p.charm) Sfx.win(); else Sfx.select();
+      const done = () => { pop(); el.close(); res(); };
+      const pop = UI.pushKeys(e => { if (e.key === 'Enter' || e.key.toLowerCase() === 'z' || e.key === 'Escape') { e.preventDefault(); done(); } });
+      $('button', el).addEventListener('click', done);
+      $('button', el).focus();
+    });
+  }
+  function leftQuest() { UI.toast('No rush. The side quest will wait for you.'); }
 
   // ───────── HUD + objective ─────────
   function updateHud() {
@@ -322,7 +371,7 @@
     if (World.locked) return;
     World.locked = true;
     const el = UI.panel(
-      '<div class="menu-box"><div class="menu-head"><div><b>' + esc(S.name) + '</b> · LV ' + level() + ' · HP ' + maxHP() + '</div><div class="muted">Chapter ' + (S.flags.chapter || 0) + (Auth.current() && Auth.current().username ? ' · signed in as ' + esc(Auth.current().username) : '') + '</div></div>' +
+      '<div class="menu-box"><div class="menu-head"><div><b>' + esc(S.name) + '</b> · LV ' + level() + ' · HP ' + maxHP() + '</div><div class="muted">' + (charm('compass') ? '🧭 Friend of Lowmarsh · ' : '') + 'Chapter ' + (S.flags.chapter || 0) + ' · ' + sideDone() + ' side quests' + (Auth.current() && Auth.current().username ? ' · signed in as ' + esc(Auth.current().username) : '') + '</div></div>' +
       '<div class="menu-grid">' +
       '<button data-a="rook">🐦 Ask Rook</button><button data-a="notebook">📖 Mira\'s Notebook</button>' +
       '<button data-a="scratch">✏️ Scratch Pad</button><button data-a="grapher">📈 Grapher</button>' +
@@ -467,14 +516,24 @@
 
   function itemsView(back) {
     const list = Object.keys(S.items).filter(k => S.items[k] > 0);
-    overlayPanel('<h2 class="p5"><span>ITEMS</span></h2>' + (list.length ? '<ul class="item-list">' + list.map(k => '<li><b>' + esc(ITEMS[k].name) + '</b> ×' + S.items[k] + '<br><span class="muted">' + esc(ITEMS[k].desc) + '</span></li>').join('') + '</ul>' : '<p class="muted">Your pockets are empty. Two jumpers and a phone with no signal.</p>'), back);
+    const charms = CHARMS.filter(c => charm(c.id));
+    overlayPanel('<h2 class="p5"><span>ITEMS</span></h2>' + (charms.length ? '<ul class="item-list charm-list">' + charms.map(c => '<li class="charm got"><span class="ci">' + c.icon + '</span><div><b>' + esc(c.name) + '</b><br><span class="muted">' + esc(c.desc) + '</span></div></li>').join('') + '</ul>' : '') + (list.length ? '<ul class="item-list">' + list.map(k => '<li><b>' + esc(ITEMS[k].name) + '</b> ×' + S.items[k] + '<br><span class="muted">' + esc(ITEMS[k].desc) + '</span></li>').join('') + '</ul>' : '<p class="muted">Your pockets are empty. Two jumpers and a phone with no signal.</p>'), back);
   }
 
   function jobsView(back) {
     const jobs = window.SCRIPTS.jobs ? window.SCRIPTS.jobs(S.flags) : [];
     const open = jobs.filter(j => !j.done), done = jobs.filter(j => j.done);
-    const li = j => '<li class="' + (j.done ? 'job-done' : '') + '"><b>' + (j.done ? '✓ ' : '◇ ') + esc(fmtPlain(j.title)) + '</b><br><span class="muted">' + esc(fmtPlain(j.where)) + '</span></li>';
-    overlayPanel('<h2 class="p5"><span>SIDE QUESTS</span></h2><p class="muted">Optional problems around Lowmarsh. Real exam questions, every one. ' + done.length + ' of ' + jobs.length + ' done.</p>' +
+    const n = sideDone(), total = window.SCRIPTS.sideQuestCount || jobs.length;
+    const li = j => '<li class="' + (j.done ? 'job-done' : '') + '"><b>' + (j.done ? '✓ ' : '◇ ') + esc(fmtPlain(j.title)) + '</b><br><span class="muted">' + esc(fmtPlain(j.where)) + '</span>' +
+      (j.done ? '' : '<span class="job-reward">🍪 +1' + ' · ⏳ +1 for clean working</span>') + '</li>';
+    const charms = CHARMS.map(c => {
+      const at = Math.min(c.at, total), got = n >= at;
+      return '<li class="charm' + (got ? ' got' : '') + '"><span class="ci">' + (got ? c.icon : '?') + '</span><div><b>' + (got ? esc(c.name) : 'A charm from the village') + '</b> <span class="muted">' + (got ? '' : at + ' side quests') + '</span><br><span class="muted">' + esc(c.desc) + '</span></div></li>';
+    }).join('');
+    overlayPanel('<h2 class="p5"><span>SIDE QUESTS</span></h2><p class="muted">Optional problems around Lowmarsh. Each one pays a flapjack, plus an hourglass if you get every step right first time. Start one and change your mind? Press <b>Not now</b> to come back later.</p>' +
+      '<div class="rw-prog"><div class="acc"><i style="width:' + Math.round(100 * n / total) + '%"></i></div><span>' + n + ' of ' + total + ' done</span></div>' +
+      '<h3 class="job-h">Charms</h3><ul class="item-list charm-list">' + charms + '</ul>' +
+      '<h3 class="job-h">Quests</h3>' +
       (jobs.length ? '<ul class="item-list job-list">' + open.concat(done).map(li).join('') + '</ul>' : '<p class="muted">Nobody needs anything yet. Give it time.</p>'), back);
   }
 
@@ -744,7 +803,7 @@
   }
   const accuracy = id => { const st = S.stats[id]; return st && st.right + st.wrong ? st.right / (st.right + st.wrong) : null; };
   const level = () => 1 + Object.keys(S.solved).length / 3 | 0;
-  const maxHP = () => 16 + 2 * Math.min(level(), 20);
+  const maxHP = () => 16 + 2 * Math.min(level(), 20) + (charm('shell') ? 4 : 0) + (charm('compass') ? 4 : 0);
   const depthNote = d => DEPTHS.slice().reverse().find(x => x[0] <= d + 1)[1];
 
   // ───────── phones: the view, the controls, full screen ─────────
@@ -875,7 +934,7 @@
   window.Game = {
     get save() { return S; },
     CAST: null, G, ITEMS, fmt, topicLabel: id => (topic(id) ? topic(id).name : ''), topic, showLesson,
-    record, level, maxHP, depthNote, openMenu, askRook, persist, scratch, grapher, scratchTip,
+    record, level, maxHP, depthNote, charm, LEAVE, afterScript, leftQuest, openMenu, askRook, persist, scratch, grapher, scratchTip,
     titleChoose: id => (titleUI ? titleUI.choose(id) : null),
     titleDrawer: id => (titleUI ? (id ? titleUI.chooseDrawer(id) : titleUI.openDrawer()) : null),
     daily: back => dailyIntro(back), drills: back => drillsMenu(back), papers: back => papersMenu(back), notebook: back => notebook(back, true),

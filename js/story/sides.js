@@ -130,11 +130,11 @@
   });
 
   (SC.extraJobs = SC.extraJobs || []).push(
-    [1, 'flowerbedDone', 'The square flower bed', 'a villager in the square'],
-    [2, 'footpathDone', 'The new footpath', 'Tomas at the blue market stall'],
-    [2, 'pondDone', "Moss's round pond", 'Moss by the stream'],
-    [2, 'binomDone', "Mira's puzzle book", 'Old Wick'],
-    [2, 'fishpenDone', "Nell's round fish pen", 'Nell at Gull Point (after her net)'],
-    [2, 'rocksDone', 'The two rocks', 'Ottoline in the lamp room'],
+    [1, 'flowerbedDone', 'The square flower bed', 'a villager in the square', 'flowerbed'],
+    [2, 'footpathDone', 'The new footpath', 'Tomas at the blue market stall', 'footpath'],
+    [2, 'pondDone', "Moss's round pond", 'Moss by the stream', 'pond'],
+    [2, 'binomDone', "Mira's puzzle book", 'Old Wick', 'wickBinom'],
+    [2, 'fishpenDone', "Nell's round fish pen", 'Nell at Gull Point (after her net)', 'fishpen'],
+    [2, 'rocksDone', 'The two rocks', 'Ottoline in the lamp room', 'rocks'],
   );
 })();
