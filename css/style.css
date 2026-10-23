@@ -294,3 +294,5 @@ canvas.dodge { display: block; margin: 0 auto; background: #000; border: 3px sol
   .bubble { left: auto; right: 0; top: -4px; max-width: 60%; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
+
+.item-list li.job-done { opacity: 0.55; }

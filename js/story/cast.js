@@ -17,6 +17,8 @@ window.CAST = {
   strix:    { name: 'Magistrate Strix', portrait: 'owl',     color: '#e8c24a', blip: 200 },
   wend:     { name: 'The Wend',        portrait: 'wend',     color: '#9bd3e8', blip: 120 },
   cog:      { name: 'Cog',             portrait: 'cog',      color: '#c8c8d0', blip: 160 },
+  rowan:    { name: 'Rowan',           portrait: 'rowan',    color: '#c9e3a0', blip: 270 },
+  tansy:    { name: 'Tansy',           portrait: 'tansy',    color: '#ffc38a', blip: 760 },
   mira:     { name: 'Mira Hale',       portrait: 'mira',     color: '#7fd1b9', blip: 500 },
   hush:     { name: 'The Hush',        portrait: 'shadow',   color: '#c77dff', blip: 110 },
   kid:      { name: 'Kid',             portrait: 'kid',      color: '#ffd166', blip: 820 },

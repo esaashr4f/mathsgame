@@ -87,6 +87,29 @@
       c.fillStyle = '#c0403a'; c.fillRect(sx - 2, sy - 84, 4, 6);
     };
   }
+  function drawWindpump(on) {
+    return (c, sx, sy, t) => {
+      c.fillStyle = '#5e3f22'; c.fillRect(sx - 7, sy - 40, 14, 40);
+      c.fillStyle = '#7a5232'; c.fillRect(sx - 5, sy - 40, 4, 40);
+      c.fillStyle = '#3a2a1a'; c.fillRect(sx - 3, sy - 10, 6, 10);
+      c.fillStyle = '#41414c'; c.fillRect(sx - 9, sy - 46, 18, 6);
+      c.save(); c.translate(sx, sy - 44); c.rotate(on ? t * 2.4 : 0.4);
+      for (let i = 0; i < 4; i++) {
+        c.rotate(Math.PI / 2);
+        c.fillStyle = '#3a2a1a'; c.fillRect(-1, 0, 2, 26);
+        c.fillStyle = on || i % 2 ? '#e8e2d0' : 'rgba(232,226,208,0.35)'; c.fillRect(2, 6, 6, 20);
+      }
+      c.restore();
+      if (on) { c.fillStyle = '#9bd3e8'; c.fillRect(sx + 7, sy - 6, 6 + Math.sin(t * 6) * 2, 3); }
+    };
+  }
+  function drawBoat(c, sx, sy, t) {
+    const b = Math.sin(t * 2) * 1.5;
+    c.fillStyle = '#5e3f22'; c.fillRect(sx - 14, sy - 6 + b, 28, 6);
+    c.fillStyle = '#8a6038'; c.fillRect(sx - 16, sy - 9 + b, 32, 3);
+    c.fillStyle = '#41414c'; c.fillRect(sx + 9, sy - 15 + b, 5, 7);
+    c.fillStyle = '#c0403a'; c.fillRect(sx - 12, sy - 4 + b, 24, 1);
+  }
   function drawStill(c, sx, sy, t) {
     c.save(); c.globalAlpha = 0.6 + 0.2 * Math.sin(t * 2);
     c.strokeStyle = '#c77dff'; c.lineWidth = 2;
@@ -169,19 +192,30 @@
       // west: meadows, the lock, the marsh
       scatter(g, 'T', 22, 0, 12, 28, 40, 51);
       scatter(g, ',', 40, 0, 30, 28, 20, 52);
+      const flooded = f.chapter >= 4 && !f.drained;
+      if (flooded) {
+        // The Wend has burst its banks: the meadows are a lake with two islands.
+        rect(g, 1, 31, 26, 11, '~'); rect(g, 14, 42, 13, 8, '~'); rect(g, 0, 50, 27, 4, '~');
+        rect(g, 15, 32, 9, 8, '.');                       // Rowan's farm, now an island
+        rect(g, 8, 31, 2, 11, f.pumpOn ? '=' : '~');      // the causeway shows once the pump runs
+        rect(g, 3, 42, 10, 8, '.');                       // lockhouse island
+      } else {
+        rect(g, 8, 28, 2, 16, ':');
+        rect(g, 2, 32, 5, 3, 'v'); rect(g, 12, 41, 3, 2, 'K');
+      }
       rect(g, 0, 26, 30, 2, ':');
-      rect(g, 8, 28, 2, 16, ':');
+      rect(g, 8, 28, 2, 3, ':');
       house(g, 5, 44, 7, 5, 4);       // lockhouse, door (9,48)
       rect(g, 9, 49, 1, 3, ':');
-      if (!f.drained && f.chapter >= 4) {
-        rect(g, 1, 31, 26, 19, '~');
-        rect(g, 8, 31, 2, 13, '=');
-        rect(g, 5, 36, 3, 3, '.'); rect(g, 15, 40, 4, 3, '.'); rect(g, 20, 33, 3, 2, '.');
-      }
+      house(g, 16, 33, 7, 5, 3);      // Rowan's farmhouse, door (19,37)
+      rect(g, 19, 38, 1, 2, ':');
       rect(g, 0, 12, 22, 14, 'R');
       rect(g, 2, 14, 6, 4, '~'); rect(g, 13, 19, 5, 3, '~'); rect(g, 3, 22, 4, 2, '~');
       rect(g, 6, 18, 5, 4, ',');
       rect(g, 10, 22, 2, 4, ':');
+      // the marsh edge: a wall of trees, with two fogged gaps
+      rect(g, 1, 25, 21, 1, 'T'); rect(g, 10, 25, 2, 1, ':');
+      rect(g, 22, 12, 1, 13, 'T'); rect(g, 22, 18, 1, 2, ':'); rect(g, 23, 18, 3, 2, ':');
       // map edges
       rect(g, 0, 4, 1, 48, 'T');
 
@@ -222,7 +256,7 @@
       E.push({ id: 'duck2', x: 70, y: 58, sprite: 'duck', wander: 5, swim: true, talk: S('duck'), solid: false });
       E.push({ id: 'duck3', x: 30, y: 10.5, sprite: 'duck', wander: 4, swim: true, talk: S('duck'), solid: false });
       // ── gorge
-      E.push({ id: 'bramble', x: 49.5, y: f.brambleSpared ? 5 : 3, sprite: 'bramble', talk: S('bramble'), w: 8, tall: 20 });
+      E.push({ id: 'bramble', x: 49.5, y: f.brambleSpared ? 5 : 3, sprite: 'bramble', talk: S('bramble'), w: 8, tall: 20, hidden: f.chapter === 4 && !f.drained });
       // ── east road & Gull Point
       if (!f.eastOpen) for (let y = 25; y <= 28; y++) E.push({ id: 'fogE' + y, x: 74, y, draw: drawFogWall, talk: S('fogWall'), w: 8 });
       E.push({ id: 'lighthouse', x: 85, y: 18, draw: drawLighthouse(!!f.lightOn), talk: S('lighthouseDoor'), w: 10, tall: 40 });
@@ -240,8 +274,21 @@
       if (!f.westOpen) E.push({ id: 'log', x: 29, y: 26.5, draw: drawLog, talk: S('log'), w: 8, tall: 30 });
       E.push({ id: 'lockgate', x: 16, y: 57, draw: drawGate(!!f.lockOpen), talk: S('lockgate'), solid: false, tall: 70 });
       E.push({ id: 'cog', x: 15, y: 51, sprite: 'cog', talk: S('cog'), w: 7, tall: 18 });
-      E.push({ id: 'wendSerpent', x: 14, y: 36, sprite: 'wend', talk: S('wend'), w: 9, tall: 14, hidden: !(f.chapter >= 4 && !f.drained) });
-      if (!f.marshOpen) for (let y = 12; y <= 27; y++) E.push({ id: 'fogW' + y, x: 22, y, draw: drawFogWall, talk: S('fogMarsh'), w: 8 });
+      E.push({ id: 'wendSerpent', x: 10.8, y: 38, sprite: 'wend', talk: S('wend'), w: 9, tall: 14, bob: 2, hidden: !(f.chapter >= 4 && !f.drained) });
+      // ── the meadows (chapter 4)
+      const ch4 = f.chapter === 4 && !f.drained;
+      E.push({ id: 'windpump', x: 4, y: 29.5, draw: drawWindpump(!!f.pumpOn), talk: S('windpump'), w: 8, tall: 56 });
+      E.push({ id: 'gauge', x: 23, y: 30, sprite: 'sign', talk: S('gauge') });
+      E.push({ id: 'rowan', x: f.drained ? 17 : 20, y: f.drained ? 39 : 29.4, sprite: 'rowan', talk: S('rowan'), hidden: !(f.chapter >= 4) });
+      E.push({ id: 'brambleW', x: 27, y: 29.5, sprite: 'bramble', talk: S('brambleWest'), w: 8, tall: 20, hidden: !ch4 });
+      E.push({ id: 'launch', x: 10.6, y: 34.6, draw: drawBoat, talk: S('launch'), w: 8, solid: false, under: true, hidden: !(ch4 && f.pumpOn) });
+      E.push({ id: 'launch2', x: 13.6, y: 35.6, draw: drawBoat, talk: S('launchBack'), w: 8, solid: false, under: true, hidden: !(ch4 && f.launchDone) });
+      E.push({ id: 'tansy', x: f.drained ? 20 : 21, y: f.drained ? 39.5 : 38.5, sprite: 'tansy', talk: S('tansy'), hidden: !(f.chapter >= 4) });
+      E.push({ id: 'goat1', x: 17, y: 39, sprite: 'goat', talk: S('goat'), wander: 2, speed: 8 });
+      E.push({ id: 'goat2', x: 23, y: 36, sprite: 'goat', talk: S('goat'), wander: 2, speed: 8 });
+      E.push({ id: 'goat3', x: 15.5, y: 33, sprite: 'goat', talk: S('goat'), wander: 2, speed: 8 });
+      E.push({ id: 'stake', x: 23, y: 32.4, sprite: 'sign', talk: S('surveyStake') });
+      if (!f.marshOpen) [[10, 25], [11, 25], [22, 18], [22, 19]].forEach(([x, y]) => E.push({ id: 'fogW' + x + '_' + y, x, y, draw: drawFogWall, talk: S('fogMarsh'), w: 8 }));
       E.push({ id: 'still', x: 8.5, y: 20, draw: drawStill, talk: S('still'), w: 14, solid: false, under: true });
       if (f.chapter >= 6 && !f.miraFreed) E.push({ id: 'miraFog', x: 8.5, y: 18.5, sprite: 'mira', talk: S('miraFogged'), alpha: 0.7 });
       return {
@@ -261,7 +308,8 @@
           { x: 49, y: 7, w: 2, run: S('gorgeApproach'), when: f => !f.brambleSpared },
           { x: 48, y: 0, w: 4, run: S('crossBridge'), when: f => f.bridgeBuilt },
           { x: 80, y: 26, h: 2, run: S('arriveGullPoint'), when: f => f.eastOpen && !f.gullPointSeen },
-          { x: 22, y: 26, h: 2, run: S('arriveMeadows'), when: f => f.westOpen && !f.meadowsSeen },
+          { x: 24, y: 26, h: 5, run: S('arriveMeadows'), when: f => f.westOpen && !f.meadowsSeen },
+          { x: 19, y: 37, run: S('farmDoor') },
           { x: 12, y: 18, h: 6, run: S('enterStill'), when: f => f.marshOpen && !f.miraFreed },
         ],
       };

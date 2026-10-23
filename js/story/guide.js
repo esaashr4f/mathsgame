@@ -14,12 +14,47 @@
     [f => !f.brambleSpared, 'Face Bramble at the gorge bridge', 'North, across Moss\'s crossing, up to the gorge. Bring the blueprint. Bring patience.', 'In the encounter: ACT, then "Work it out". One step per turn. If you slip, he hits harder — and I\'ll hint.'],
     [f => !f.lightOn, 'Relight the lighthouse at Gull Point (east road)', 'East along the cliff road to Gull Point. The fog has thinned enough to get through.', 'Nell the fisher is on the beach. The lighthouse door is at the foot of the tower.'],
     [f => !f.strixSpared, 'Restore the census records in the Town Hall', 'The Town Hall is open. Pim the clerk needs the records sorted, and Dr Sorrel\'s remedy is on trial.', 'Statistics chapter. The census is the OCR Large Data Set, more or less. And don\'t let anyone say "proves" about a hypothesis test.'],
-    [f => !f.drained, 'Calm the flood in the western meadows', 'West, past where the fallen tree was. The Wend has burst its banks. Graphs and calculus, {name}. Lots of graphs.'],
+    [f => !f.meadowsSeen, 'Go west to the flooded meadows', 'West along the road from the square, past where the oak fell. Bramble moved it. The Wend has burst its banks.'],
+    [f => !f.gaugeDone, 'Talk to Rowan by the gauge post on the shore', 'Rowan\'s the farmer by the gauge post on the meadow shore. He needs to know how fast the water\'s rising. Differentiation from first principles: two moments, closer and closer.'],
+    [f => !f.pumpOn, 'Get the old windpump running (west end of the shore)', 'The windpump is at the far west end of the shore. Sails first: logs. Then whether there\'s enough wind: a cube law.'],
+    [f => !f.launchDone, "Take Rowan's launch from the causeway", 'Walk out along the causeway. The launch is tied up on the right. Mira modelled its engine: find the best speed by differentiating.'],
+    [f => !f.shelterDone, 'Help Tansy on the farm island', 'Tansy\'s by the barn. She needs a roof for the goats. Optimisation: write the volume as one variable, differentiate, set it to zero.'],
+    [f => !f.riverbedDone, "Read Mira's survey stake (top corner of the island)", 'Mira\'s stake is at the top-right corner of the island. Factorise, differentiate, find the stationary points: that\'s a sketch.'],
+    [f => !f.drained, 'Face the Wend (from the causeway)', 'Take the launch back, then face the Wend from the causeway. Second derivatives tell you max or min. Then integrate.', 'In the encounter: ACT, then "Work it out". Use the hourglass if you need time.'],
     [f => !f.lockOpen, 'Open the Wend Lock and get the steel cable', 'The lock is at the far west end of the river. There\'s a golem. Forces and motion. Draw a force diagram first.'],
     [f => !f.bridgeBuilt, 'Bring the cable to Bramble at the gorge', 'Take the cable to Bramble. The timber boats are arriving now the light\'s on.'],
     [f => !f.miraFreed, 'Go into the marsh — to the Still', 'The marsh is north-west, beyond the meadows. The fog has pulled back to its heart. Mira\'s in there. I know it.'],
     [f => true, 'Explore Lowmarsh · practise · get ready for your exam', 'We did it, {name}. Now go and do it again in the exam hall. Drills, past papers, the Daily Dive — they\'re all in the menu.'],
   ];
+
+  // Side quests: [chapter it opens, done flag, title, where to look].
+  const JOBS = [
+    [1, 'wickDone', "Old Wick's lantern", 'Old Wick, wandering the square'],
+    [1, 'tomasDone', "Tomas's apples", 'the blue market stall'],
+    [1, 'kidCode', "Mira's strongbox code", 'a kid in the square'],
+    [2, 'nellDone', "Nell's net", 'Nell on the beach at Gull Point'],
+    [2, 'janDone', "Jan's kingfisher", 'Old Jan on the headland'],
+    [2, 'kiteDone', "Pebble's kite", 'a kid on the headland'],
+    [3, 'travelDone', 'The travel ledger', 'the Mayor in the Town Hall'],
+    [3, 'radarDone', 'School or care home?', 'the Mayor in the Town Hall'],
+    [3, 'vennDone', 'The evening classes', 'the Mayor in the Town Hall'],
+    [3, 'registerDone', 'The fog-day register', 'the register in the Town Hall'],
+    [3, 'ivyDone', "Gran Ivy's allotments", 'Gran Ivy, south of the square'],
+    [3, 'coffeeDone', "Fen's posters", 'Aunt Fen at the bakery'],
+    [3, 'goalsDone', "Moss's football team", 'Moss by the stream'],
+    [3, 'giftsDone', 'The free gift claim', 'the blue market stall'],
+    [3, 'spinnerDone', 'The fairground spinner', 'a kid in the square'],
+    [3, 'bandDone', 'Blue Rocking', 'a kid near the cottages'],
+    [4, 'soupDone', "Fen's soup run", 'Aunt Fen at the bakery, then Tansy'],
+    [4, 'leveeDone', "Bramble's flood bank", 'Bramble'],
+    [4, 'midgesDone', 'The midge plague', 'Dr Sorrel at the clinic'],
+    [4, 'lanternDone', "Wick's beam", 'Old Wick'],
+    [4, 'colonyDone', 'The shrinking colony', 'Old Jan at Gull Point'],
+    [4, 'ditchDone', "Moss's drainage ditch", 'Moss'],
+    [4, 'algaeDone', 'The bloom in the rock pools', 'Nell at Gull Point'],
+  ];
+  SC.jobs = f => JOBS.filter(j => (f.chapter || 0) >= j[0]).map(j => ({ title: j[2], where: j[3], done: !!f[j[1]] }));
+  SC.addJobs = list => JOBS.push(...list);
 
   SC.objective = f => STEPS.find(s => s[0](f))[1];
   SC.rookHint = f => {

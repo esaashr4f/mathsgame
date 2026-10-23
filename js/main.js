@@ -97,6 +97,7 @@
     blueprint: { name: "Mira's Bridge Blueprint", desc: 'The original bridge design, in Mira\'s handwriting.' },
     lens: { name: 'Lens Notes', desc: 'Ottoline\'s notes on the lighthouse lens.' },
     census: { name: 'Census Page', desc: 'Mira\'s census entry: "Location: the Still."' },
+    soup: { name: "Fen's Soup Flask", desc: 'Leek and potato, 100 °C when it left the bakery. For Tansy.' },
     cable: { name: 'Steel Cable', desc: 'Forty metres of good steel cable from the lock.' },
   };
 
@@ -213,6 +214,7 @@
       '<button data-a="rook">🐦 Ask Rook</button><button data-a="notebook">📖 Mira\'s Notebook</button>' +
       '<button data-a="scratch">✏️ Scratch Pad</button><button data-a="grapher">📈 Grapher</button>' +
       '<button data-a="formulae">📐 Formula Book</button><button data-a="items">🎒 Items</button>' +
+      '<button data-a="jobs">📋 Side Quests</button>' +
       '<button data-a="drills">🎯 Drills</button><button data-a="papers">📝 Past Papers</button>' +
       '<button data-a="daily">⏱ Daily Dive</button><button data-a="save">💾 Save</button>' +
       '<button data-a="settings">⚙ Settings</button><button data-a="title">🚪 Title Screen</button>' +
@@ -227,6 +229,7 @@
       grapher: sub(back => grapher(back)),
       formulae: sub(back => formulae(back)),
       items: sub(back => itemsView(back)),
+      jobs: sub(back => jobsView(back)),
       drills: sub(back => drillsMenu(back, true)),
       papers: sub(back => papersMenu(back, true)),
       daily: sub(back => dailyIntro(back, true)),
@@ -329,6 +332,14 @@
   function itemsView(back) {
     const list = Object.keys(S.items).filter(k => S.items[k] > 0);
     overlayPanel('<h2 class="p5"><span>ITEMS</span></h2>' + (list.length ? '<ul class="item-list">' + list.map(k => '<li><b>' + esc(ITEMS[k].name) + '</b> ×' + S.items[k] + '<br><span class="muted">' + esc(ITEMS[k].desc) + '</span></li>').join('') + '</ul>' : '<p class="muted">Your pockets are empty. Two jumpers and a phone with no signal.</p>'), back);
+  }
+
+  function jobsView(back) {
+    const jobs = window.SCRIPTS.jobs ? window.SCRIPTS.jobs(S.flags) : [];
+    const open = jobs.filter(j => !j.done), done = jobs.filter(j => j.done);
+    const li = j => '<li class="' + (j.done ? 'job-done' : '') + '"><b>' + (j.done ? '✓ ' : '◇ ') + esc(fmtPlain(j.title)) + '</b><br><span class="muted">' + esc(fmtPlain(j.where)) + '</span></li>';
+    overlayPanel('<h2 class="p5"><span>SIDE QUESTS</span></h2><p class="muted">Optional problems around Lowmarsh. Real exam questions, every one. ' + done.length + ' of ' + jobs.length + ' done.</p>' +
+      (jobs.length ? '<ul class="item-list">' + open.concat(done).map(li).join('') + '</ul>' : '<p class="muted">Nobody needs anything yet. Give it time.</p>'), back);
   }
 
   function settings(back) {

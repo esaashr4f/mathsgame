@@ -102,6 +102,18 @@
       '.kwwwwwk..',
       '..kkkkk...',
     ],
+    goat: [
+      '.N.N........',
+      '.kNk........',
+      'kwwwk.......',
+      'kwewk..kkkk.',
+      '.kwwkkkwwwwk',
+      '..kwwwwwwwWk',
+      '..kwwwwwwWWk',
+      '..kWwkkkwWk.',
+      '..kNk...kNk.',
+      '..kk....kk..',
+    ],
     cat: [
       'k...k.....',
       'kokok.....',
@@ -305,6 +317,8 @@
     ivy: { h: '#b9b3a6', b: '#b07fc8', y: '#5f8f4a', s: '#e3b48c', p: '#4f3420' },
     kid: { h: '#e8c24a', b: '#c0403a', y: '#f4f1e8', p: '#3f6fb0' },
     ottoline: { h: '#d6e6ff', b: '#8fa8cc', y: '#cfe0ff', s: '#e6eefb', e: '#4a5a7a', p: '#7a90b8', k: '#5a6a8a' },
+    rowan: { h: '#8a6038', b: '#5f8f4a', y: '#7a5232', s: '#d9a57c', p: '#3a3550' },
+    tansy: { h: '#c0603a', b: '#e8c24a', y: '#5f8f4a', p: '#4f3420' },
     shadow: { h: '#1a1024', b: '#2a1838', y: '#c77dff', s: '#2a1838', e: '#ff4d6d', p: '#1a1024' },
   };
 
