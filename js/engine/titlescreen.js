@@ -164,6 +164,10 @@
     const c = cv.getContext('2d');
     let W = 0, H = 0, scale = 1, scene = null, logo = null, look = null, lookKey = '', t = 0, last = performance.now(), checked = -99;
     let phase = opts.skipIntro ? 'menu' : 'press', open = opts.skipIntro ? 1 : 0, sel = opts.selected || 0, hoverAcct = false, chosen = -1, chosenAt = 0;
+    // the side menu (☰, top left): everything around the game that isn't in the story
+    const drawer = opts.drawer || [];
+    const dPick = drawer.map((d, i) => (d.id ? i : -1)).filter(i => i >= 0);
+    let dOpen = !!opts.drawerOpen, dAnim = dOpen ? 1 : 0, dSel = Math.max(0, dPick.indexOf(opts.drawerSel)), hoverIcon = false, dChosen = -1;
     const items = opts.items;
     const touch = matchMedia('(pointer: coarse)').matches;
     const forced = parseFloat(new URLSearchParams(location.search).get('hour'));
@@ -302,7 +306,67 @@
           if (isSel) { const hrt = Sprites.get('heart'); c.drawImage(hrt, r.x - hrt.width - 5, r.y + Math.round((MENU.size * 0.8 - hrt.height) / 2) + (Math.floor(t * 2.2) % 2)); }
         });
       }
+      drawDrawer(dt);
       raf = requestAnimationFrame(frame);
+    }
+
+    // ── the side menu ──
+    const ICON = { x: 6, y: 6, w: 16, h: 13 };
+    function drawerLayout() {
+      const pw = Math.min(W - 16, Math.max(150, ...drawer.map(d => (d.id ? textW(d.label, MENU) + (d.soon ? textW('soon', MENU) + 14 : 0) : textW(d.head, MENU)) + 44)));
+      const rows = [];
+      let y = 34;
+      drawer.forEach((d, i) => { if (d.head) { y += i ? 6 : 0; rows.push({ i, y, head: true }); y += 16; } else { rows.push({ i, y }); y += 18; } });
+      const scroll = Math.max(0, y + 8 - H);
+      return { pw, rows, scroll };
+    }
+    function drawDrawer(dt) {
+      dAnim = Math.max(0, Math.min(1, dAnim + (dOpen ? dt : -dt) * 7));
+      // the ☰: three chunky pixel lines with a drop shadow
+      const col = hoverIcon || dOpen ? COLORS.sel : COLORS.dim;
+      for (let i = 0; i < 3; i++) { c.fillStyle = COLORS.shadow; c.fillRect(ICON.x + 1, ICON.y + 1 + i * 5, 14, 3); }
+      for (let i = 0; i < 3; i++) { c.fillStyle = col; c.fillRect(ICON.x, ICON.y + i * 5, 14, 3); }
+      if (dAnim <= 0) return;
+      const D = drawerLayout(), x0 = Math.round(-D.pw + D.pw * (1 - Math.pow(1 - dAnim, 3)));
+      c.save(); c.globalAlpha = 0.5 * dAnim; c.fillStyle = '#05060f'; c.fillRect(0, 0, W, H); c.restore();
+      // the panel: a warm pixel window, square on the screen edge, rounded on the open side
+      const px = (cc, a, b, w, h) => { c.fillStyle = cc; c.fillRect(a, b, w, h); };
+      px('#2a1408', x0, 0, D.pw + 2, H);
+      px('#fff1d6', x0 + D.pw - 2, 2, 1, H - 4);
+      px('#5a3a62', x0 + D.pw - 3, 2, 1, H - 4);
+      px('#1e1428', x0, 0, D.pw - 3, H);
+      px('#2a1d38', x0, 0, D.pw - 3, 24);
+      drawText(c, 'Menu', x0 + 26, 5, MENU, COLORS.sub, COLORS.shadow);
+      for (let i = 0; i < 3; i++) { c.fillStyle = COLORS.sel; c.fillRect(x0 + 6, 6 + i * 5, 14, 3); }
+      c.save(); c.beginPath(); c.rect(x0, 26, D.pw - 3, H - 26); c.clip();
+      const sy = Math.min(D.scroll, Math.max(0, (D.rows.find(r => r.i === dPick[dSel]) || { y: 0 }).y - H + 40));
+      D.rows.forEach(r => {
+        const d = drawer[r.i], y = r.y - sy;
+        if (r.head) { drawText(c, d.head, x0 + 10, y, MENU, '#a88aa0', COLORS.shadow); c.fillStyle = '#3a2a4a'; c.fillRect(x0 + 10, y + 14, D.pw - 24, 1); return; }
+        const isSel = dPick[dSel] === r.i, flash = dChosen === r.i && Math.floor((t - chosenAt) * 14) % 2 === 0;
+        if (isSel) { c.fillStyle = '#33244a'; c.fillRect(x0 + 4, y - 2, D.pw - 10, 17); }
+        drawText(c, d.label, x0 + 24, y, MENU, flash ? '#ffffff' : isSel ? COLORS.sel : (d.soon ? '#b9a6b8' : COLORS.text), COLORS.shadow);
+        if (d.soon) drawText(c, 'soon', x0 + D.pw - 14 - textW('soon', MENU), y, MENU, '#8a6a88', COLORS.shadow);
+        if (isSel) c.drawImage(Sprites.get('heart'), x0 + 10, y + 3 + (Math.floor(t * 2.2) % 2));
+      });
+      c.restore();
+    }
+    function toggleDrawer(v) { dOpen = v == null ? !dOpen : v; Sfx.select(); }
+    function dMove(d) { dSel = (dSel + d + dPick.length) % dPick.length; Sfx.move(); }
+    function dChoose(k) {
+      if (dChosen >= 0) return;
+      dSel = k; dChosen = dPick[k]; chosenAt = t; Sfx.confirm();
+      const id = drawer[dChosen].id;
+      setTimeout(() => { dChosen = -1; if (cv.isConnected) opts.onChoose(id, { fromDrawer: true }); }, 300);
+    }
+    function dHit(p) {
+      if (p.x >= ICON.x - 4 && p.x <= ICON.x + ICON.w + 4 && p.y >= ICON.y - 4 && p.y <= ICON.y + ICON.h + 4) return 'icon';
+      if (!dOpen) return null;
+      const D = drawerLayout();
+      if (p.x > D.pw) return 'outside';
+      const sy = Math.min(D.scroll, Math.max(0, (D.rows.find(r => r.i === dPick[dSel]) || { y: 0 }).y - H + 40));
+      const row = D.rows.find(r => !r.head && p.y + sy >= r.y - 3 && p.y + sy < r.y + 15);
+      return row ? dPick.indexOf(row.i) : 'panel';
     }
 
     // ── input ──
@@ -318,6 +382,13 @@
       if (!cv.isConnected) return cleanup();
       if (document.getElementById('title').classList.contains('hidden') || document.querySelector('.panel-screen') || (document.activeElement && document.activeElement.tagName === 'INPUT')) return;
       const k = e.key.toLowerCase();
+      if (k === 'm' || (k === 'escape' && dOpen) || (k === 'x' && dOpen)) { e.preventDefault(); return toggleDrawer(k === 'm' ? null : false); }
+      if (dOpen) {
+        if (k === 'arrowup' || k === 'w') { e.preventDefault(); dMove(-1); }
+        else if (k === 'arrowdown' || k === 's') { e.preventDefault(); dMove(1); }
+        else if (k === 'enter' || k === 'z' || k === ' ') { e.preventDefault(); dChoose(dSel); }
+        return;
+      }
       if (phase === 'press') { if (k === 'enter' || k === 'z' || k === ' ') { e.preventDefault(); start(); } return; }
       if (open < 1) return;
       if (k === 'arrowup' || k === 'w' || k === 'arrowleft' || k === 'a') { e.preventDefault(); move(-1); }
@@ -332,13 +403,20 @@
       return i >= 0 ? i : null;
     }
     function onMove(e) {
-      const h = hit(toLogical(e));
+      const p = toLogical(e), dh = dHit(p);
+      hoverIcon = dh === 'icon';
+      if (dOpen) { if (typeof dh === 'number' && dh !== dSel) dMove(dh - dSel); cv.style.cursor = typeof dh === 'number' || dh === 'icon' || dh === 'outside' ? 'pointer' : 'default'; return; }
+      if (hoverIcon) { cv.style.cursor = 'pointer'; return; }
+      const h = hit(p);
       hoverAcct = h === 'account';
       if (typeof h === 'number' && h !== sel) move(h - sel);
       cv.style.cursor = h != null ? 'pointer' : 'default';
     }
     function onClick(e) {
-      const h = hit(toLogical(e));
+      const p = toLogical(e), dh = dHit(p);
+      if (dh === 'icon') return toggleDrawer();
+      if (dOpen) { if (dh === 'outside') toggleDrawer(false); else if (typeof dh === 'number') dChoose(dh); return; }
+      const h = hit(p);
       if (h === 'account') { Sfx.select(); return opts.onChoose('account'); }
       if (phase === 'press') return start();
       if (typeof h === 'number') choose(h);
@@ -355,7 +433,7 @@
     cv.addEventListener('pointermove', onMove);
     cv.addEventListener('click', onClick);
     raf = requestAnimationFrame(frame);
-    return { cleanup, start, choose: id => { const i = items.findIndex(it => it.id === id); if (i >= 0) { phase = 'menu'; open = 1; choose(i); } } };
+    return { cleanup, start, openDrawer: () => toggleDrawer(true), chooseDrawer: id => { const k = dPick.findIndex(i => drawer[i].id === id); if (k >= 0) { dOpen = true; dAnim = 1; dChoose(k); } }, choose: id => { const i = items.findIndex(it => it.id === id); if (i >= 0) { phase = 'menu'; open = 1; choose(i); } } };
   }
 
   const FONTS = ['500 16px "Pixelify Sans"', '700 64px "Pixelify Sans"', '700 40px "Pixelify Sans"', '700 32px "Pixelify Sans"'];

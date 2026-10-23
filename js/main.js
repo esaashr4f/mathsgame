@@ -138,13 +138,101 @@
 
   // The title screen: a pixel-art canvas (js/engine/titlescreen.js) whose sky follows the real time of day,
   // "Press Z or Enter", then a menu with a heart cursor. A hidden list of real buttons mirrors it for screen readers.
-  let titleSel = null, titleSeen = false, titleUI = null;
+  // ───────── the side menu: everything around the game ─────────
+  const DRAWER = () => [
+    { head: 'You' },
+    { id: 'stats', label: 'My Stats' },
+    { id: 'account', label: Auth.current() && Auth.current().username ? 'Profile' : 'Log in' },
+    { head: 'Study' },
+    { id: 'notebookAll', label: 'Mira\'s Notebook' },
+    { id: 'formulae', label: 'Formula Book' },
+    { id: 'grapher', label: 'Grapher' },
+    { id: 'scratch', label: 'Scratch Pad' },
+    { head: 'Lowmarsh' },
+    { id: 'about', label: 'About' },
+    { id: 'howto', label: 'How to Play' },
+    { id: 'coverage', label: 'What\'s Covered' },
+    { head: 'More' },
+    { id: 'teachers', label: 'For Teachers', soon: true },
+    { id: 'plus', label: 'Lowmarsh Plus', soon: true },
+    { id: 'help', label: 'Help' },
+    { id: 'privacy', label: 'Privacy' },
+    { id: 'credits', label: 'Credits' },
+    { id: 'settings', label: 'Settings' },
+  ];
+  const pct = (a, b) => (b ? Math.round(100 * a / b) : 0);
+
+  function statsPage(back) {
+    const T = window.TOPICS;
+    const all = Object.values(S.stats).reduce((t, x) => ({ r: t.r + x.right, w: t.w + x.wrong }), { r: 0, w: 0 });
+    const jobs = window.SCRIPTS.jobs ? window.SCRIPTS.jobs(S.flags) : [];
+    const days = Object.keys(S.daily).sort();
+    const bestDepth = days.reduce((m, k) => Math.max(m, S.daily[k].depth || 0), 0);
+    const rows = T.map(t => { const st = S.stats[t.id] || { right: 0, wrong: 0 }, n = st.right + st.wrong; return { t, n, a: n ? st.right / n : null }; })
+      .sort((x, y) => (x.a == null) - (y.a == null) || (x.a || 0) - (y.a || 0));
+    const papers = window.PAPERS.filter(p => S.papers[p.id] != null);
+    const last7 = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - 6 + i); const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); return { day: 'MTWTFSS'[(d.getDay() + 6) % 7], v: S.daily[k] ? S.daily[k].depth : null }; });
+    const el = overlayPanel('<h2 class="p5"><span>MY STATS</span></h2>' +
+      '<div class="stat-grid">' +
+      '<div><b>' + (all.r + all.w ? pct(all.r, all.r + all.w) + '%' : '—') + '</b><span>steps right first time</span></div>' +
+      '<div><b>' + (all.r + all.w) + '</b><span>steps worked</span></div>' +
+      '<div><b>' + papers.length + '/' + window.PAPERS.length + '</b><span>papers sat</span></div>' +
+      '<div><b>' + streak() + '</b><span>day streak</span></div>' +
+      '<div><b>' + bestDepth + 'm</b><span>deepest challenge</span></div>' +
+      '<div><b>' + (S.started ? 'Ch ' + (S.flags.chapter || 0) : '—') + '</b><span>story</span></div>' +
+      '<div><b>' + S.pages.length + '/' + T.length + '</b><span>notebook pages</span></div>' +
+      '<div><b>' + jobs.filter(j => j.done).length + '/' + jobs.length + '</b><span>side quests</span></div></div>' +
+      '<h3 class="group-head">Topics, weakest first</h3><div class="topic-rows">' + rows.map(r =>
+        '<div class="trow"><span class="tname">' + esc(r.t.name) + '</span><span class="acc"><i style="width:' + Math.round((r.a || 0) * 100) + '%"></i></span><span class="tval">' + (r.a == null ? 'not tried' : Math.round(r.a * 100) + '% · ' + r.n) + '</span><button class="btn small" data-a="drill" data-v="' + r.t.id + '">Practise</button></div>').join('') + '</div>' +
+      '<h3 class="group-head">Past papers</h3>' + (papers.length ? '<table class="tbl"><tr><th>Paper</th><th>Best</th><th></th></tr>' + papers.map(p => { const tot = p.questions.reduce((t, q) => t + q.marks, 0); return '<tr><td>' + esc(p.title.replace(/^OCR\s+/, '')) + '</td><td>' + S.papers[p.id] + '/' + tot + '</td><td>' + pct(S.papers[p.id], tot) + '%</td></tr>'; }).join('') + '</table>' : '<p class="muted">No papers sat under exam conditions yet.</p>') +
+      '<h3 class="group-head">Daily Challenge, last 7 days</h3><div class="week">' + last7.map(d => '<div class="wday"><i style="height:' + (d.v == null ? 0 : Math.max(4, Math.round(d.v / 7))) + 'px"></i><b>' + (d.v == null ? '·' : d.v + 'm') + '</b><span>' + d.day + '</span></div>').join('') + '</div>',
+      back, '', ['pim', 'I\'ve filed all your numbers. Alphabetically, then by colour, then properly. Your weakest topics are at the top. That\'s where the marks are.']);
+    on(el, { back: () => { el.close(); back(); }, drill: id => { el.close(); runDrill([id], null, () => statsPage(back)); } });
+  }
+
+  function textPage(back, title, host, html) { overlayPanel('<h2 class="p5"><span>' + title + '</span></h2><div class="lesson page-text">' + html + '</div>', back, '', host); }
+  const PAGES = {
+    about: back => textPage(back, 'ABOUT', ['rook', 'Lowmarsh. Fog, a missing surveyor, a crow with opinions, and a great deal of A level maths. Sit down, this won\'t take long.'],
+      '<p>Lowmarsh is a story-driven RPG that teaches A level Mathematics by making you use it. You arrive in a fen village where a strange fog has made everyone forget how to work things out. Every problem you solve, whether it\'s a plank long enough to reach the jetty, a lighthouse lamp or a river that has forgotten its shape, is a real exam question, worked through step by step.</p>' +
+      '<h3>What makes it different</h3><ul><li>Real past-paper questions, with the numbers and mark schemes, woven into the story.</li><li>You always write the working. Rook hints, and talks you through it if you\'re stuck, but never does it for you.</li><li>Every timer runs at real exam pace: 72 seconds a mark.</li><li>Encounters are Undertale-style: you never fight, you solve the creature\'s problem and spare it.</li></ul>' +
+      '<h3>Part One and Part Two</h3><p>Part One covers the whole of AS Level (OCR H230): six chapters, 64 story problems, 34 side quests and twelve past papers. Part Two, the rest of A level, is on its way.</p>'),
+    howto: back => textPage(back, 'HOW TO PLAY', ['rook', 'Arrow keys to walk, Z to talk. Everything else, I\'ll explain as we go. Probably twice.'],
+      '<h3>Controls</h3><ul><li><b>Move:</b> arrow keys or WASD. On a phone, the on-screen pad.</li><li><b>Talk / confirm:</b> Z, Enter or Space.</li><li><b>Menu:</b> C or Esc, or the ☰ MENU button in the top left of the game.</li><li><b>Ask Rook where to go:</b> R.</li><li><b>This side menu:</b> M, or the ☰ in the corner of the title screen.</li></ul>' +
+      '<h3>Solving a problem</h3><p>Each problem is split into the steps a mark scheme rewards. Type the answer to each step; the box shows how it has read what you typed. Fractions, surds (2√3 or 2sqrt3), powers (x^2), points (3, -2) and vectors (6i - 8j) all work. Stuck? Press <b>Hint</b>, then <b>Talk me through it</b>, then write it in yourself.</p>' +
+      '<h3>Encounters</h3><p>FIGHT never works. Use ACT → Work it out to solve one step per turn before the clock runs out. Get a step wrong and you dodge an attack. Solve the whole problem and the creature can be spared.</p>' +
+      '<h3>The scratch pad</h3><p>The ✏️ Scratch pad button opens a sheet of paper for your working. Draw with a mouse, finger or stylus.</p>' +
+      '<h3>Practice</h3><p>Drills practise one topic at a time; Past Papers can be sat under exam conditions, guided, or one question at a time; the Daily Challenge gives everyone the same seven problems each day.</p>'),
+    coverage: back => {
+      const T = window.TOPICS, n = id => allQuestions().filter(q => q.topic === id).length;
+      textPage(back, 'WHAT\'S COVERED', ['pim', 'Every topic on the OCR AS specification, cross-referenced. I may have enjoyed this too much.'],
+        '<p>Part One covers <b>OCR AS Level Mathematics A (H230)</b>: Paper 1 (Pure Mathematics and Statistics) and Paper 2 (Pure Mathematics and Mechanics). A level (H240) is coming in Part Two.</p>' +
+        '<table class="tbl"><tr><th>Topic</th><th>Spec</th><th>Paper</th><th>Questions</th></tr>' + T.map(t => '<tr><td>' + esc(t.name) + '</td><td>' + esc(t.spec) + '</td><td>' + esc(t.paper) + '</td><td>' + n(t.id) + '</td></tr>').join('') + '</table>' +
+        '<h3>Past papers</h3><ul>' + window.PAPERS.map(p => '<li>' + esc(p.title.replace(/^OCR\s+/, '')) + ' · ' + esc(p.paper) + '</li>').join('') + '</ul>' +
+        '<p class="muted">Edexcel and AQA are planned.</p>');
+    },
+    teachers: back => textPage(back, 'FOR TEACHERS', ['mayor', 'Teachers! Welcome, welcome. The council is VERY excited. The council is mostly me.'],
+      '<p><b>Coming soon.</b> Here\'s what\'s planned for schools and tutors:</p><ul><li><b>Classes:</b> students join with a class code, no email addresses needed.</li><li><b>Set work:</b> assign a past paper, a topic drill or a story chapter, with a deadline.</li><li><b>Class statistics:</b> see each student\'s accuracy by topic, which questions the class found hardest, and who is falling behind.</li><li><b>Mark breakdowns:</b> past papers marked question by question, ready to discuss in class.</li><li><b>Exports:</b> download results as a spreadsheet.</li></ul><p>Until then, students can share their <b>My Stats</b> page with you.</p>'),
+    plus: back => textPage(back, 'LOWMARSH PLUS', ['fen', 'Everything you can play right now is free, love. Always will be. Have a flapjack.'],
+      '<p><b>Coming soon.</b> Lowmarsh Plus will be an optional upgrade. Nothing here costs anything yet, and the story, drills, past papers and Daily Challenge will stay free.</p><p>Ideas being considered for Plus:</p><ul><li>Part Two, the full A level, as it\'s released.</li><li>Every past paper for every exam board, as they\'re added.</li><li>Predicted grades from your past-paper results.</li><li>Progress that follows you between devices.</li><li>Extra cosmetics for your character and Rook.</li></ul>'),
+    help: back => textPage(back, 'HELP', ['rook', 'Something gone wrong? Don\'t panic. Panicking is my job.'],
+      '<h3>My answer is right but it says it isn\'t</h3><p>Check the "reads as" line under the box: it shows how your answer was understood. Use ^ for powers, sqrt or √ for roots, and brackets for fractions: (x+1)/2. If you\'re sure it\'s right, try the exact form (2√3 rather than 3.46).</p>' +
+      '<h3>Where is my progress saved?</h3><p>In this browser on this device. If you sign in, it\'s saved to your account on this device. Clearing your browser data erases it.</p>' +
+      '<h3>I\'m stuck in the story</h3><p>Press R to ask Rook where to go next, or open the pause menu and choose <b>Ask Rook</b>. The objective is always shown at the top of the screen.</p>' +
+      '<h3>The game is too fast or too slow</h3><p>Timers give 72 seconds per mark, the same pace as the real exam. Drills can be untimed: turn off Exam timing in Drills.</p>'),
+    privacy: back => textPage(back, 'PRIVACY', ['strix', 'The court has examined the evidence. It is brief. Hoo.'],
+      '<ul><li><b>Your progress</b> (story, answers, stats, streak) is stored in your browser on this device. It isn\'t sent anywhere.</li><li><b>Accounts:</b> email accounts are kept on this device. Passwords are never stored, only a salted hash of them. If online sign-in (Google, Apple) is switched on, it\'s handled by Firebase Authentication.</li><li><b>No adverts and no tracking.</b></li><li><b>Fonts and maths rendering</b> load from Google Fonts and cdnjs.</li><li>To erase everything, use <b>Settings → Erase all save data</b>.</li></ul>'),
+    credits: back => textPage(back, 'CREDITS', ['bramble', 'Built it with my own two hands. Well. Somebody\'s hands. Here are the names.'],
+      '<ul><li><b>Exam questions:</b> past papers and topic questions © OCR, used for revision.</li><li><b>Fonts:</b> Pixelify Sans, VT323, Press Start 2P, Inter, Patrick Hand and Anton, all under the SIL Open Font License.</li><li><b>Maths rendering:</b> KaTeX.</li><li><b>Inspired by</b> Undertale, Stardew Valley, Pokémon Mystery Dungeon and Krillion.</li><li><b>Pixel art, story and code:</b> made for Lowmarsh.</li></ul>'),
+  };
+
+  let titleSel = null, titleSeen = false, titleUI = null, titleDrawer = null;
   function title() {
     const items = (S.started ? [{ id: 'cont', label: 'Continue' }] : [])
       .concat([{ id: 'new', label: 'New Game' }, { id: 'papers', label: 'Past Papers' }, { id: 'drills', label: 'Drills' }, { id: 'daily', label: 'Daily Challenge' }, { id: 'settings', label: 'Settings' }]);
     const el = screen('<canvas class="title-cv" aria-hidden="true"></canvas>' +
       '<nav class="sr-only" aria-label="Main menu">' + items.map(it => '<button data-a="' + it.id + '">' + esc(it.label) + '</button>').join('') +
-      '<button data-a="account">' + (Auth.current() && Auth.current().username ? 'Profile' : 'Log in') + '</button></nav>', 'canvas-title');
+      '<button data-a="account">' + (Auth.current() && Auth.current().username ? 'Profile' : 'Log in') + '</button></nav>' +
+      '<nav class="sr-only" aria-label="More">' + DRAWER().filter(d => d.id && d.id !== 'account' && d.id !== 'settings').map(d => '<button data-a="' + d.id + '">' + esc(d.label) + '</button>').join('') + '</nav>', 'canvas-title');
     const actions = {
       cont: () => startWorld(),
       new: () => {
@@ -158,7 +246,13 @@
       daily: () => dailyIntro(title),
       settings: () => settings(title),
       account: () => (Auth.current() && Auth.current().username ? profile(title) : login(title)),
+      stats: () => statsPage(title),
+      notebookAll: () => notebook(title, false),
+      formulae: () => formulae(title),
+      grapher: () => grapher(title),
+      scratch: () => scratch(title),
     };
+    Object.keys(PAGES).forEach(k => { actions[k] = () => PAGES[k](title); });
     on(el, actions);
     if (titleUI) titleUI.cleanup();
     titleUI = null;
@@ -168,9 +262,10 @@
       titleUI = TitleScreen.mount($('.title-cv', el), {
         items, skipIntro: titleSeen,
         selected: Math.max(0, items.findIndex(it => it.id === titleSel)),
+        drawer: DRAWER(), drawerOpen: !!titleDrawer, drawerSel: titleDrawer ? DRAWER().findIndex(d => d.id === titleDrawer) : 1,
         account: () => (Auth.current() && Auth.current().username ? Auth.current().username : 'Log in'),
         onSelect: i => { titleSel = items[i].id; },
-        onChoose: id => { titleSeen = true; if (id !== 'account') titleSel = id; actions[id](); },
+        onChoose: (id, how) => { titleSeen = true; titleDrawer = how && how.fromDrawer ? id : null; if (id !== 'account' && !titleDrawer) titleSel = id; actions[id](); },
       });
     });
   }
@@ -644,6 +739,7 @@
     CAST: null, G, ITEMS, fmt, topicLabel: id => (topic(id) ? topic(id).name : ''), topic, showLesson,
     record, level, maxHP, depthNote, openMenu, askRook, persist, scratch, grapher, scratchTip,
     titleChoose: id => (titleUI ? titleUI.choose(id) : null),
+    titleDrawer: id => (titleUI ? (id ? titleUI.chooseDrawer(id) : titleUI.openDrawer()) : null),
     daily: back => dailyIntro(back), drills: back => drillsMenu(back), papers: back => papersMenu(back), notebook: back => notebook(back, true),
   };
 
