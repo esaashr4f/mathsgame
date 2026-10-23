@@ -43,7 +43,7 @@
     canvas: null, ctx: null, active: false, locked: false,
     mapId: null, map: null, rows: [], entities: [], triggers: [],
     player: { x: 0, y: 0, dir: 'down', moving: false, frame: 0, ft: 0 },
-    trail: [], cam: { x: 0, y: 0 }, t: 0, lastTrigger: null, last: 0, onFrame: null,
+    trail: [], cam: { x: 0, y: 0 }, t: 0, talkCooldown: 0, lastTrigger: null, last: 0, onFrame: null,
 
     init(canvas) {
       this.canvas = canvas;
@@ -134,6 +134,7 @@
           if (!this.blocked(nx, p.y)) p.x = nx;
           if (!this.blocked(p.x, ny)) p.y = ny;
           p.moving = true;
+          this.talkCooldown = 0;
         }
         const trig = this.triggerAt(p.x, p.y);
         if (trig && trig !== this.lastTrigger && (!trig.when || trig.when(this.flags()))) {
@@ -188,6 +189,9 @@
     },
 
     interact() {
+      // Mashing Enter/Z through a conversation shouldn't start it all over again: after a conversation ends,
+      // ignore talk presses until they stop pressing for a moment (each press during the pause extends it) or walk.
+      if (performance.now() < this.talkCooldown) { this.talkCooldown = performance.now() + 400; return; }
       const e = this.facingEntity();
       if (e) {
         // NPCs turn to face you.
@@ -205,6 +209,7 @@
       try { await fn(Game.G); } catch (err) { if (err !== Game.LEAVE) console.error(err); else if (Game.leftQuest) Game.leftQuest(); }
       if (Game.afterScript) { try { await Game.afterScript(); } catch (err) { console.error(err); } }
       this.locked = false;
+      this.talkCooldown = performance.now() + 600;
     },
 
     rookPos() {
