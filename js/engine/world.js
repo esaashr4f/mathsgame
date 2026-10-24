@@ -208,6 +208,11 @@
       // A side quest you walk away from ends the conversation early (Game.LEAVE); nothing is lost.
       try { await fn(Game.G); } catch (err) { if (err !== Game.LEAVE) console.error(err); else if (Game.leftQuest) Game.leftQuest(); }
       if (Game.afterScript) { try { await Game.afterScript(); } catch (err) { console.error(err); } }
+      // A locked door leaves you standing in the doorway, drawn over the wall: step back out onto the path.
+      if (this.active) {
+        const p = this.player, tx = Math.floor(p.x / TS), ty = Math.floor((p.y - 2) / TS);
+        if (this.tile(tx, ty) === 'D' && !Tiles.SOLID.has(this.tile(tx, ty + 1))) { await this.walk('player', tx, ty + 1, 70); p.dir = 'down'; }
+      }
       this.locked = false;
       this.talkCooldown = performance.now() + 600;
     },

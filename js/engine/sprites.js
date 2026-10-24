@@ -380,6 +380,11 @@
     tansy: { h: '#c0603a', b: '#e8c24a', y: '#5f8f4a', p: '#4f3420' },
     hazel: { h: '#3c5e30', b: '#e07b39', y: '#f4f1e8', s: '#d9a57c', p: '#4f3420' },
     dozer: { h: '#9a948a', b: '#7d5ea8', y: '#b07fc8', s: '#e3b48c', p: '#3a3550' },
+    hob: { h: '#5a5a68', b: '#7a5232', y: '#4f3420', s: '#d9a57c', p: '#2d2d3a' },
+    agnes: { h: '#f4f1e8', b: '#e8e2d0', y: '#c0403a', s: '#e3b48c', p: '#5e3f22' },
+    pike: { h: '#b9b3a6', b: '#3c5e30', y: '#5f8f4a', s: '#d9a57c', p: '#2b3a55' },
+    bea: { h: '#e8c24a', b: '#e8c24a', y: '#14141c', s: '#e3b48c', p: '#5f8f4a' },
+    shelly: { h: '#c0603a', b: '#9bd3e8', y: '#f4f1e8', s: '#d9a57c', p: '#3f6fb0' },
     shadow: { h: '#1a1024', b: '#2a1838', y: '#c77dff', s: '#2a1838', e: '#ff4d6d', p: '#1a1024' },
   };
 

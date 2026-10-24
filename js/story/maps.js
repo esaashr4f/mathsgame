@@ -103,6 +103,22 @@
       if (on) { c.fillStyle = '#9bd3e8'; c.fillRect(sx + 7, sy - 6, 6 + Math.sin(t * 6) * 2, 3); }
     };
   }
+  function drawWindmill(c, sx, sy, t) {
+    c.fillStyle = '#c4a983'; c.beginPath(); c.moveTo(sx - 13, sy); c.lineTo(sx - 8, sy - 50); c.lineTo(sx + 8, sy - 50); c.lineTo(sx + 13, sy); c.fill();
+    c.fillStyle = '#a88d69'; c.fillRect(sx - 1, sy - 48, 2, 48);
+    c.fillStyle = '#3a2a1a'; c.fillRect(sx - 4, sy - 12, 8, 12);
+    c.fillStyle = '#9bd3e8'; c.fillRect(sx - 3, sy - 34, 6, 5);
+    c.fillStyle = '#8c3b2e'; c.fillRect(sx - 10, sy - 56, 20, 7);
+    c.save(); c.translate(sx, sy - 52); c.rotate(t * 0.9);
+    for (let i = 0; i < 4; i++) { c.rotate(Math.PI / 2); c.fillStyle = '#5e3f22'; c.fillRect(-1, 0, 2, 32); c.fillStyle = '#f4f1e8'; c.fillRect(2, 8, 7, 24); }
+    c.restore();
+    c.fillStyle = '#4f3420'; c.fillRect(sx - 2, sy - 54, 4, 4);
+  }
+  function drawCave(c, sx, sy) {
+    c.fillStyle = '#5a5a68'; c.fillRect(sx - 16, sy - 22, 32, 22);
+    c.fillStyle = '#41414c'; c.fillRect(sx - 16, sy - 22, 32, 3);
+    c.fillStyle = '#0a0a12'; c.beginPath(); c.arc(sx, sy, 10, Math.PI, 0); c.fill(); c.fillRect(sx - 10, sy - 1, 20, 1);
+  }
   function drawBoat(c, sx, sy, t) {
     const b = Math.sin(t * 2) * 1.5;
     c.fillStyle = '#5e3f22'; c.fillRect(sx - 14, sy - 6 + b, 28, 6);
@@ -119,7 +135,7 @@
   }
 
   // ───────────────────────── THE OVERWORLD ─────────────────────────
-  const W = 100, Hh = 72;
+  const W = 100, Hh = 88;
   window.MAPS.world = {
     name: 'Lowmarsh',
     build(f) {
@@ -141,7 +157,20 @@
       rect(g, 88, 12, 4, 42, '_');
       // south: the river Wend
       rect(g, 0, 52, 92, 2, '_');
-      rect(g, 0, 54, 92, Hh - 54, '~');
+      rect(g, 0, 54, 92, 8, '~');
+      // ── the south bank (over Hob's footbridge): Pike's Pond, Windmill Hill, Bea's orchard
+      rect(g, 0, 62, 92, 1, '_');
+      rect(g, 88, 62, 4, Hh - 62, '_');
+      rect(g, 0, 62, 1, Hh - 62, 'T'); rect(g, 0, Hh - 1, 92, 1, 'T');
+      scatter(g, ',', 120, 1, 63, 87, 23, 61);
+      scatter(g, 'T', 26, 1, 63, 26, 23, 62);
+      rect(g, 70, 54, 2, 8, '=');                         // the footbridge
+      rect(g, 70, 63, 2, 6, ':'); rect(g, 28, 68, 56, 2, ':');
+      rect(g, 30, 72, 9, 6, '~'); rect(g, 34, 70, 2, 2, ':'); rect(g, 34, 72, 1, 2, 'p');   // the pond and its pier
+      rect(g, 56, 70, 2, 7, ':');                          // up Windmill Hill
+      rect(g, 75, 71, 14, 1, 'f'); rect(g, 80, 70, 2, 2, ':');                            // the orchard fence and gate
+      for (let ty = 73; ty <= 82; ty += 3) for (let tx = 76; tx <= 87; tx += 3) set(g, tx, ty, 'T');
+      rect(g, 84, 84, 3, 1, 'v');
       scatter(g, 'R', 40, 0, 50, 46, 3, 14);
       scatter(g, 'R', 30, 54, 50, 34, 3, 15);
       // jetty + ferry
@@ -192,6 +221,8 @@
       // Gull Point's landward cliff: the only way in is the road (fogged until chapter 2), not round the back
       rect(g, 74, 13, 1, 12, 'r'); rect(g, 74, 29, 1, 13, 'r');
       rect(g, 88, 42, 4, 1, 'r');                     // rocks across the beach below the point
+      // the cove under the point: sand, rock pools, a sea cave
+      rect(g, 75, 44, 13, 7, '_'); rect(g, 79, 47, 2, 2, '~'); rect(g, 84, 48, 2, 1, '~'); rect(g, 75, 43, 3, 1, 'r');
       // west: meadows, the lock, the marsh
       scatter(g, 'T', 22, 0, 12, 28, 40, 51);
       scatter(g, ',', 40, 0, 30, 28, 20, 52);
@@ -212,10 +243,13 @@
       rect(g, 9, 49, 1, 3, ':');
       house(g, 16, 33, 7, 5, 3);      // Rowan's farmhouse, door (19,37)
       rect(g, 19, 38, 1, 2, ':');
-      rect(g, 0, 12, 22, 14, 'R');
-      rect(g, 2, 14, 6, 4, '~'); rect(g, 13, 19, 5, 3, '~'); rect(g, 3, 22, 4, 2, '~');
-      rect(g, 6, 18, 5, 4, ',');
-      rect(g, 10, 22, 2, 4, ':');
+      // the marsh: open water, reed islands and Mira's old boardwalks
+      rect(g, 0, 12, 22, 14, '~');
+      rect(g, 3, 17, 10, 5, 'R'); rect(g, 6, 19, 5, 2, ',');                // the island of the Still
+      rect(g, 14, 13, 6, 3, 'R'); rect(g, 13, 22, 4, 3, 'R'); rect(g, 2, 13, 4, 2, 'R');
+      rect(g, 10, 22, 2, 4, 'p');                                             // boardwalk in from the south
+      rect(g, 13, 18, 9, 2, '=');                                             // boardwalk in from the east
+      rect(g, 17, 16, 1, 2, 'p'); rect(g, 12, 23, 1, 1, '='); rect(g, 5, 15, 1, 2, 'p');
       // the west woods: the meadows are only reached along the road, past the fallen tree (until chapter 4)
       rect(g, 22, 25, 7, 1, 'T');
       rect(g, 29, 28, 1, 24, 'T'); rect(g, 29, 52, 1, 2, 'r');
@@ -252,8 +286,8 @@
       E.push({ id: 'pots', x: 61, y: 19, sprite: 'pot', talk: S('pots') });
       E.push({ id: 'pots2', x: 62, y: 19, sprite: 'pot', talk: S('pots') });
       E.push({ id: 'pots3', x: 65, y: 19, sprite: 'pot', talk: S('flowerpot') });
-      E.push({ id: 'bench1', x: 45, y: 28.6, sprite: 'bench', talk: S('bench'), solid: false });
-      E.push({ id: 'flowerbox1', x: 34, y: 19, sprite: 'flowerbox', talk: S('flowers'), solid: false });
+      E.push({ id: 'bench1', x: 45, y: 28.6, sprite: 'bench', talk: S('bench'), w: 7 });
+      E.push({ id: 'flowerbox1', x: 34, y: 19, sprite: 'flowerbox', talk: S('flowers'), w: 6 });
       E.push({ id: 'sign1', x: 40, y: 13, sprite: 'sign', talk: S('signGorge') });
       E.push({ id: 'sign2', x: 71, y: 25, sprite: 'sign', talk: S('signEast') });
       E.push({ id: 'sign3', x: 30, y: 25, sprite: 'sign', talk: S('signWest') });
@@ -274,6 +308,20 @@
       E.push({ id: 'jan', x: 78, y: 22, sprite: 'jan', talk: S('jan') });
       E.push({ id: 'pebble', x: 82, y: 24, sprite: 'kid', talk: S('kidKite'), wander: 2 });
       // ── clinic, cottages, allotments
+      // ── the south bank
+      E.push({ id: 'hob', x: f.hobDone ? 72.6 : 70.5, y: 53, sprite: 'hob', talk: S('hob'), w: f.hobDone ? 6 : 12 });
+      E.push({ id: 'southSign', x: 73, y: 63, sprite: 'sign', talk: S('southSign') });
+      E.push({ id: 'windmill', x: 56.5, y: 79, draw: drawWindmill, talk: S('windmill'), w: 14, tall: 70 });
+      E.push({ id: 'agnes', x: 59, y: 76, sprite: 'agnes', talk: S('agnes') });
+      E.push({ id: 'pike', x: 36, y: 70.4, sprite: 'pike', talk: S('pike') });
+      E.push({ id: 'pier', x: 34, y: 73.4, sprite: 'net', talk: S('pier'), solid: false });
+      E.push({ id: 'bea', x: 81, y: 74, sprite: 'bea', talk: S('bea') });
+      E.push({ id: 'hives', x: 86, y: 86.2, sprite: 'crate', talk: S('hives') });
+      E.push({ id: 'goose1', x: 45, y: 65, sprite: 'duck', talk: S('duck'), wander: 4 });
+      // ── the cove
+      E.push({ id: 'shelly', x: 82, y: 46, sprite: 'shelly', talk: S('shelly') });
+      E.push({ id: 'cave', x: 76, y: 44.2, draw: drawCave, talk: S('cave'), w: 10 });
+      E.push({ id: 'rockpool', x: 80, y: 48.4, sprite: 'net', talk: S('rockpool'), solid: false, hidden: true });
       E.push({ id: 'ivy', x: 55, y: 45, sprite: 'ivy', talk: S('ivy') });   // at her allotment gate
       E.push({ id: 'kid2', x: 40, y: 45, sprite: 'kid', talk: S('kid2'), wander: 3 });
       // ── west

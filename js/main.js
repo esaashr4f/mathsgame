@@ -171,7 +171,7 @@
     { id: 'sandglass', at: 8, icon: '⏳', name: "Moss's Sandglass", desc: '+15 seconds on every timed step in an encounter.' },
     { id: 'feather', at: 14, icon: '🪶', name: "Rook's Spare Feather", desc: 'The first hit you take in each encounter does no damage.' },
     { id: 'lamp', at: 20, icon: '🏮', name: "Ottoline's Lamp", desc: 'Lights up the dodge box: the words fly 15% slower.' },
-    { id: 'compass', at: 34, icon: '🧭', name: "Mira's Brass Compass", desc: 'Every side quest done. +4 more max HP, and the village calls you a Friend of Lowmarsh.' },
+    { id: 'compass', at: 999, icon: '🧭', name: "Mira's Brass Compass", desc: 'Every side quest done. +4 more max HP, and the village calls you a Friend of Lowmarsh.' },
   ];
   const sideQuest = id => (window.SCRIPTS.sideQuests || {})[id];
   const sideDone = () => Object.keys(window.SCRIPTS.sideQuests || {}).filter(id => S.solved[id]).length;
@@ -215,13 +215,33 @@
     if (World.map.music) return World.map.music;
     if (World.mapId !== 'world') return ROOM_MUSIC[World.mapId] || 'home';
     const x = World.player.x / 16, y = World.player.y / 16;
+    if (y >= 62) return 'southbank';
     if (x < 22 && y >= 12 && y < 25) return 'marsh';
     if (x < 30 && y >= 26) return S.flags.chapter >= 4 && !S.flags.drained ? 'flood' : 'meadows';
     if (x >= 72) return 'coast';
     if (y < 11) return 'gorge';
     return 'village';
   }
-  setInterval(() => { if (World.active) Music.area(areaMusic()); }, 500);
+  // where you are, for the top bar
+  function placeName() {
+    if (World.mapId !== 'world') return World.map.name;
+    const x = World.player.x / 16, y = World.player.y / 16;
+    if (y >= 62) return 'South Bank';
+    if (y >= 54) return 'The Wend';
+    if (y < 10) return 'The Gorge';
+    if (x < 22 && y >= 12 && y < 25) return 'The Marsh';
+    if (x < 30 && y >= 26) return 'West Meadows';
+    if (x >= 74 && y >= 43) return 'The Cove';
+    if (x >= 74) return 'Gull Point';
+    if (x >= 66 && y >= 24 && y <= 29) return 'The Cliff Road';
+    return 'Lowmarsh';
+  }
+  setInterval(() => {
+    if (!World.active) return;
+    Music.area(areaMusic());
+    const loc = $('#hud .hud-loc'), name = placeName();
+    if (loc && loc.textContent !== name) loc.textContent = name;
+  }, 500);
   // practice sessions get the study track; exams are always silent
   async function session(qs, o) {
     Music.push(o.mode === 'exam' ? null : 'study');
@@ -234,7 +254,7 @@
     if (!World.active) { hud.innerHTML = ''; return; }
     const obj = window.SCRIPTS.objective ? window.SCRIPTS.objective(S.flags) : '';
     const text = obj ? fmtPlain(obj) : '';
-    hud.innerHTML = '<button class="hud-menu" title="Menu (C or Esc)">☰<span class="lbl"> MENU <kbd>C</kbd></span></button><span class="hud-loc">' + esc(World.map.name) + '</span>' +
+    hud.innerHTML = '<button class="hud-menu" title="Menu (C or Esc)">☰<span class="lbl"> MENU <kbd>C</kbd></span></button><span class="hud-loc">' + esc(placeName()) + '</span>' +
       (obj ? '<span class="hud-obj" title="Objective">📜<span class="lbl"> ' + esc(text) + '</span></span>' : '');
     // On a small screen the objective folds down to its scroll: tap to read it. A new one shows itself for a few seconds.
     if (text && text !== hudObj) { hudObj = text; peekObjective(4000); }
@@ -326,7 +346,7 @@
     about: back => textPage(back, 'ABOUT', ['rook', 'Lowmarsh. Fog, a missing surveyor, a crow with opinions, and a great deal of A level maths. Sit down, this won\'t take long.'],
       '<p>Lowmarsh is a story-driven RPG that teaches A level Mathematics by making you use it. You arrive in a fen village where a strange fog has made everyone forget how to work things out. Every problem you solve, whether it\'s a plank long enough to reach the jetty, a lighthouse lamp or a river that has forgotten its shape, is a real exam question, worked through step by step.</p>' +
       '<h3>What makes it different</h3><ul><li>Real past-paper questions, with the numbers and mark schemes, woven into the story.</li><li>You always write the working. Rook hints, and talks you through it if you\'re stuck, but never does it for you.</li><li>Every timer runs at real exam pace: 72 seconds a mark.</li><li>Encounters are Undertale-style: you never fight, you solve the creature\'s problem and spare it.</li></ul>' +
-      '<h3>Part One and Part Two</h3><p>Part One covers the whole of AS Level (OCR H230): six chapters, 64 story problems, 34 side quests and twelve past papers. Part Two, the rest of A level, is on its way.</p>'),
+      '<h3>Part One and Part Two</h3><p>Part One covers the whole of AS Level (OCR H230): six chapters and ' + (window.SCRIPTS.sideQuestCount || 39) + ' side quests (' + Object.keys(window.STORY_PROBLEMS).length + ' problems in all), and twelve past papers. Part Two, the rest of A level, is on its way.</p>'),
     howto: back => textPage(back, 'HOW TO PLAY', ['rook', 'Arrow keys to walk, Z to talk. Everything else, I\'ll explain as we go. Probably twice.'],
       '<h3>Controls</h3><ul><li><b>Move:</b> arrow keys or WASD. On a phone, the on-screen pad.</li><li><b>Talk / confirm:</b> Z, Enter or Space.</li><li><b>Menu:</b> C or Esc, or the ☰ MENU button in the top left of the game.</li><li><b>Ask Rook where to go:</b> R.</li><li><b>This side menu:</b> M, or the ☰ in the corner of the title screen.</li></ul>' +
       '<h3>Solving a problem</h3><p>Each problem is split into the steps a mark scheme rewards. Type the answer to each step; the box shows how it has read what you typed. Fractions, surds (2√3 or 2sqrt3), powers (x^2), points (3, -2) and vectors (6i - 8j) all work. Stuck? Press <b>Hint</b>, then <b>Talk me through it</b>, then write it in yourself.</p>' +

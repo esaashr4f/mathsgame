@@ -26,5 +26,10 @@ window.CAST = {
   villager: { name: 'Villager',        portrait: 'villager2', color: '#ffb3c6', blip: 520 },
   hazel:    { name: 'Hazel (Moss\'s mum)', portrait: 'hazel', color: '#c7e39b', blip: 600 },
   dozer:    { name: 'Mr Dozer',        portrait: 'dozer',    color: '#b9b3a6', blip: 200 },
+  hob:      { name: 'Hob',             portrait: 'hob',      color: '#d9b38c', blip: 210 },
+  agnes:    { name: 'Agnes the Miller', portrait: 'agnes',   color: '#f4f1e8', blip: 500 },
+  pike:     { name: 'Old Pike',        portrait: 'pike',     color: '#9bd3e8', blip: 240 },
+  bea:      { name: 'Bea',             portrait: 'bea',      color: '#ffd166', blip: 640 },
+  shelly:   { name: 'Shelly',          portrait: 'shelly',   color: '#ffb3c6', blip: 580 },
   tomas:    { name: 'Tomas the Grocer', portrait: 'villager', color: '#9bd3e8', blip: 360 },
 };

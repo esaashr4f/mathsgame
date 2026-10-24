@@ -55,7 +55,7 @@ window.Music = (function () {
   const FALLBACK = {
     title: ['title', 'village'], study: ['study', 'title'],
     village: ['village'], gorge: ['gorge', 'wilds', 'village'], coast: ['coast', 'wilds', 'village'],
-    meadows: ['meadows', 'wilds', 'village'], marsh: ['marsh', 'wilds'], flood: ['flood', 'meadows', 'wilds', 'village'],
+    meadows: ['meadows', 'wilds', 'village'], southbank: ['southbank', 'meadows', 'wilds', 'village'], marsh: ['marsh', 'wilds'], flood: ['flood', 'meadows', 'wilds', 'village'],
     home: ['home', 'village'], townhall: ['townhall', 'home', 'village'], lighthouse: ['lighthouse', 'coast', 'home'], lock: ['lock', 'home'],
     encounter: ['encounter'], finale: ['finale', 'encounter'],
   };
