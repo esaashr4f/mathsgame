@@ -20,6 +20,7 @@ node rooms.js                      # the same inside every building
 | `newplayer`, `girltest` | a new game: name, boy/girl, controls card, first tips |
 | `doortest` | a locked door puts you back on the path |
 | `iphone` | every screen fits iPhone sizes in Safari |
+| `phone-questions` | on a phone the answer box is always on screen (upright and sideways) |
 | `fuzz`, `reach`, `rooms` | the whole world, chapter by chapter |
 
 Screenshots land in `tests/e2e/shots/`. The answer checker has its own tests: `node tools/validate.js` and `node tools/answer-formats.js` (every correct answer written every reasonable way, and typical mistakes, against every step).

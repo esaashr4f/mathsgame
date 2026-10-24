@@ -35,7 +35,7 @@
       return { destroy: pop };
     }
     host.innerHTML =
-      '<div class="ans-row"><input class="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type your working\'s answer…" aria-label="Your answer">' +
+      '<div class="ans-row"><input class="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="your answer to this step…" aria-label="Your answer">' +
       '<button class="btn small primary go">CHECK</button></div>' +
       '<div class="preview"></div><div class="fmt-hint">' + esc(step.type === 'expr' && step.vars ? 'An expression in ' + step.vars.join(', ') : TYPE_HINT[step.type || 'num']) + '</div>';
     const inp = $('.ans', host), pv = $('.preview', host);
@@ -102,13 +102,13 @@
         (problem.diagram ? '<div class="nb-diagram">' + problem.diagram + '</div>' : '') +
         '<div class="nb-prompt">' + problem.prompt + '</div>' +
         '<ol class="working"></ol>' +
-        '<div class="step-ask"></div>' +
+        '<div class="nb-dock"><div class="step-ask"></div>' +
         '<div class="nb-input"></div>' +
         '<div class="nb-rook"><img src="' + Sprites.portrait('rook') + '" alt=""><div class="nb-rook-say">Take it one step at a time. I\'ll be right here.</div></div>' +
-        '<div class="nb-tools"><button class="btn small" data-t="hint">🐦 Hint</button><button class="btn small" data-t="teach">📖 Talk me through it</button><button class="btn small" data-t="notes">Mira\'s notes</button><button class="btn small" data-t="scratch">✏️ Scratch pad</button></div>' +
+        '<div class="nb-tools"><button class="btn small" data-t="hint">🐦 Hint</button><button class="btn small" data-t="teach">📖 <span class="lbl">Talk me through it</span><span class="lbl-short">Explain</span></button><button class="btn small" data-t="notes">📒 <span class="lbl">Mira\'s notes</span><span class="lbl-short">Notes</span></button><button class="btn small" data-t="scratch">✏️<span class="lbl"> Scratch pad</span></button></div></div>' +
         '</div>', 'nb-screen');
       let i = 0, wrongs = 0, taught = false, firstTry = 0, draft = '', box = null;
-      const rookSay = html => { const r = $('.nb-rook-say', el); r.innerHTML = html; UI.renderMath(r); };
+      const rookSay = html => { const r = $('.nb-rook-say', el); r.innerHTML = html; UI.renderMath(r); $('.nb-rook', el).classList.add('said'); };
 
       function showStep() {
         const s = problem.steps[i];
@@ -118,7 +118,8 @@
         UI.renderMath($('.step-ask', el));
         if (box) box.destroy();
         box = answerBox($('.nb-input', el), s, submit, { onDraft: v => (draft = v) });
-        $('.step-ask', el).scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        // on a phone the step sits in a dock at the bottom of the screen, so there's nothing to scroll to
+        if (!matchMedia('(max-width: 600px), (max-height: 500px) and (orientation: landscape)').matches) $('.step-ask', el).scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
       function submit(v) {
         const s = problem.steps[i];
@@ -204,9 +205,9 @@
       const daily = opts.mode === 'daily';
       const el = UI.panel(
         '<div class="sess">' +
-        '<div class="sess-top"><button class="btn small" data-q="quit">◂ ' + (opts.mode === 'exam' ? 'hand in' : 'quit') + '</button><div class="sess-title">' + esc(opts.title) + '</div>' + (opts.clock ? '<div class="exam-clock"></div>' : '') + '<div class="qcount"></div><button class="btn small" data-q="scratch">✏️ Scratch pad</button></div>' +
+        '<div class="sess-top"><button class="btn small" data-q="quit">◂ ' + (opts.mode === 'exam' ? 'hand in' : 'quit') + '</button><div class="sess-title">' + esc(opts.title) + '</div>' + (opts.clock ? '<div class="exam-clock"></div>' : '') + '<div class="qcount"></div><button class="btn small" data-q="scratch">✏️<span class="lbl"> Scratch pad</span></button></div>' +
         (daily ? '<div class="gauge"><div class="gauge-track"><span class="gauge-krill" style="left:0%">🪣</span></div><div class="gauge-depth">0m</div></div><div class="depth-note"></div>' : '') +
-        '<div class="notebook"><div class="nb-head"><span class="nb-tag"></span></div><div class="nb-context"></div><div class="nb-prompt"></div><ol class="working"></ol><div class="step-host"></div></div>' +
+        '<div class="notebook"><div class="nb-head"><span class="nb-tag"></span></div><div class="nb-context"></div><div class="nb-prompt"></div><ol class="working"></ol><div class="nb-dock"><div class="step-host"></div></div></div>' +
         '</div>', 'nb-screen');
       const R = { steps: 0, right: 0, depth: 0, grid: [], missed: [], start: Date.now(), hints: 0, marks: 0, byQ: [] };
       let qi = 0, si = 0, qGain = 0, qGot = 0, attempts = 0, hinted = false, clock = null, quit = false, examTimer = null;
