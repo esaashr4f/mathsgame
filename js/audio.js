@@ -44,3 +44,65 @@ window.Sfx = (function () {
     sink() { tone(300, 0.5, 'sine', 0.04, 90); },
   };
 })();
+
+// Background music. Tracks are optional: list the files you have in audio/music/music.js and they play;
+// anything missing falls back to a related track, or silence. Each place asks for a slot by name.
+window.Music = (function () {
+  const files = window.LOWMARSH_MUSIC || {};
+  // what each slot falls back to when its own track hasn't been added
+  const FALLBACK = {
+    title: ['title', 'village'], study: ['study', 'title'],
+    village: ['village'], gorge: ['gorge', 'wilds', 'village'], coast: ['coast', 'wilds', 'village'],
+    meadows: ['meadows', 'wilds', 'village'], marsh: ['marsh', 'wilds'], flood: ['flood', 'meadows', 'wilds', 'village'],
+    home: ['home', 'village'], townhall: ['townhall', 'home', 'village'], lighthouse: ['lighthouse', 'coast', 'home'], lock: ['lock', 'home'],
+    encounter: ['encounter'], finale: ['finale', 'encounter'],
+  };
+  let vol = 0.5, cur = null, area = null;
+  const overrides = [];
+  const resolve = slot => { for (const s of (FALLBACK[slot] || [slot])) if (files[s]) return files[s]; return null; };
+  function fade(el, to, ms, done) {
+    const from = el.volume, t0 = performance.now();
+    clearInterval(el._fade);
+    el._fade = setInterval(() => {
+      const k = Math.min(1, (performance.now() - t0) / ms);
+      el.volume = Math.max(0, Math.min(1, from + (to - from) * k));
+      if (k >= 1) { clearInterval(el._fade); if (done) done(); }
+    }, 40);
+  }
+  function apply() {
+    const slot = overrides.length ? overrides[overrides.length - 1] : area;
+    const file = slot ? resolve(slot) : null;
+    if (cur && cur.file === file) return;
+    const old = cur;
+    if (old) fade(old.el, 0, 900, () => old.el.pause());
+    cur = null;
+    if (!file || vol <= 0) return;
+    const el = new Audio('audio/music/' + file);
+    el.loop = true; el.volume = 0;
+    cur = { file, el };
+    start();
+  }
+  // Browsers only allow sound after the player has clicked or pressed something; try again then.
+  function start() {
+    if (!cur || !cur.el.paused || document.hidden) return;
+    const el = cur.el;
+    el.play().then(() => fade(el, vol, 900)).catch(() => {});
+  }
+  ['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, start, true));
+  document.addEventListener('visibilitychange', () => { if (!cur) return; if (document.hidden) cur.el.pause(); else start(); });
+
+  return {
+    get tracks() { return Object.keys(files).length; },
+    get playing() { return cur ? cur.file : null; },
+    // the music for where you are (the title, a place in the world)
+    area(slot) { if (slot !== area) { area = slot; apply(); } },
+    // music that takes over for a while (an encounter, a story moment); null means silence
+    push(slot) { overrides.push(slot); apply(); },
+    pop() { overrides.pop(); apply(); },
+    setVolume(v) {
+      vol = v;
+      if (cur) { if (vol <= 0) { const old = cur; cur = null; fade(old.el, 0, 300, () => old.el.pause()); } else fade(cur.el, vol, 200); }
+      else apply();
+    },
+  };
+})();

@@ -407,6 +407,9 @@ body.touch .dlg-name { font-size: 13px; }
 body.touch .dlg-face { width: 64px; }
 body.land .dlg { left: max(3%, var(--ov, 0px)); right: max(3%, var(--ov, 0px)); }
 body.touch .choice-box button { font-size: 17px; }
+.vol { display: flex; align-items: center; gap: 10px; font-family: var(--ui); margin: 8px 0 4px; }
+.vol input { flex: 1; max-width: 240px; accent-color: var(--gold); }
+.vol span { min-width: 3.5em; color: var(--soft); }
 .pad-pick { margin: 10px 0 4px; font-family: var(--ui); }
 .pad-pick > span { display: block; color: var(--soft); margin-bottom: 6px; }
 .pad-pick .tabs { max-width: 340px; margin-bottom: 4px; }

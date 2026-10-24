@@ -11,7 +11,7 @@ With `js/auth-config.js` left empty:
 
 ## Switching on Google, Apple and accounts that work on any device
 
-This uses Firebase Authentication. It's free at this scale and needs no server of your own.
+This uses Firebase (Authentication for sign-in, Firestore for saves). It's free at this scale and needs no server of your own.
 
 1. Go to <https://console.firebase.google.com>, create a project, and add a **Web app**. Copy the config object it shows you.
 2. Paste it into `js/auth-config.js`:
@@ -20,15 +20,52 @@ This uses Firebase Authentication. It's free at this scale and needs no server o
      firebase: { apiKey: '…', authDomain: '…firebaseapp.com', projectId: '…', appId: '…' },
    };
    ```
-   These values are meant to be public. They identify the project and don't grant access.
+   These values are meant to be public. They identify the project and don't grant access; the security rules below do that.
 3. In Firebase, open **Authentication → Sign-in method** and enable:
    - **Email/Password**.
    - **Google**: one click.
-   - **Apple**: needs an Apple Developer account (£79 / $99 a year). Create a Services ID and a key in Apple's developer portal, then paste them into Firebase. Firebase's Apple page walks you through it.
-4. In **Authentication → Settings → Authorised domains**, add the domain the game is hosted on (for example `yourname.github.io`).
+   - **Apple**: needs an Apple Developer account (£79 / $99 a year). Create a Services ID and a key in Apple's developer portal, then paste them into Firebase. Firebase's Apple page walks you through it. You can leave Apple until later.
+4. In **Authentication → Settings → Authorised domains**, add the domain the game is hosted on (for example `lowmarsh.co.uk` or `yourname.github.io`).
+5. Open **Firestore Database → Create database**. Pick a location near your players (for the UK, `europe-west2`, London) and start in **production mode**.
+6. In **Firestore → Rules**, replace the rules with these and press **Publish**:
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{db}/documents {
+       // each player's saved game: only they can read or write it
+       match /saves/{uid} {
+         allow read, write: if request.auth != null && request.auth.uid == uid
+                            && (request.resource == null || request.resource.data.data.size() < 800000);
+       }
+       // each player's public profile (just the username)
+       match /profiles/{uid} {
+         allow read: if request.auth != null;
+         allow write: if request.auth != null && request.auth.uid == uid;
+       }
+       // usernames are claimed here so nobody can take one that's in use
+       match /usernames/{name} {
+         allow read: if request.auth != null;
+         allow create: if request.auth != null && request.resource.data.uid == request.auth.uid
+                       && name.matches('^[a-z0-9_]{3,16}$');
+         allow update: if request.auth != null && resource.data.uid == request.auth.uid
+                       && request.resource.data.uid == request.auth.uid;
+         allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+       }
+     }
+   }
+   ```
 
-Once that's done, email sign-up also goes through Firebase, so the same login works on any device.
+Once that's done:
 
-## What still stays on the device
+- Email sign-up goes through Firebase, so the same login works on any device.
+- Usernames are unique across everyone, not just one device.
+- **Progress follows the player.** Every save is kept in the browser at once and sent to the account a few seconds later (and when the tab is closed or hidden). When the game opens, or someone signs in, whichever copy was saved most recently wins. The first time an account is used on a device, it takes the account's saved game if there is one; a new account brings the guest progress along.
+- The profile page shows whether progress is saved to the account, or waiting because the player is offline.
 
-Progress (story, stats, papers, streak) is still saved in the browser, keyed to the account. To make saves follow you between devices, the next step would be to store them in Firestore under the user's id. That's about 40 lines in `main.js` (`persist` and `loadSave`), and can come later.
+## What it stores
+
+- `saves/<uid>`: the player's whole save as one piece of text, plus when it was saved.
+- `profiles/<uid>`: their username.
+- `usernames/<name>`: which account owns that username.
+
+Passwords are handled by Firebase and never touch the game. Update the in-game Privacy page (in `js/main.js`, `PAGES.privacy`) and your privacy policy before launch to say that progress and email addresses are stored with Google Firebase.

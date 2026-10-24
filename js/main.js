@@ -11,7 +11,7 @@
   const fresh = () => ({
     name: '', started: false, map: 'world', x: 50, y: 58, dir: 'up',
     flags: { chapter: 0, fogLevel: 0.55 }, items: {}, pages: [], solved: {}, stats: {}, daily: {}, papers: {},
-    sound: true, timedDrills: false, pad: 'buttons', paperFilter: { board: 'OCR', level: 'AS' },
+    sound: true, music: 0.5, timedDrills: false, pad: 'buttons', paperFilter: { board: 'OCR', level: 'AS' },
   });
   const saveKey = () => { const a = Auth.current(); return a ? KEY + ':' + a.uid : KEY; };
   let S = fresh();
@@ -19,9 +19,42 @@
     S = fresh();
     try { S = Object.assign(fresh(), JSON.parse(localStorage.getItem(saveKey())) || {}); } catch (e) { /* private mode */ }
     Sfx.setEnabled(S.sound);
+    Music.setVolume(S.music);
   }
   loadSave();
-  const persist = () => { try { localStorage.setItem(saveKey(), JSON.stringify(S)); } catch (e) { /* ignore */ } };
+  // Saved in this browser at once; with Firebase switched on, also to the account a few seconds later.
+  const persist = () => {
+    S.updatedAt = Date.now();
+    try { localStorage.setItem(saveKey(), JSON.stringify(S)); } catch (e) { /* ignore */ }
+    if (Auth.cloud.available) { clearTimeout(cloudTimer); cloudTimer = setTimeout(pushCloud, 3000); }
+  };
+
+  // ───────── saves that follow you between devices (needs Firebase; see docs/ACCOUNTS.md) ─────────
+  let cloudTimer = 0, cloudState = '';
+  async function pushCloud() {
+    clearTimeout(cloudTimer); cloudTimer = 0;
+    if (!Auth.cloud.available) return;
+    cloudState = 'saving';
+    try { await Auth.cloud.save(S); cloudState = 'saved'; } catch (e) { cloudState = 'offline'; }
+  }
+  addEventListener('visibilitychange', () => { if (document.hidden && cloudTimer) pushCloud(); });
+  addEventListener('pagehide', () => { if (cloudTimer) pushCloud(); });
+  // Whichever copy was saved most recently wins. Returns true if the account's copy replaced this one.
+  async function syncCloud() {
+    if (!Auth.cloud.available) return false;
+    try {
+      const c = await Auth.cloud.load();
+      if (c && c.updatedAt > (S.updatedAt || 0) && !World.active) {
+        S = Object.assign(fresh(), c.save);
+        try { localStorage.setItem(saveKey(), JSON.stringify(S)); } catch (e) { /* ignore */ }
+        Sfx.setEnabled(S.sound); Music.setVolume(S.music);
+        cloudState = 'saved';
+        return true;
+      }
+      if (!c || c.updatedAt < (S.updatedAt || 0)) await pushCloud(); else cloudState = 'saved';
+    } catch (e) { cloudState = 'offline'; }
+    return false;
+  }
   // One-off tips (shared by every save on this device).
   const tipsKey = 'lowmarsh-tips';
   const seenTip = k => { try { return (JSON.parse(localStorage.getItem(tipsKey)) || {})[k]; } catch (e) { return false; } };
@@ -89,7 +122,12 @@
       if (side && first) sideReward(problem, side, r);
       return r;
     },
-    battle: enc => Battle.run(enc),
+    async battle(enc) {
+      Music.push(enc.music || (enc === window.ENCOUNTERS.hush ? 'finale' : 'encounter'));
+      try { return await Battle.run(enc); } finally { Music.pop(); }
+    },
+    // a story moment can take over the music for a while: G.music('finale') … G.music() to hand it back
+    music(slot) { if (slot === undefined) Music.pop(); else Music.push(slot); },
     graph(opts, caption) {
       return new Promise(res => {
         const el = UI.panel('<div class="notebook graph-show"><div class="nb-diagram">' + Graph.svg(Object.assign({ w: 320, h: 220 }, opts)) + '</div><p>' + (caption || '') + '</p><button class="btn primary">OK ▸</button></div>', 'nb-screen');
@@ -158,6 +196,26 @@
     });
   }
   function leftQuest() { UI.toast('No rush. The side quest will wait for you.'); }
+
+  // ───────── music: what plays where (the tracks themselves are listed in audio/music/music.js) ─────────
+  const ROOM_MUSIC = { bakery: 'home', workshop: 'home', clinic: 'home', wickhouse: 'home', townhall: 'townhall', lockhouse: 'lock', lighthouse: 'lighthouse', lamproom: 'lighthouse' };
+  function areaMusic() {
+    if (!World.active || !World.map) return null;
+    if (World.map.music) return World.map.music;
+    if (World.mapId !== 'world') return ROOM_MUSIC[World.mapId] || 'home';
+    const x = World.player.x / 16, y = World.player.y / 16;
+    if (x < 22 && y >= 12 && y < 25) return 'marsh';
+    if (x < 30 && y >= 26) return S.flags.chapter >= 4 && !S.flags.drained ? 'flood' : 'meadows';
+    if (x >= 72) return 'coast';
+    if (y < 11) return 'gorge';
+    return 'village';
+  }
+  setInterval(() => { if (World.active) Music.area(areaMusic()); }, 500);
+  // practice sessions get the study track; exams are always silent
+  async function session(qs, o) {
+    Music.push(o.mode === 'exam' ? null : 'study');
+    try { return await Solver.session(qs, o); } finally { Music.pop(); }
+  }
 
   // ───────── HUD + objective ─────────
   function updateHud() {
@@ -278,17 +336,18 @@
       '<p><b>Coming soon.</b> Lowmarsh Plus will be an optional upgrade. Nothing here costs anything yet, and the story, drills, past papers and Daily Challenge will stay free.</p><p>Ideas being considered for Plus:</p><ul><li>Part Two, the full A level, as it\'s released.</li><li>Every past paper for every exam board, as they\'re added.</li><li>Predicted grades from your past-paper results.</li><li>Progress that follows you between devices.</li><li>Extra cosmetics for your character and Rook.</li></ul>'),
     help: back => textPage(back, 'HELP', ['rook', 'Something gone wrong? Don\'t panic. Panicking is my job.'],
       '<h3>My answer is right but it says it isn\'t</h3><p>Check the "reads as" line under the box: it shows how your answer was understood. Use ^ for powers, sqrt or √ for roots, and brackets for fractions: (x+1)/2. If you\'re sure it\'s right, try the exact form (2√3 rather than 3.46).</p>' +
-      '<h3>Where is my progress saved?</h3><p>In this browser on this device. If you sign in, it\'s saved to your account on this device. Clearing your browser data erases it.</p>' +
+      '<h3>Where is my progress saved?</h3>' + (Auth.configured ? '<p>In this browser, and, if you sign in, to your account too, so it follows you to any device. Signed out, it stays on this device only, and clearing your browser data erases it.</p>' : '<p>In this browser on this device. If you sign in, it\'s saved to your account on this device. Clearing your browser data erases it.</p>') +
       '<h3>I\'m stuck in the story</h3><p>Press R to ask Rook where to go next, or open the pause menu and choose <b>Ask Rook</b>. The objective is always shown at the top of the screen.</p>' +
       '<h3>The game is too fast or too slow</h3><p>Timers give 72 seconds per mark, the same pace as the real exam. Drills can be untimed: turn off Exam timing in Drills.</p>'),
     privacy: back => textPage(back, 'PRIVACY', ['strix', 'The court has examined the evidence. It is brief. Hoo.'],
-      '<ul><li><b>Your progress</b> (story, answers, stats, streak) is stored in your browser on this device. It isn\'t sent anywhere.</li><li><b>Accounts:</b> email accounts are kept on this device. Passwords are never stored, only a salted hash of them. If online sign-in (Google, Apple) is switched on, it\'s handled by Firebase Authentication.</li><li><b>No adverts and no tracking.</b></li><li><b>Fonts and maths rendering</b> load from Google Fonts and cdnjs.</li><li>To erase everything, use <b>Settings → Erase all save data</b>.</li></ul>'),
+      '<ul>' + (Auth.configured ? '<li><b>Your progress</b> (story, answers, stats, streak) is stored in your browser. If you sign in, it\'s also stored with your account in Google Firebase, where only you can read it.</li><li><b>Accounts:</b> sign-in is handled by Firebase Authentication (Google). Your email address and username are stored there; your password never reaches the game.</li>' : '<li><b>Your progress</b> (story, answers, stats, streak) is stored in your browser on this device. It isn\'t sent anywhere.</li><li><b>Accounts:</b> email accounts are kept on this device. Passwords are never stored, only a salted hash of them.</li>') + '<li><b>No adverts and no tracking.</b></li><li><b>Fonts and maths rendering</b> load from Google Fonts and cdnjs.</li><li>To erase everything, use <b>Settings → Erase all save data</b>.</li></ul>'),
     credits: back => textPage(back, 'CREDITS', ['bramble', 'Built it with my own two hands. Well. Somebody\'s hands. Here are the names.'],
       '<ul><li><b>Exam questions:</b> past papers and topic questions © OCR, used for revision.</li><li><b>Fonts:</b> Pixelify Sans, Inter and Patrick Hand, all under the SIL Open Font License.</li><li><b>Maths rendering:</b> KaTeX.</li><li><b>Inspired by</b> Undertale, Stardew Valley, Pokémon Mystery Dungeon and Krillion.</li><li><b>Pixel art, story and code:</b> made for Lowmarsh.</li></ul>'),
   };
 
   let titleSel = null, titleSeen = false, titleUI = null, titleDrawer = null;
   function title() {
+    Music.area('title');
     const items = (S.started ? [{ id: 'cont', label: 'Continue' }] : [])
       .concat([{ id: 'new', label: 'New Game' }, { id: 'papers', label: 'Past Papers' }, { id: 'drills', label: 'Drills' }, { id: 'daily', label: 'Daily Challenge' }, { id: 'settings', label: 'Settings' }]);
     const el = screen('<canvas class="title-cv" aria-hidden="true"></canvas>' +
@@ -299,7 +358,7 @@
       cont: () => startWorld(),
       new: () => {
         if (S.started && !confirm('Start a new story? Your story progress will be erased (practice stats are kept).')) return;
-        const keep = { stats: S.stats, daily: S.daily, papers: S.papers, sound: S.sound, paperFilter: S.paperFilter };
+        const keep = { stats: S.stats, daily: S.daily, papers: S.papers, sound: S.sound, music: S.music, pad: S.pad, timedDrills: S.timedDrills, paperFilter: S.paperFilter };
         S = Object.assign(fresh(), keep); persist();
         nameEntry();
       },
@@ -541,12 +600,15 @@
     const a = Auth.current();
     const el = overlayPanel('<h2 class="p5"><span>SETTINGS</span></h2>' +
       '<label class="toggle"><input type="checkbox" id="snd"' + (S.sound ? ' checked' : '') + '> Sound effects</label>' +
+      '<label class="vol">Music <input type="range" id="mus" min="0" max="100" step="5" value="' + Math.round(S.music * 100) + '"><span>' + (S.music ? Math.round(S.music * 100) + '%' : 'off') + '</span></label>' +
+      (Music.tracks ? '' : '<p class="muted small-note" style="text-align:left">No music has been added to this copy of Lowmarsh yet.</p>') +
       '<div class="pad-pick"><span>On a touch screen, walk with</span><div class="tabs"><button data-a="pad" data-v="buttons"' + (S.pad !== 'stick' ? ' class="on"' : '') + '>✚ Buttons</button><button data-a="pad" data-v="stick"' + (S.pad === 'stick' ? ' class="on"' : '') + '>◉ Joystick</button></div>' +
       '<p class="muted small-note">Joystick: put your thumb down anywhere on the left half of the screen and slide.</p></div>' +
       '<hr><p class="muted">' + (a && a.username ? 'Signed in as <b>' + esc(a.username) + '</b>.' : 'Not signed in. Your progress is saved on this device.') + '</p>' +
       '<hr><p class="muted">Controls: arrows/WASD move · Z/Enter talk & confirm · C/Esc menu · R ask Rook. On phones use the on-screen pad.</p>' +
       '<button class="btn danger small" data-a="wipe">Erase ALL save data</button>', back);
     $('#snd', el).addEventListener('change', e => { S.sound = e.target.checked; Sfx.setEnabled(S.sound); persist(); });
+    $('#mus', el).addEventListener('input', e => { S.music = e.target.value / 100; Music.setVolume(S.music); $('.vol span', el).textContent = S.music ? e.target.value + '%' : 'off'; persist(); });
     el.querySelectorAll('[data-a=pad]').forEach(b => b.addEventListener('click', () => {
       S.pad = b.dataset.v; persist(); applyPad();
       el.querySelectorAll('[data-a=pad]').forEach(x => x.classList.toggle('on', x === b));
@@ -585,7 +647,7 @@
     let qs = shuffle(allQuestions().filter(q => topics.includes(q.topic)));
     if (limit) qs = qs.slice(0, limit);
     if (!qs.length) return back();
-    const R = await Solver.session(qs, { mode: 'drill', title: topics.length === 1 ? topic(topics[0]).name : 'Mixed drill', timed: S.timedDrills, attempts: 3 });
+    const R = await session(qs, { mode: 'drill', title: topics.length === 1 ? topic(topics[0]).name : 'Mixed drill', timed: S.timedDrills, attempts: 3 });
     persist();
     if (R) results(R, 'drill', back); else back();
   }
@@ -615,7 +677,7 @@
       const rnd = seeded(seed);
       const T = shuffle(window.TOPICS, rnd).slice(0, 7);
       const qs = T.map(t => shuffle(allQuestions().filter(q => q.topic === t.id), rnd)[0]).filter(Boolean);
-      const R = await Solver.session(qs, { mode: 'daily', title: isDaily ? 'Daily Challenge #' + diveNumber() : 'Endless practice', timed: true, attempts: 1 });
+      const R = await session(qs, { mode: 'daily', title: isDaily ? 'Daily Challenge #' + diveNumber() : 'Endless practice', timed: true, attempts: 1 });
       if (!R) return back();
       if (isDaily) { S.daily[todayStr()] = { depth: R.depth, grid: R.grid.join(''), n: diveNumber() }; }
       persist();
@@ -688,7 +750,7 @@
 
   async function runPaper(id, back) {
     const p = window.PAPERS.find(x => x.id === id);
-    const R = await Solver.session(p.questions, { mode: 'exam', title: p.title.replace(/^OCR\s+/, ''), timed: false, attempts: 1, clock: p.minutes });
+    const R = await session(p.questions, { mode: 'exam', title: p.title.replace(/^OCR\s+/, ''), timed: false, attempts: 1, clock: p.minutes });
     if (!R) return back();
     const total = p.questions.reduce((t, q) => t + q.marks, 0);
     S.papers[id] = Math.max(S.papers[id] || 0, R.marks);
@@ -705,10 +767,19 @@
     return el;
   }
   // After signing in: give the account its own save (bringing the guest save with it the first time).
-  function afterSignIn() {
+  // The first time an account is used on this device it takes the account's saved game if it has one,
+  // otherwise it brings the guest save along. After that, the newest copy wins.
+  async function afterSignIn() {
     const k = saveKey();
-    try { if (!localStorage.getItem(k)) localStorage.setItem(k, JSON.stringify(S)); } catch (e) { /* ignore */ }
+    let here = false;
+    try { here = !!localStorage.getItem(k); } catch (e) { /* ignore */ }
+    if (!here) {
+      let c = null;
+      if (Auth.cloud.available) { UI.toast('Fetching your saved game…'); c = await Auth.cloud.load().catch(() => null); }
+      try { localStorage.setItem(k, JSON.stringify(c ? c.save : S)); } catch (e) { /* ignore */ }
+    }
     loadSave();
+    await syncCloud();
     UI.toast('Signed in as ' + Auth.current().username);
     title();
   }
@@ -756,9 +827,9 @@
     const check = () => { const err = inp.value ? Auth.validUsername(inp.value) : ''; chk.textContent = err || (inp.value ? '✓ Available' : ''); chk.className = 'u-check ' + (err ? 'bad' : 'ok'); };
     inp.addEventListener('input', check); check();
     on(el, { back: () => { el.close(); if (!editing && !Auth.current().username) Auth.signOut(); back(); } });
-    $('form', el).addEventListener('submit', e => {
+    $('form', el).addEventListener('submit', async e => {
       e.preventDefault();
-      try { Auth.setUsername(inp.value); el.close(); editing ? profile(back) : afterSignIn(); } catch (err) { chk.textContent = err.message; chk.className = 'u-check bad'; }
+      try { await Auth.setUsername(inp.value); el.close(); editing ? profile(back) : afterSignIn(); } catch (err) { chk.textContent = err.message; chk.className = 'u-check bad'; }
     });
     setTimeout(() => inp.focus(), 50);
   }
@@ -770,14 +841,15 @@
     const via = { google: 'Google', apple: 'Apple', email: 'email' }[a.provider] || a.provider;
     const el = authPanel('<div class="profile-head"><img src="' + Sprites.portrait('player') + '" alt=""><div><h2 class="auth-h">' + esc(a.username) + '</h2><p class="muted">Signed in with ' + esc(via) + (a.email ? ' · ' + esc(a.email) : '') + '</p></div></div>' +
       '<div class="stat-grid"><div><b>' + (S.started ? 'Ch ' + (S.flags.chapter || 0) : '—') + '</b><span>story</span></div><div><b>LV ' + level() + '</b><span>level</span></div>' +
-      '<div><b>' + S.pages.length + '/15</b><span>notebook pages</span></div><div><b>' + jobs.filter(j => j.done).length + '/' + jobs.length + '</b><span>side quests</span></div>' +
+      '<div><b>' + S.pages.length + '/' + window.TOPICS.length + '</b><span>notebook pages</span></div><div><b>' + jobs.filter(j => j.done).length + '/' + jobs.length + '</b><span>side quests</span></div>' +
       '<div><b>' + papersDone + '</b><span>papers sat</span></div><div><b>' + streak() + '</b><span>day streak</span></div>' +
       '<div><b>' + (st.r + st.w ? Math.round(100 * st.r / (st.r + st.w)) + '%' : '—') + '</b><span>steps right first time</span></div></div>' +
+      '<p class="muted small-note sync-note">' + (Auth.cloud.available ? ({ saving: '☁ Saving to your account…', offline: '☁ Couldn\'t reach your account just now. Progress is safe on this device and will be saved next time.' }[cloudState] || '☁ Progress is saved to your account, so it follows you to any device.') : 'Progress is saved on this device.') + '</p>' +
       '<div class="row"><button class="btn small" data-a="rename">✎ Change username</button><button class="btn small danger" data-a="out">Log out</button></div>', back);
     on(el, {
       back: () => { el.close(); back(); },
       rename: () => { el.close(); chooseUsername(back, true); },
-      out: async () => { await Auth.signOut(); el.close(); loadSave(); UI.toast('Signed out.'); title(); },
+      out: async () => { if (cloudTimer) await pushCloud(); await Auth.signOut(); el.close(); loadSave(); UI.toast('Signed out.'); title(); },
     });
   }
 
@@ -950,5 +1022,7 @@
       else if (e.target.closest('.hud-obj')) { const o = e.target.closest('.hud-obj'); if (o.classList.contains('open')) o.classList.remove('open'); else peekObjective(6000); }
     });
     title();
+    // Signed in on another device since last time? Bring the newer save across.
+    syncCloud().then(took => { if (took && !World.active && !$('.panel-screen')) title(); });
   });
 })();
