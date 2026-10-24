@@ -46,8 +46,46 @@
     '..kpkkpk....',
     '..kk..kk....',
   ];
+  // The player as a girl: long hair over the shoulders, the same striped jumper, a skirt.
+  const GIRL_DOWN = [
+    '...kkkkkk...',
+    '..khhhhhhk..',
+    '.khhhhhhhhk.',
+    '.khhsssshhk.',
+    'khhsssssshhk',
+    'khsessssesh' + 'k',
+    'khsssssssshk',
+    'khhkssssk' + 'hhk',
+    'khbbyyyybbhk',
+    'kbbbbbbbbbbk',
+    'ksbyyyyyybsk',
+    'ksbbbbbbbbsk',
+    '.kbbbbbbbbk.',
+    'krrrrrrrrrrk',
+    '.kssk..kssk.',
+    '.kkkk..kkkk.',
+  ];
+  const GIRL_UP = GIRL_DOWN.map((row, i) => (i >= 3 && i <= 7 ? 'khhhhhhhhhhk' : i === 8 ? 'khhhhhhhhhhk' : row));
+  const GIRL_SIDE = [
+    '...kkkkkk...',
+    '..khhhhhhk..',
+    '.khhhhhhhhk.',
+    '.khhhhhsssk.',
+    '.khhhhsssssk',
+    'khhhhsssesk.',
+    'khhhssssssk.',
+    'khhhsssssk..',
+    'khhkbyyyyk..',
+    '.kbbbbbbbk..',
+    '.kyyyysyyk..',
+    '.kbbbbsbbk..',
+    '.kbbbbbbk...',
+    '.krrrrrrk...',
+    '..kskksk....',
+    '..kk..kk....',
+  ];
   // Walk frame: shift the feet.
-  const stepFrame = rows => rows.map((r, i) => (i === 14 ? r.replace('.kppk..kppk.', '..kpk.kppk..').replace('..kpkkpk....', '..kppkpk....') : i === 15 ? r.replace('.kkkk..kkkk.', '..kkk.kkkk..') : r));
+  const stepFrame = rows => rows.map((r, i) => (i === 14 ? r.replace('.kppk..kppk.', '..kpk.kppk..').replace('..kpkkpk....', '..kppkpk....').replace('.kssk..kssk.', '..ksk.kssk..').replace('..kskksk....', '..ksskks....') : i === 15 ? r.replace('.kkkk..kkkk.', '..kkk.kkkk..') : r));
 
   const ART = {
     rook: [
@@ -321,6 +359,7 @@
   // Palettes for each human-shaped character.
   const PEOPLE = {
     player: {},
+    playerGirl: { h: '#6b3423', r: '#c0403a' },
     fen: { h: '#8a4b2a', b: '#c0403a', y: '#f4f1e8', p: '#7e2a26' },
     gull: { h: '#2b3a55', b: '#2b3a55', y: '#e8e2d0', s: '#e3b48c', p: '#22222e' },
     mayor: { h: '#1a1a24', b: '#7d5ea8', y: '#c0403a', p: '#2d2d3a' },
@@ -339,6 +378,8 @@
     rowan: { h: '#8a6038', b: '#5f8f4a', y: '#7a5232', s: '#d9a57c', p: '#3a3550' },
     dilys: { h: '#5a5a68', b: '#2b3a55', y: '#e8c24a', s: '#d9a57c', p: '#22222e' },
     tansy: { h: '#c0603a', b: '#e8c24a', y: '#5f8f4a', p: '#4f3420' },
+    hazel: { h: '#3c5e30', b: '#e07b39', y: '#f4f1e8', s: '#d9a57c', p: '#4f3420' },
+    dozer: { h: '#9a948a', b: '#7d5ea8', y: '#b07fc8', s: '#e3b48c', p: '#3a3550' },
     shadow: { h: '#1a1024', b: '#2a1838', y: '#c77dff', s: '#2a1838', e: '#ff4d6d', p: '#1a1024' },
   };
 
@@ -368,6 +409,7 @@
     if (PEOPLE[name]) {
       const pal = Object.assign({}, BASE, PEOPLE[name]);
       let rows = dir === 'up' ? HUMAN_UP : dir === 'left' || dir === 'right' ? HUMAN_SIDE : HUMAN_DOWN;
+      if (name === 'playerGirl') rows = dir === 'up' ? GIRL_UP : dir === 'left' || dir === 'right' ? GIRL_SIDE : GIRL_DOWN;
       if (name === 'mayor') rows = ['..kkkkkkkk..', '..kkkkkkkk..', 'kkkkkkkkkkkk'].concat(rows.slice(3));
       if (name === 'gull') rows = ['............', '..kkkkkkkk..', '.kbbbbbbbbk.', 'kkkkkkkkkkkk'].concat(rows.slice(4));
       if (frame) rows = stepFrame(rows);

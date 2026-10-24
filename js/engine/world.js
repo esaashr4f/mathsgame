@@ -13,7 +13,7 @@
     if (typing()) return;
     const k = KEYMAP[e.key.toLowerCase()];
     if (k) { keys[k] = true; if (e.key.startsWith('Arrow')) e.preventDefault(); }
-    if (!World.active || World.locked || e.repeat) return;
+    if (!World.active || World.locked || e.repeat || e.defaultPrevented) return;   // a dialogue or menu already used this key
     const key = e.key.toLowerCase();
     if (key === 'z' || key === 'enter' || key === ' ') { e.preventDefault(); World.interact(); }
     if (key === 'c' || key === 'escape' || key === 'x') { e.preventDefault(); window.Game && Game.openMenu(); }
@@ -234,7 +234,7 @@
       this.entities.filter(e => e.under && !e.hidden).forEach(e => this.drawEntity(e));
       const actors = this.entities.filter(e => !e.hidden && !e.under).map(e => ({ y: e.py, draw: () => this.drawEntity(e) }));
       const p = this.player;
-      actors.push({ y: p.y, draw: () => this.drawSprite(Sprites.get('player', p.dir, p.moving ? p.frame : 0), p.x, p.y + (p.moving && p.frame ? -1 : 0)) });
+      actors.push({ y: p.y, draw: () => this.drawSprite(Sprites.get(Game.playerSprite(), p.dir, p.moving ? p.frame : 0), p.x, p.y + (p.moving && p.frame ? -1 : 0)) });
       if (this.flags().rook && this.map.rook !== false) {
         const r = this.rookPos();
         const flap = Math.floor(this.t * 6) % 2;

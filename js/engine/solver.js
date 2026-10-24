@@ -95,7 +95,7 @@
     return new Promise(resolve => {
       const giver = problem.giver ? Game.CAST[problem.giver] : null;
       const el = UI.panel(
-        (opts.quit ? '<div class="nb-bar"><button class="btn small" data-t="quit">◂ ' + esc(opts.quit) + '</button></div>' : '') +
+        (opts.quit ? '<div class="nb-bar"><button class="btn small" data-t="quit">◂ ' + esc(opts.quit) + ' <kbd>Esc</kbd></button></div>' : '') +
         '<div class="notebook">' +
         '<div class="nb-head"><span class="nb-tag">' + esc(Game.topicLabel(problem.topic)) + '</span><h2>' + esc(problem.title) + '</h2></div>' +
         (problem.context ? '<div class="nb-context">' + (giver ? '<img src="' + Sprites.portrait(giver.portrait) + '" alt=""><div><b style="color:' + giver.color + '">' + esc(giver.name) + '</b><br>' : '<div>') + Game.fmt(problem.context) + '</div></div>' : '') +
@@ -163,8 +163,11 @@
         if (t.dataset.t === 'teach') { taught = true; rookSay('Right, watch: ' + s.explain + '<br><i>Now you write it in.</i>'); }
         if (t.dataset.t === 'notes') Game.showLesson(problem.topic);
         if (t.dataset.t === 'scratch') Game.scratch(() => {});
-        if (t.dataset.t === 'quit') { if (box) box.destroy(); el.close(); resolve({ quit: true }); }
+        if (t.dataset.t === 'quit') leave();
       });
+      const leave = () => { if (box) box.destroy(); el.close(); resolve({ quit: true }); };
+      // Esc leaves too (from anywhere in the notebook, even while typing an answer)
+      if (opts.quit) el.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); leave(); } }, true);
       showStep();
       Game.scratchTip && Game.scratchTip();
     });

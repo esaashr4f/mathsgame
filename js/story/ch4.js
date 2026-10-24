@@ -154,6 +154,8 @@
   SC.lockgate = async G => G.narr('* The Wend Lock. The gates are shut tight, and the windlass is jammed with something.');
   SC.lockLog = async G => G.narr('* The lock-keeper\'s log. The last entry: "Storm. Lock shut on Cog\'s order, to save the village. Cog will not open it again. Cog says it is not SAFE. — D."');
   SC.winch = async G => G.narr('* A great windlass for the lock gates. Its cable is missing.');
+  SC.goatPhoto = async G => G.narr('* A framed photo of a goat, wearing a rosette. "Best in Show, Lowmarsh Fair." The goat does not look pleased about it.');
+  SC.kettle = async G => G.narr('* The kettle Tansy rescued from the flood. It has pride of place, and a little dent.');
   SC.farmDoor = async G => G.narr(G.flag('drained') ? '* Rowan\'s farmhouse. Everything is wet but nothing is ruined. Tansy has hung the goats\' names over the door.' : '* The water inside the farmhouse is up to the window sills. Tansy has rescued the kettle, the cat and a framed photo of a goat.');
 
   SC.arriveMeadows = async G => {

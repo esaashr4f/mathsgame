@@ -82,8 +82,10 @@
         const k = e.key.toLowerCase();
         if (k === 'arrowdown' || k === 'arrowright' || k === 's' || k === 'd') { sel = (sel + 1) % btns.length; mark(); Sfx.blip(600); e.preventDefault(); }
         else if (k === 'arrowup' || k === 'arrowleft' || k === 'w' || k === 'a') { sel = (sel - 1 + btns.length) % btns.length; mark(); Sfx.blip(600); e.preventDefault(); }
-        else if (isOk(e)) { e.preventDefault(); pick(sel); }
+        // ignore a confirm press in the first moment, so mashing through dialogue can't pick an answer by accident
+        else if (isOk(e)) { e.preventDefault(); if (performance.now() - shown > 400) pick(sel); }
       });
+      const shown = performance.now();
     });
   }
 

@@ -191,7 +191,8 @@
         await G.say('rook', 'That\'s the Fog, all right. Grown-ups keep the answers they were told, but lose the reasons. And without the reasons they can\'t do anything new.',
           'You, on the other hand, are still learning. Still asking why. The fog doesn\'t stick to people like that. Not much, anyway.');
       }
-      const c = await G.choose(['I\'ll give it a go.', 'Rook, can\'t you just do it?']);
+      const c = await G.choose(['I\'ll give it a go.', 'Rook, can\'t you just do it?', '(Have a look around the deck first.)']);
+      if (c === 2) return G.say('gull', 'Take your time. The jetty\'s not going anywhere. Neither are we.');
       if (c === 1) await G.say('rook', 'I know HOW. I watched Mira do this for eleven years. But I\'ve got no thumbs, and numbers go slippery when I panic.', 'You write. I\'ll talk. That\'s the deal.');
       await G.solve(P.gangplank);
       await G.say('gull', 'Two root five... four point four seven. And this plank\'s four and a half. Ha! Three centimetres to spare!');
@@ -401,8 +402,24 @@
   };
 
   SC.workshopDoor = async G => {};
-  SC.mossDoor = async G => G.narr('* Moss\'s house. Someone inside is singing about turnips.');
-  SC.cottageDoor = async G => G.narr('* A cottage. A note on the door: "GONE TO BED UNTIL THE FOG LIFTS."');
+  // ── Moss's house ──
+  SC.hazel = async G => {
+    const lines = G.flag('brambleSpared')
+      ? ['Bramble made him a BOAT. Out of driftwood. Moss sleeps with it. I have stopped asking questions.', 'You\'re the one who does the sums, aren\'t you? Thank you for my boy\'s rope. And for the troll. Mostly the rope.']
+      : G.flag('ropeFixed')
+        ? ['He\'s across the stream every five minutes now. With scones. For a TROLL. I\'m very proud and very confused.']
+        : ['Moss has been at that stream since breakfast, building a bridge out of rope and stubbornness.', 'Before the fog, Mira used to sit at this table and show him sums with turnips. He was rubbish at it. He loved it.'];
+    await G.say('hazel', ...lines);
+  };
+  SC.mossSoup = async G => G.narr('* A pot of turnip soup, bubbling. That explains the singing.');
+  SC.mossShelf = async G => G.narr(G.flag('brambleSpared') ? '* A little driftwood boat, carved by enormous hands. "MOSS" is scratched on the side, slightly wrong.' : '* A shelf of river finds: three bottle tops, a bent spoon, a very smooth stone. All labelled.');
+  // ── the quiet cottage ──
+  SC.dozer = async G => {
+    if (G.flag('miraFreed')) return G.say('dozer', 'The fog\'s GONE! I slept for three weeks. I feel incredible. Did I miss anything?', '...A troll built a bridge? Hm. Sounds about right.');
+    await G.narr('* Mr Dozer is fast asleep under three quilts and a cat.');
+    await G.say('dozer', 'Zzz... is the fog gone yet... no?... wake me when it is... zzz...');
+  };
+  SC.dozerClock = async G => G.narr('* A clock, stopped at twenty past three. Someone has put a sock over it.');
 
   // Mira's workshop
   SC.miraDesk = async G => {

@@ -310,7 +310,7 @@
           door(63, 18, 'workshop', 6, 8),
           door(36, 36, 'clinic', 5, 7),
           door(64, 36, 'wickhouse', 4, 6),
-          { x: 43, y: 40, run: S('mossDoor') }, { x: 55, y: 40, run: S('cottageDoor') },
+          door(43, 40, 'mosshouse', 4, 6), door(55, 40, 'cottage', 4, 6),
           door(9, 48, 'lockhouse', 5, 7),
           { x: 84, y: 19, w: 2, run: S('lighthouseDoor') },
           { x: 47, y: 46, w: 6, run: S('arriveVillage'), when: f => f.rook && !f.arrived },
@@ -318,7 +318,7 @@
           { x: 48, y: 0, w: 4, run: S('crossBridge'), when: f => f.bridgeBuilt },
           { x: 80, y: 26, h: 2, run: S('arriveGullPoint'), when: f => f.eastOpen && !f.gullPointSeen },
           { x: 24, y: 26, h: 5, run: S('arriveMeadows'), when: f => f.westOpen && !f.meadowsSeen },
-          { x: 19, y: 37, run: S('farmDoor') },
+          { x: 19, y: 37, run: G => (G.flag('drained') ? G.go('farmhouse', 5, 7, 'up') : SC.farmDoor(G)) },
           { x: 12, y: 18, h: 6, run: S('enterStill'), when: f => f.marshOpen && !f.stillSeen },
           { x: 10, y: 24, w: 2, run: S('enterStill'), when: f => f.marshOpen && !f.stillSeen },
         ],
@@ -429,6 +429,56 @@
         entities: [{ id: 'lamps', x: 6, y: 4, sprite: 'lamp', talk: S('wickLamps') }, { id: 'wickbook', x: 2, y: 2.8, sprite: 'page', talk: S('wickBook'), solid: false }],
         triggers: [exit(4, 7, 64, 37)],
       };
+    },
+  };
+
+  // Moss's house: his mum Hazel, a kitchen that smells of turnip soup, and (later) a driftwood boat
+  window.MAPS.mosshouse = {
+    name: "Moss's House", rook: true,
+    build(f) {
+      const g = room(9, 8);
+      set(g, 1, 2, 'O'); rect(g, 6, 2, 2, 1, 'S');
+      rect(g, 3, 4, 3, 1, 'c');
+      set(g, 4, 7, 'X');
+      const E = [
+        { id: 'hazel', x: 2, y: 4, sprite: 'hazel', talk: S('hazel') },
+        { id: 'soup', x: 1, y: 2.8, sprite: 'page', talk: S('mossSoup'), solid: false },
+        { id: 'toyshelf', x: 6.5, y: 2.8, sprite: 'page', talk: S('mossShelf'), solid: false },
+      ];
+      return { rows: rows(g), fog: 0.05, entities: E, triggers: [exit(4, 7, 43, 41)] };
+    },
+  };
+
+  // the cottage with the note on the door: Mr Dozer has gone to bed until the fog lifts
+  window.MAPS.cottage = {
+    name: 'The Quiet Cottage', rook: true,
+    build(f) {
+      const g = room(9, 8);
+      rect(g, 1, 2, 2, 1, 'B'); set(g, 6, 2, 'O');
+      rect(g, 5, 4, 3, 2, 'u');
+      set(g, 4, 7, 'X');
+      const E = [
+        { id: 'dozer', x: f.miraFreed ? 3 : 6, y: f.miraFreed ? 4 : 4.4, sprite: 'dozer', talk: S('dozer') },
+        { id: 'clock', x: 1.5, y: 2.8, sprite: 'page', talk: S('dozerClock'), solid: false },
+      ];
+      return { rows: rows(g), fog: 0.05, entities: E, triggers: [exit(4, 7, 55, 41)] };
+    },
+  };
+
+  // Rowan's farmhouse, once the flood has gone down
+  window.MAPS.farmhouse = {
+    name: "Rowan's Farmhouse", rook: true,
+    build(f) {
+      const g = room(11, 9);
+      set(g, 2, 2, 'O'); rect(g, 7, 2, 3, 1, 'S');
+      rect(g, 3, 4, 4, 1, 'c');
+      set(g, 5, 8, 'X');
+      const E = [
+        { id: 'goatphoto', x: 8, y: 2.8, sprite: 'page', talk: S('goatPhoto'), solid: false },
+        { id: 'kettle', x: 2, y: 2.8, sprite: 'page', talk: S('kettle'), solid: false },
+        { id: 'farmcat', x: 8, y: 6, sprite: 'cat', talk: S('cat'), wander: 2, speed: 10 },
+      ];
+      return { rows: rows(g), fog: 0.05, entities: E, triggers: [exit(5, 8, 19, 38)] };
     },
   };
 

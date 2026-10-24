@@ -60,6 +60,7 @@
   const seenTip = k => { try { return (JSON.parse(localStorage.getItem(tipsKey)) || {})[k]; } catch (e) { return false; } };
   const markTip = k => { try { const t = JSON.parse(localStorage.getItem(tipsKey)) || {}; t[k] = 1; localStorage.setItem(tipsKey, JSON.stringify(t)); } catch (e) { /* ignore */ } };
 
+  const playerSprite = () => (S.gender === 'girl' ? 'playerGirl' : 'player');
   const fmt = s => String(s).replace(/\{name\}/g, esc(S.name || 'you'));
   const fmtPlain = s => String(s).replace(/\{name\}/g, S.name || 'you');
   const topic = id => window.TOPICS.find(t => t.id === id);
@@ -77,16 +78,16 @@
   function speaker(who) {
     if (!who) return null;
     const c = window.CAST[who] || { name: who, portrait: null, color: '#fff', blip: 440 };
-    return { name: fmtPlain(c.name), portrait: c.portrait, color: c.color, blip: c.blip };
+    return { name: fmtPlain(c.name), portrait: who === 'you' ? playerSprite() : c.portrait, color: c.color, blip: c.blip };
   }
   const G = {
-    async say(who, ...lines) { for (const l of lines) await UI.say(speaker(who), fmtPlain(l)); },
+    async say(who, ...lines) { justChose = false; for (const l of lines) await UI.say(speaker(who), fmtPlain(l)); },
     async talk(seq) { for (const [who, line] of seq) await G.say(who, line); },
     rook: (...l) => G.say('rook', ...l),
     me: (...l) => G.say('you', ...l),
     narr: (...l) => G.say(null, ...l),
-    async ask(who, line, options) { await G.say(who, line); return UI.choose(options.map(fmtPlain)); },
-    choose: (options, prompt) => UI.choose(options.map(fmtPlain), prompt && fmtPlain(prompt)),
+    async ask(who, line, options) { await G.say(who, line); justChose = true; return UI.choose(options.map(fmtPlain)); },
+    choose: (options, prompt) => { justChose = true; return UI.choose(options.map(fmtPlain), prompt && fmtPlain(prompt)); },
     flag: k => S.flags[k],
     set(k, v) { S.flags[k] = v === undefined ? true : v; persist(); },
     give(item, n) { S.items[item] = (S.items[item] || 0) + (n || 1); persist(); UI.toast('Got ' + ITEMS[item].name + (n > 1 ? ' ×' + n : '') + '!'); },
@@ -114,9 +115,18 @@
     card: (t, s, b) => UI.card(t, s, b),
     narrate: lines => UI.narrate(lines.map(fmtPlain)),
     async solve(problem) {
+      // Every problem can be left and picked up again: nothing is set until it's solved, so the
+      // person just asks again next time you talk to them.
       const side = sideQuest(problem.id);
-      const r = await Solver.story(problem, side ? { quit: 'Not now: back to Lowmarsh' } : undefined);
-      if (r && r.quit) throw LEAVE;
+      // Ask before opening a problem (unless the scene has just asked), so a conversation can always end
+      // with Enter instead of dropping you into the notebook.
+      if (!justChose) {
+        const c = await UI.choose(['Work it out now', 'Not now'], '📜 ' + fmtPlain(problem.title) + (side ? ' (side quest)' : ''));
+        if (c === 1) { leftSide = !!side; throw LEAVE; }
+      }
+      justChose = false;
+      const r = await Solver.story(problem, { quit: side ? 'Not now: back to Lowmarsh' : 'Step away for now' });
+      if (r && r.quit) { leftSide = !!side; throw LEAVE; }
       const first = !S.solved[problem.id];
       S.solved[problem.id] = true; persist();
       if (side && first) sideReward(problem, side, r);
@@ -195,7 +205,8 @@
       $('button', el).focus();
     });
   }
-  function leftQuest() { UI.toast('No rush. The side quest will wait for you.'); }
+  let leftSide = false, justChose = false;
+  function leftQuest() { UI.toast(leftSide ? 'No rush. The side quest will wait for you.' : 'No rush. Talk to them again when you\'re ready.'); }
 
   // ───────── music: what plays where (the tracks themselves are listed in audio/music/music.js) ─────────
   const ROOM_MUSIC = { bakery: 'home', workshop: 'home', clinic: 'home', wickhouse: 'home', townhall: 'townhall', lockhouse: 'lock', lighthouse: 'lighthouse', lamproom: 'lighthouse' };
@@ -391,6 +402,28 @@
     });
   }
 
+  // "Are you a boy or a girl?", Pokémon-style: pick who you play as.
+  function chooseCharacter() {
+    return new Promise(res => {
+      const el = screen('<div class="name-screen win who-screen"><h2>Are you a boy or a girl?</h2>' +
+        '<div class="who-pick"><button data-a="pick" data-v="boy"><span>Boy</span></button>' +
+        '<button data-a="pick" data-v="girl"><span>Girl</span></button></div>' +
+        '<p class="muted small-note">You can change this later in Settings.</p></div>');
+      const btns = Array.from(el.querySelectorAll('[data-a=pick]'));
+      let sel = 0;
+      const mark = () => btns.forEach((b, i) => b.classList.toggle('sel', i === sel));
+      mark();
+      const done = v => { pop(); el.classList.add('hidden'); res(v); };
+      const pop = UI.pushKeys(e => {
+        const k = e.key.toLowerCase();
+        if (['arrowleft', 'arrowright', 'a', 'd'].includes(k)) { sel = 1 - sel; mark(); Sfx.blip(600); e.preventDefault(); }
+        else if (['enter', 'z', ' '].includes(k)) { e.preventDefault(); Sfx.confirm(); done(btns[sel].dataset.v); }
+      });
+      btns.forEach((b, i) => b.addEventListener('mouseenter', () => { sel = i; mark(); }));
+      on(el, { pick: v => done(v) });
+    });
+  }
+
   function nameEntry() {
     const el = screen('<div class="name-screen win"><h2>What\'s your name?</h2><input id="nm" maxlength="12" autocomplete="off" spellcheck="false"><div><button class="btn primary" data-a="go">THAT\'S ME</button></div></div>');
     const inp = $('#nm', el);
@@ -400,6 +433,8 @@
       if (!n) return inp.focus();
       S.name = n; persist();
       el.classList.add('hidden');
+      S.gender = await chooseCharacter();
+      persist();
       await window.SCRIPTS.prologueNarration(G);
       S.started = true; S.map = 'world'; S.x = 50; S.y = 58; S.dir = 'up'; persist();
       startWorld(true);
@@ -634,6 +669,7 @@
       '<label class="toggle"><input type="checkbox" id="snd"' + (S.sound ? ' checked' : '') + '> Sound effects</label>' +
       '<label class="vol">Music <input type="range" id="mus" min="0" max="100" step="5" value="' + Math.round(S.music * 100) + '"><span>' + (S.music ? Math.round(S.music * 100) + '%' : 'off') + '</span></label>' +
       (Music.tracks ? '' : '<p class="muted small-note" style="text-align:left">No music has been added to this copy of Lowmarsh yet.</p>') +
+      '<div class="pad-pick"><span>Your character</span><div class="tabs"><button data-a="who" data-v="boy"' + (S.gender !== 'girl' ? ' class="on"' : '') + '>Boy</button><button data-a="who" data-v="girl"' + (S.gender === 'girl' ? ' class="on"' : '') + '>Girl</button></div></div>' +
       '<div class="pad-pick"><span>On a touch screen, walk with</span><div class="tabs"><button data-a="pad" data-v="buttons"' + (S.pad !== 'stick' ? ' class="on"' : '') + '>✚ Buttons</button><button data-a="pad" data-v="stick"' + (S.pad === 'stick' ? ' class="on"' : '') + '>◉ Joystick</button></div>' +
       '<p class="muted small-note">Joystick: put your thumb down anywhere on the left half of the screen and slide.</p></div>' +
       '<hr><p class="muted">' + (a && a.username ? 'Signed in as <b>' + esc(a.username) + '</b>.' : 'Not signed in. Your progress is saved on this device.') + '</p>' +
@@ -641,6 +677,10 @@
       '<button class="btn danger small" data-a="wipe">Erase ALL save data</button>', back);
     $('#snd', el).addEventListener('change', e => { S.sound = e.target.checked; Sfx.setEnabled(S.sound); persist(); });
     $('#mus', el).addEventListener('input', e => { S.music = e.target.value / 100; Music.setVolume(S.music); $('.vol span', el).textContent = S.music ? e.target.value + '%' : 'off'; persist(); });
+    el.querySelectorAll('[data-a=who]').forEach(b => b.addEventListener('click', () => {
+      S.gender = b.dataset.v; persist();
+      el.querySelectorAll('[data-a=who]').forEach(x => x.classList.toggle('on', x === b));
+    }));
     el.querySelectorAll('[data-a=pad]').forEach(b => b.addEventListener('click', () => {
       S.pad = b.dataset.v; persist(); applyPad();
       el.querySelectorAll('[data-a=pad]').forEach(x => x.classList.toggle('on', x === b));
@@ -871,7 +911,7 @@
     const papersDone = Object.keys(S.papers).length;
     const st = Object.values(S.stats).reduce((t, x) => ({ r: t.r + x.right, w: t.w + x.wrong }), { r: 0, w: 0 });
     const via = { google: 'Google', apple: 'Apple', email: 'email' }[a.provider] || a.provider;
-    const el = authPanel('<div class="profile-head"><img src="' + Sprites.portrait('player') + '" alt=""><div><h2 class="auth-h">' + esc(a.username) + '</h2><p class="muted">Signed in with ' + esc(via) + (a.email ? ' · ' + esc(a.email) : '') + '</p></div></div>' +
+    const el = authPanel('<div class="profile-head"><img src="' + Sprites.portrait(playerSprite()) + '" alt=""><div><h2 class="auth-h">' + esc(a.username) + '</h2><p class="muted">Signed in with ' + esc(via) + (a.email ? ' · ' + esc(a.email) : '') + '</p></div></div>' +
       '<div class="stat-grid"><div><b>' + (S.started ? 'Ch ' + (S.flags.chapter || 0) : '—') + '</b><span>story</span></div><div><b>LV ' + level() + '</b><span>level</span></div>' +
       '<div><b>' + S.pages.length + '/' + window.TOPICS.length + '</b><span>notebook pages</span></div><div><b>' + jobs.filter(j => j.done).length + '/' + jobs.length + '</b><span>side quests</span></div>' +
       '<div><b>' + papersDone + '</b><span>papers sat</span></div><div><b>' + streak() + '</b><span>day streak</span></div>' +
@@ -1038,7 +1078,7 @@
   window.Game = {
     get save() { return S; },
     CAST: null, G, ITEMS, fmt, topicLabel: id => (topic(id) ? topic(id).name : ''), topic, showLesson,
-    record, level, maxHP, depthNote, charm, firstTime: k => { if (seenTip(k)) return false; markTip(k); return true; }, LEAVE, afterScript, leftQuest, openMenu, askRook, persist, scratch, grapher, scratchTip,
+    record, level, maxHP, depthNote, charm, playerSprite, firstTime: k => { if (seenTip(k)) return false; markTip(k); return true; }, LEAVE, afterScript, leftQuest, openMenu, askRook, persist, scratch, grapher, scratchTip,
     titleChoose: id => (titleUI ? titleUI.choose(id) : null),
     titleDrawer: id => (titleUI ? (id ? titleUI.chooseDrawer(id) : titleUI.openDrawer()) : null),
     daily: back => dailyIntro(back), drills: back => drillsMenu(back), papers: back => papersMenu(back), notebook: back => notebook(back, true),

@@ -24,5 +24,7 @@ window.CAST = {
   hush:     { name: 'The Hush',        portrait: 'hush',     color: '#c77dff', blip: 110 },
   kid:      { name: 'Kid',             portrait: 'kid',      color: '#ffd166', blip: 820 },
   villager: { name: 'Villager',        portrait: 'villager2', color: '#ffb3c6', blip: 520 },
+  hazel:    { name: 'Hazel (Moss\'s mum)', portrait: 'hazel', color: '#c7e39b', blip: 600 },
+  dozer:    { name: 'Mr Dozer',        portrait: 'dozer',    color: '#b9b3a6', blip: 200 },
   tomas:    { name: 'Tomas the Grocer', portrait: 'villager', color: '#9bd3e8', blip: 360 },
 };
