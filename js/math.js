@@ -220,7 +220,7 @@
   }
 
   function splitList(s) {
-    return String(s)
+    return String(s).replace(/^\s*\{|\}\s*$/g, '')
       .replace(/\band\b|\bor\b/gi, ',')
       .split(/[,;]/)
       .map(x => stripLhs(x.trim()))
@@ -285,7 +285,12 @@
           }
           const v = numValue(raw);
           if (step.range) return { ok: v >= step.range[0] && v <= step.range[1] };
-          return { ok: closeEnough(v, expectedNum(step.answer), step) };
+          const want = expectedNum(step.answer);
+          if (closeEnough(v, want, step)) return { ok: true };
+          // A rounded decimal of the right value isn't a maths slip: say so, and let them try again.
+          if (/\d\.\d/.test(raw) && step.dp == null && step.sf == null && closeEnough(v, want, { sf: 3 }))
+            return { ok: false, format: true, code: 'rounded', message: 'Very close: is that rounded? Give the exact value (a fraction or surd is fine, like 5/8 or 2√5), or more decimal places.' };
+          return { ok: false };
         }
         case 'set': {
           const given = splitList(raw).map(numValue);

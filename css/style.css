@@ -312,6 +312,13 @@ body.in-world #scratchBtn { display: block; }
   .cmd { font-size: 16px; padding: 4px 4px 4px 22px; }
   canvas.dodge { width: min(100%, 360px); }
   .blueprint { align-self: start; }
+  body .reward { padding: 10px 16px 12px; max-width: 560px; }
+  body .rw-title { font-size: 22px; margin-bottom: 8px; }
+  body .rw-list { gap: 4px; margin-bottom: 8px; }
+  body .rw-list li { font-size: 15px; padding: 3px 8px; }
+  body .rw-charm { padding: 4px 10px; margin-bottom: 8px; }
+  body .rw-prog { margin-bottom: 8px; }
+  body .reward .small-note { margin: 4px 0 8px !important; }
   .menu-box { margin-top: 2vh; max-width: 640px; padding: 10px 14px; }
   .menu-grid { grid-template-columns: 1fr 1fr 1fr; margin-bottom: 8px; }
   .menu-grid button { font-size: 16px; padding: 4px 6px 4px 28px; }
@@ -435,6 +442,7 @@ body.touch .choice-box button { font-size: 17px; }
 @keyframes glow { from { box-shadow: 0 0 0 0 rgba(255, 209, 102, .0); } to { box-shadow: 0 0 14px 2px rgba(255, 209, 102, .45); } }
 .rw-prog { display: flex; flex-direction: column; gap: 4px; margin: 0 0 14px; font-size: 15px; color: var(--soft); }
 .rw-prog .acc { height: 8px; }
+.controls-card kbd { display: inline-block; min-width: 2em; margin-right: 8px; padding: 0 6px; border: 2px solid var(--cream); border-radius: 3px; font-family: var(--ui); color: var(--gold); text-align: center; }
 .job-h { font-family: var(--ui); color: var(--amber); font-size: 20px; margin: 14px 0 6px; }
 .job-reward { display: block; font-size: 14px; color: var(--gold); margin-top: 2px; }
 .charm-list .charm { display: flex; gap: 10px; align-items: center; opacity: .6; }

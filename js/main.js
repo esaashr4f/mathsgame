@@ -422,7 +422,7 @@
     World.active = true;
     updateHud();
     rotateHint();
-    if (fresh) World.run(G => window.SCRIPTS.prologue(G));
+    if (fresh) World.run(async G => { await window.SCRIPTS.prologue(G); await controlsTip(); });
   }
 
   // ───────── pause menu ─────────
@@ -542,7 +542,9 @@
   }
 
   // The first time someone meets a problem, point out the scratch pad button.
+  // First-time tips in the notebook: how to answer, then (next problem) the scratch pad.
   function scratchTip() {
+    if (!seenTip('answer')) return answerTip();
     if (seenTip('scratch')) return;
     setTimeout(() => {
       const btns = document.querySelectorAll('[data-t=scratch], [data-q=scratch]');
@@ -554,6 +556,36 @@
       b.insertAdjacentElement('afterend', tip);
       tip.querySelector('button').addEventListener('click', () => { markTip('scratch'); tip.remove(); });
     }, 400);
+  }
+
+  function answerTip() {
+    setTimeout(() => {
+      const box = document.querySelector('.nb-screen .nb-input');
+      if (!box || document.querySelector('.tip-bubble')) return;
+      const tip = document.createElement('div');
+      tip.className = 'tip-bubble';
+      tip.innerHTML = '<b>How to answer:</b> work out this step, type the answer in the box and press <b>Enter</b>. Underneath, the box shows how it has read what you typed, so you can check it before you submit. Stuck? Press <b>🐦 Hint</b>. Still stuck? <b>Talk me through it</b>. <button class="btn small">Got it</button>';
+      box.insertAdjacentElement('afterend', tip);
+      tip.querySelector('button').addEventListener('click', () => { markTip('answer'); tip.remove(); });
+    }, 400);
+  }
+
+  // After the prologue: how to move, talk and open the menu (once per device).
+  function controlsTip() {
+    if (seenTip('controls')) return;
+    markTip('controls');
+    const touch = document.body.classList.contains('touch');
+    const rows = touch
+      ? [['✚ or joystick', 'walk'], ['A', 'talk to someone you\'re facing, and skip dialogue'], ['☰', 'the menu: save, notebook, side quests, practice'], ['🐦', 'ask Rook where to go next']]
+      : [['← ↑ → ↓ or WASD', 'walk'], ['Z or Enter', 'talk to someone you\'re facing, and skip dialogue'], ['C or Esc', 'the menu: save, notebook, side quests, practice'], ['R', 'ask Rook where to go next']];
+    return new Promise(res => {
+      const el = UI.panel('<div class="reward win controls-card"><div class="rw-kicker">How to play</div><h2 class="rw-title">Controls</h2>' +
+        '<ul class="rw-list">' + rows.map(r => '<li><kbd>' + r[0] + '</kbd> ' + r[1] + '</li>').join('') + '</ul>' +
+        '<p class="muted small-note">Your next objective is always at the top of the screen.</p><button class="btn primary">OK ▸</button></div>', 'reward-screen');
+      const done = () => { pop(); el.close(); res(); };
+      const pop = UI.pushKeys(e => { if (['enter', 'z', ' ', 'escape'].includes(e.key.toLowerCase())) { e.preventDefault(); done(); } });
+      $('button', el).addEventListener('click', done);
+    });
   }
 
   function grapher(back, preset) {
@@ -1006,7 +1038,7 @@
   window.Game = {
     get save() { return S; },
     CAST: null, G, ITEMS, fmt, topicLabel: id => (topic(id) ? topic(id).name : ''), topic, showLesson,
-    record, level, maxHP, depthNote, charm, LEAVE, afterScript, leftQuest, openMenu, askRook, persist, scratch, grapher, scratchTip,
+    record, level, maxHP, depthNote, charm, firstTime: k => { if (seenTip(k)) return false; markTip(k); return true; }, LEAVE, afterScript, leftQuest, openMenu, askRook, persist, scratch, grapher, scratchTip,
     titleChoose: id => (titleUI ? titleUI.choose(id) : null),
     titleDrawer: id => (titleUI ? (id ? titleUI.chooseDrawer(id) : titleUI.openDrawer()) : null),
     daily: back => dailyIntro(back), drills: back => drillsMenu(back), papers: back => papersMenu(back), notebook: back => notebook(back, true),

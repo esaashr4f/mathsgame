@@ -267,6 +267,13 @@
       // ── main loop ──
       (async () => {
         await text(enc.intro);
+        if (Game.firstTime('battle')) {
+          const touch = document.body.classList.contains('touch');
+          await rook('First time? Here\'s how this works. FIGHT never helps: you can\'t hit a problem until it goes away.');
+          await rook('Choose ACT, then "Work it out" to solve one step of their problem. The clock runs at exam pace.');
+          await rook('Get a step wrong and they\'ll lash out: ' + (touch ? 'drag the red heart' : 'move the red heart with the arrow keys or drag it') + ' to dodge.');
+          await rook('Solve every step and they\'ll calm down. Then MERCY → Spare.');
+        }
         for (;;) {
           const c = await pickCommand();
           let r;
