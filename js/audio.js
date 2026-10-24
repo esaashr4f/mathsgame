@@ -61,7 +61,7 @@ window.Music = (function () {
   };
   const XF = 0.08;          // seconds each repeat overlaps the next
   const FADE = 1.2;         // seconds to fade between tracks
-  const LEVEL = 0.6;        // the music sits under the game: 100% on the slider plays at 60%
+  const LEVEL = 0.35;       // the music sits well under the game: 100% on the slider plays at 35% of the recording
   let vol = 0.5, area = null, ctx = null, master = null, cur = null;
   const overrides = [], buffers = {}, loading = {};
   const entry = slot => { for (const s of (FALLBACK[slot] || [slot])) if (files[s]) return typeof files[s] === 'string' ? { file: files[s] } : files[s]; return null; };

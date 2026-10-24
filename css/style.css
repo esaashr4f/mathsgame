@@ -190,6 +190,8 @@ body.touch .nb-bar kbd { display: none; }
 .nb-rook-say { font-family: var(--ui); font-weight: 500; font-size: 16px; line-height: 1.35; }
 .nb-rook-say .katex { font-size: .9em; }
 .nb-tools { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+/* the step and the answer box stay pinned to the bottom of the screen while a long question scrolls */
+.nb-dock { position: sticky; bottom: 0; z-index: 3; background: var(--paper); margin: 10px -20px -22px -44px; padding: 2px 20px 14px 44px; border-top: 2px solid #e3dccb; box-shadow: 0 -6px 14px rgba(30, 20, 40, .12); }
 .notebook .btn { color: var(--plum); border-color: var(--plum); }
 .notebook .btn:hover, .notebook .btn:focus-visible { background: var(--plum); color: var(--cream); }
 .notebook .btn.primary { border-color: #b5651d; color: #8a4a10; }
@@ -279,7 +281,7 @@ body.touch .nb-bar kbd { display: none; }
 .item-list li { margin-bottom: 10px; }
 .item-list li.job-done { opacity: 0.55; }
 .job-list { list-style: none; padding-left: 0; }
-.scratch { width: 100%; height: auto; touch-action: none; background: var(--paper); border-radius: 3px; cursor: crosshair; }
+.scratch { display: block; width: 100%; height: auto; touch-action: none; background: var(--paper); border-radius: 3px; cursor: crosshair; }
 .scratch-tools { margin-bottom: 8px; }
 .grapher .gr-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; font-family: var(--ui); font-size: 17px; }
 .grapher .ans { font-size: 16px; }
@@ -288,7 +290,7 @@ body.touch input, body.touch select, body.touch textarea { font-size: max(16px, 
 .gr-range { font-family: var(--ui); font-size: 15px; }
 .gr-range input { width: 56px; background: var(--plum-2); color: var(--cream); border: 1px solid var(--edge); border-radius: 2px; padding: 2px 4px; }
 .gr-plot { margin-top: 10px; }
-.gr-plot svg { width: 100%; max-width: 640px; height: auto; }
+.gr-plot svg { display: block; margin: 0 auto; width: min(100%, 640px, max(260px, (100vh - 400px) * 320 / 230)); height: auto; }   /* the whole graph on screen, even on a short laptop */
 .gr-read { font-family: var(--ui); font-size: 16px; margin-top: 6px; }
 .results { text-align: center; }
 .rank { font-family: var(--ui); font-weight: 700; font-size: 120px; line-height: 1; color: var(--gold); text-shadow: 4px 4px 0 var(--brown), 8px 8px 0 var(--rust); display: inline-block; }
@@ -574,5 +576,16 @@ body.touch .choice-box button { font-size: 17px; }
 @media (max-height: 600px) and (pointer: coarse), (max-width: 600px) and (max-height: 600px) {
   .nb-dock .nb-rook { display: none; }
   .nb-dock .nb-rook.said { display: flex; }
+}
+/* a laptop screen: a slimmer answer dock so more of the question shows above it (Rook's line comes back when he has something to say) */
+@media (min-width: 601px) and (max-height: 820px) and (min-height: 501px) {
+  .nb-dock .step-ask { margin-top: 8px; padding: 6px 12px; }
+  .nb-dock .nb-input { margin-top: 6px; }
+  .nb-dock .preview { min-height: 18px; margin-top: 2px; }
+  .nb-dock .nb-rook { display: none; margin-top: 6px; padding: 4px 10px; }
+  .nb-dock .nb-rook img { width: 32px; }
+  .nb-dock .nb-rook.said { display: flex; }
+  .nb-dock .nb-tools { margin-top: 6px; }
+  .nb-diagram svg, .notebook .graph { max-height: max(150px, 100vh - 440px); width: auto; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }

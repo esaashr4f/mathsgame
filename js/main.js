@@ -571,9 +571,12 @@
       '<div class="row scratch-tools"><button class="btn small" data-t="pen">✏️ pen</button><button class="btn small" data-t="red">🔴 red</button><button class="btn small" data-t="eraser">🧽 eraser</button><button class="btn small" data-t="clear">🗑 clear</button></div>' +
       '<canvas class="scratch" width="900" height="1100"></canvas>', back, 'scratch-sheet');
     const cv = $('canvas', el), c = cv.getContext('2d');
+    // the sheet fills the rest of the screen, so it never runs off the bottom
+    const box = cv.getBoundingClientRect(), room = Math.max(240, innerHeight - box.top - 66);
+    cv.height = Math.round(room * cv.width / box.width);
     const paper = () => { c.fillStyle = '#fffdf6'; c.fillRect(0, 0, cv.width, cv.height); c.strokeStyle = '#dfe8f2'; c.lineWidth = 1; for (let y = 40; y < cv.height; y += 40) { c.beginPath(); c.moveTo(0, y); c.lineTo(cv.width, y); c.stroke(); } };
     paper();
-    if (scratchImage) c.putImageData(scratchImage, 0, 0);
+    if (scratchImage) c.drawImage(scratchImage, 0, 0);
     let tool = 'pen', drawing = false, last = null;
     const pos = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * cv.width / r.width, y: (e.clientY - r.top) * cv.height / r.height }; };
     cv.addEventListener('pointerdown', e => { drawing = true; last = pos(e); cv.setPointerCapture(e.pointerId); });
@@ -586,7 +589,8 @@
       c.beginPath(); c.moveTo(last.x, last.y); c.lineTo(p.x, p.y); c.stroke();
       last = p;
     });
-    const end = () => { if (drawing) { drawing = false; scratchImage = c.getImageData(0, 0, cv.width, cv.height); } };
+    const end = () => { if (drawing) { drawing = false; const keep = document.createElement('canvas'); keep.width = Math.max(cv.width, scratchImage ? scratchImage.width : 0); keep.height = Math.max(cv.height, scratchImage ? scratchImage.height : 0);
+      const k = keep.getContext('2d'); if (scratchImage) k.drawImage(scratchImage, 0, 0); k.drawImage(cv, 0, 0); scratchImage = keep; } };
     cv.addEventListener('pointerup', end); cv.addEventListener('pointerleave', end);
     el.addEventListener('click', e => {
       const t = e.target.closest('[data-t]');
