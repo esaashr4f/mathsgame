@@ -65,6 +65,21 @@ const cases = [
   [{ type: 'vector', answer: [6, -8] }, '6i + 8j', false],
   [{ type: 'choice', answer: 2 }, 2, true],
   [{ type: 'choice', answer: 2 }, 1, false],
+  // what students actually type (tools/answer-formats.js tries every step this way)
+  [{ type: 'expr', answer: '2(x+1)', ask: 'Write 4^(x+1) as a power of 2. Enter the power.' }, '4 = 2^2, so 4^(x+1) = 2^(2x+2)', true],
+  [{ type: 'expr', answer: '2(x+1)', ask: 'Write 4^(x+1) as a power of 2. Enter the power.' }, '(2^2)^(x+1)', true],
+  [{ type: 'expr', answer: '2(x+1)', ask: 'Write 4^(x+1) as a power of 2. Enter the power.' }, '4x+1', false],
+  [{ type: 'expr', answer: 'e^(2x)' }, 'e^2x', true],
+  [{ type: 'num', answer: '4/3', ask: 'Find the gradient.' }, '1.33', true],
+  [{ type: 'num', answer: '4/3', ask: 'Find the exact gradient.' }, '1.33', false],
+  [{ type: 'num', answer: '47/8', exact: true }, '5.875', true],
+  [{ type: 'num', answer: 6180 }, '6,180 N', true],
+  [{ type: 'num', answer: 0.35 }, '35%', true],
+  [{ type: 'num', answer: 1.5 }, '1 1/2', true],
+  [{ type: 'num', answer: 4 }, 'answer: x = 4.', true],
+  [{ type: 'num', answer: -4 }, '3, -4', false],
+  [{ type: 'integral', answer: '2x^3' }, '2x^3 + k', true],
+  [{ type: 'num', answer: 7, accept: [-7] }, '-7', true],
 ];
 console.log('Checker tests');
 for (const [step, input, want] of cases) {

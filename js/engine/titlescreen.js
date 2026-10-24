@@ -315,9 +315,10 @@
     function drawerLayout() {
       const pw = Math.min(W - 16, Math.max(150, ...drawer.map(d => (d.id ? textW(d.label, MENU) + (d.soon ? textW('soon', MENU) + 14 : 0) : textW(d.head, MENU)) + 44)));
       // roomy spacing when there's height for it, tighter on short (laptop) screens, and scrolling beyond that
+      // pick the roomiest spacing that fits the whole list on screen (so laptops never need to scroll)
       const heads = drawer.filter(d => d.head).length, links = drawer.length - heads;
-      const roomy = 34 + heads * 22 + links * 18 + 8 <= H;
-      const rowH = roomy ? 18 : 16, headH = roomy ? 16 : 15, gap = roomy ? 6 : 3;
+      const TIERS = [[18, 16, 6], [16, 15, 3], [14, 13, 2], [13, 12, 1]];
+      const [rowH, headH, gap] = TIERS.find(([r, h, g]) => 32 + heads * h + (heads - 1) * g + links * r + 6 <= H) || TIERS[TIERS.length - 1];
       const rows = [];
       let y = 32;
       drawer.forEach((d, i) => { if (d.head) { y += i ? gap : 0; rows.push({ i, y, head: true }); y += headH; } else { rows.push({ i, y, h: rowH }); y += rowH; } });

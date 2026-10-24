@@ -366,7 +366,7 @@
           { x: 48, y: 0, w: 4, run: S('crossBridge'), when: f => f.bridgeBuilt },
           { x: 80, y: 26, h: 2, run: S('arriveGullPoint'), when: f => f.eastOpen && !f.gullPointSeen },
           { x: 24, y: 26, h: 5, run: S('arriveMeadows'), when: f => f.westOpen && !f.meadowsSeen },
-          { x: 19, y: 37, run: G => (G.flag('drained') ? G.go('farmhouse', 5, 7, 'up') : SC.farmDoor(G)) },
+          { x: 19, y: 37, run: G => (G.flag('drained') ? G.go('farmhouse', 5, 7, 'up') : S('farmDoor')(G)) },
           { x: 12, y: 18, h: 6, run: S('enterStill'), when: f => f.marshOpen && !f.stillSeen },
           { x: 10, y: 24, w: 2, run: S('enterStill'), when: f => f.marshOpen && !f.stillSeen },
         ],

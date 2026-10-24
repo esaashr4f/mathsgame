@@ -18,7 +18,8 @@
       .replace(/÷/g, '/')
       .replace(/√/g, 'sqrt')
       .replace(/π/g, 'pi')
-      .replace(/²/g, '^2').replace(/³/g, '^3')
+      .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻]+/g, m => '^(' + [...m].map(c => '⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(c) >= 0 ? '⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(c) : '-').join('') + ')')
+      .replace(/½/g, '(1/2)').replace(/¼/g, '(1/4)').replace(/¾/g, '(3/4)').replace(/⅓/g, '(1/3)').replace(/⅔/g, '(2/3)')
       .replace(/\*\*/g, '^')
       .replace(/°/g, '')
       .replace(/[{\[]/g, '(').replace(/[}\]]/g, ')')
@@ -192,11 +193,37 @@
   }
 
   function stripUnits(s) {
-    return String(s).replace(/\s*(m\/s\^?2|m\/s²|m\/s|ms\^-?\d|kg|N|m|s|degrees|deg)\s*$/, '').trim();
+    return String(s).replace(/\s*(m\/s\^?2|m\/s²|m\/s|ms\^-?\d|m\^?[23²³]|cm\^?[23²³]|kg|km|cm|mm|g|N|J|W|m|s|h|metres|meters|metre|seconds|second|secs|newtons|degrees|deg|radians|rad|units|people|apples|fish|days|years|minutes|mins|hours|°C|C)\s*$/i, '').replace(/^\s*[£$€]\s*/, '').trim();
   }
 
+  // What students actually type around an answer: labels ("answer:", "so"), working chains ("4 = 2^2, so 4^(x+1) = 2^(2x+2)"),
+  // ≈, a full stop, thousands commas, percentages and mixed numbers. Keep just the final answer.
+  function finalAnswer(s, keepCommas) {
+    s = String(s).replace(/≈|≃/g, '=').replace(/[.;!]+\s*$/, '').trim();
+    const lastPart = stripUnits(s.split('=').pop().trim());
+    if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(lastPart)) s = lastPart.replace(/,/g, '');
+    // only treat commas as working when it looks like working ("4 = 2^2, so ..."), never "3, -4" for a single answer
+    if (!keepCommas && /=|\b(so|therefore|hence|thus|then)\b/i.test(s)) {
+      const parts = s.split(/,\s*(?:so|therefore|hence|thus|then)?\s*/i);
+      if (parts.length > 1) s = parts[parts.length - 1];
+    }
+    s = s.replace(/^.*\b(?:answer|ans|so|therefore|hence|thus|giving|gives)\b\s*:?\s*/i, '').replace(/^.*:\s*/, '');
+    if (s.includes('=') && !/[<>]/.test(s)) s = s.split('=').pop();
+    s = s.trim();
+    if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) s = s.replace(/,/g, '');
+    const mixed = /^(-?)(\d+)\s+(\d+)\s*\/\s*(\d+)$/.exec(s);
+    if (mixed) s = mixed[1] + '(' + mixed[2] + '+' + mixed[3] + '/' + mixed[4] + ')';
+    s = s.replace(/(\d+(?:\.\d+)?)\s*%/g, '($1/100)');
+    return s;
+  }
+  // "e^2x" and "4^x+1" written without brackets: students usually mean the whole run after ^ is the power.
+  const greedyPowers = s => String(s).replace(/\^\s*(-?[^\s()^]+)/g, (m, e) => (/^-?[\d.]+$/.test(e) ? m : '^(' + e + ')'));
+  const wantsExact = step => !!(step.exact || /exact|surd|simplest|in the form|as a fraction/i.test(step.ask || ''));
+  // "Write 4^(x+1) as a power of 2. Enter the power": also accept the whole power, 2^(2x+2) or (2^2)^(x+1)
+  function powerBase(step) { const m = /power of \$?\s*(\d+|x)\s*\$?/i.exec(step.ask || ''); return m ? m[1] : null; }
+
   function numValue(s) {
-    const tree = parse(stripUnits(stripLhs(s)));
+    const tree = parse(stripUnits(finalAnswer(stripLhs(s), true)));
     if (varsIn(tree).size) throw new Error('Expected a number, not letters');
     return evaluate(tree, {});
   }
@@ -223,7 +250,7 @@
     return String(s).replace(/^\s*\{|\}\s*$/g, '')
       .replace(/\band\b|\bor\b/gi, ',')
       .split(/[,;]/)
-      .map(x => stripLhs(x.trim()))
+      .map(x => finalAnswer(stripLhs(x.trim()), true))
       .filter(Boolean);
   }
 
@@ -267,11 +294,42 @@
     return [numValue(m[1]), numValue(m[2])];
   }
 
+  function tryNum(s) { try { const t = parse(stripUnits(s)); return varsIn(t).size ? null : evaluate(t, {}); } catch (e) { return null; } }
+  // The whole power typed instead of just the exponent, e.g. 2^(2x+2) when asked for the power of 2.
+  function powerForm(step, s, wantNum) {
+    const base = powerBase(step);
+    if (!base) return false;
+    try {
+      for (const src of [s, greedyPowers(s)]) {
+        const tree = parse(src);
+        const vars = step.vars || ['x'];
+        const ans = parse(String(step.answer));
+        let valid = 0;
+        for (const x of [0.37, 1.13, 2.71, 0.61]) {
+          const env = { x };
+          const g = evaluate(tree, env), b = base === 'x' ? x : Number(base);
+          const e = evaluate(ans, env);
+          if (!isFinite(g) || g <= 0) { valid = -99; break; }
+          if (Math.abs(Math.log(g) / Math.log(b) - e) > 1e-6 * Math.max(1, Math.abs(e))) { valid = -99; break; }
+          valid++;
+        }
+        if (valid >= 4 && /\^/.test(src)) return true;
+      }
+    } catch (e) { /* not a power */ }
+    return false;
+  }
+
   /**
    * Check a player's input against a step definition.
    * Returns { ok, message? , code? } — message explains format problems or known slip-ups.
    */
   function check(step, input) {
+    const r = checkOne(step, input);
+    // a question can list other answers that also deserve the mark (e.g. another valid form or a second solution)
+    if (!r.ok && step.accept) for (const a of step.accept) { const r2 = checkOne(Object.assign({}, step, { answer: a, accept: null }), input); if (r2.ok) return r2; }
+    return r;
+  }
+  function checkOne(step, input) {
     const raw = String(input == null ? '' : input).trim();
     if (step.type === 'choice') return { ok: Number(input) === step.answer };
     if (!raw) return { ok: false, message: 'Type an answer first.', format: true };
@@ -280,13 +338,27 @@
       switch (step.type || 'num') {
         case 'num': {
           if (step.exact && /\d\.\d/.test(raw) && !/\./.test(String(step.answer))) {
-            const close = closeEnough(numValue(raw), expectedNum(step.answer), { sf: 3 });
+            // a decimal that is exactly right (5.875 for 47/8) is exact; a rounded one isn't
+            const given = numValue(finalAnswer(raw));
+            if (closeEnough(given, expectedNum(step.answer), {})) return { ok: true };
+            const close = closeEnough(given, expectedNum(step.answer), { sf: 3 });
             return { ok: false, message: close ? 'Right value, but the question wants an exact answer (surds/fractions, no decimals).' : undefined, code: close ? 'inexact' : undefined };
           }
-          const v = numValue(raw);
-          if (step.range) return { ok: v >= step.range[0] && v <= step.range[1] };
           const want = expectedNum(step.answer);
+          let v;
+          try { v = numValue(finalAnswer(raw)); } catch (err) {
+            const alt = tryNum(greedyPowers(finalAnswer(raw)));
+            if (alt != null && closeEnough(alt, want, step)) return { ok: true };
+            const pw = powerForm(step, finalAnswer(raw), want);
+            if (pw) return { ok: true };
+            throw err;
+          }
+          if (step.range) return { ok: v >= step.range[0] && v <= step.range[1] };
           if (closeEnough(v, want, step)) return { ok: true };
+          const alt = tryNum(greedyPowers(finalAnswer(raw)));
+          if (alt != null && closeEnough(alt, want, step)) return { ok: true };
+          // not asked for an exact answer: 3 significant figures (or better) is fine, as in the exam
+          if (!wantsExact(step) && step.dp == null && step.sf == null && closeEnough(v, want, { sf: 3 })) return { ok: true };
           // A rounded decimal of the right value isn't a maths slip: say so, and let them try again.
           if (/\d\.\d/.test(raw) && step.dp == null && step.sf == null && closeEnough(v, want, { sf: 3 }))
             return { ok: false, format: true, code: 'rounded', message: 'Very close: is that rounded? Give the exact value (a fraction or surd is fine, like 5/8 or 2√5), or more decimal places.' };
@@ -314,7 +386,7 @@
         }
         case 'vector': {
           let comps;
-          if (raw.includes(',')) comps = parsePoint(raw);
+          if (raw.includes(',')) comps = parsePoint(raw.replace(/[<⟨]/g, '(').replace(/[>⟩]/g, ')'));
           else {
             const tree = parse(stripLhs(raw).replace(/\bi\b/g, 'i'));
             const at = (i, j) => evaluate(tree, { i, j, k: 0 });
@@ -347,9 +419,9 @@
         case 'expr':
         case 'antideriv':
         case 'integral': {
-          let s = stripLhs(raw);
+          let s = finalAnswer(stripLhs(raw));
           if (step.type === 'integral') {
-            const withoutC = s.replace(/\s*\+\s*[cC]\s*$/, '').replace(/^\s*[cC]\s*\+\s*/, '');
+            const withoutC = s.replace(/\s*\+\s*[cCkK]\s*$/, '').replace(/^\s*[cCkK]\s*\+\s*/, '');
             if (withoutC === s) {
               const t = parse(s);
               if (sameFunction(t, parse(step.answer), step.vars || ['x'], true))
@@ -364,11 +436,15 @@
           if (unknown.length) return { ok: false, message: 'Your answer uses "' + unknown[0] + '" — this answer should only use ' + vars.join(', ') + '.', format: true };
           if (step.forbid && step.forbid.some(f => new RegExp(f).test(normalise(s))))
             return { ok: false, message: step.forbidMessage || 'Equivalent, but not simplified into the form asked for.', code: 'form' };
-          return { ok: sameFunction(tree, parse(step.answer), vars, step.type !== 'expr') };
+          if (sameFunction(tree, parse(step.answer), vars, step.type !== 'expr')) return { ok: true };
+          try { if (sameFunction(parse(greedyPowers(s)), parse(step.answer), vars, step.type !== 'expr')) return { ok: true }; } catch (e) { /* not that either */ }
+          if (powerForm(step, s)) return { ok: true };
+          return { ok: false };
         }
       }
     } catch (err) {
-      return { ok: false, message: 'Couldn\'t read that: ' + err.message + '.', format: true };
+      const working = /=.*=|,\s*so\b|\bso\b|\btherefore\b/i.test(raw);
+      return { ok: false, message: working ? 'Type just the final answer to this step (your working can go on the scratch pad).' : 'Couldn\'t read that: ' + err.message + '.', format: true };
     }
     return { ok: false };
   }
@@ -382,7 +458,7 @@
         return m ? '\\left(' + toTex(parse(m[1])) + ',\\ ' + toTex(parse(m[2])) + '\\right)' : '';
       }
       if (step.type === 'line') return String(input).split('=').map(x => toTex(parse(x))).join(' = ');
-      return toTex(parse(stripUnits(stripLhs(input))));
+      return toTex(parse(stripUnits(finalAnswer(stripLhs(input)))));
     } catch (e) {
       return null;
     }

@@ -61,6 +61,7 @@ window.Music = (function () {
   };
   const XF = 0.08;          // seconds each repeat overlaps the next
   const FADE = 1.2;         // seconds to fade between tracks
+  const LEVEL = 0.6;        // the music sits under the game: 100% on the slider plays at 60%
   let vol = 0.5, area = null, ctx = null, master = null, cur = null;
   const overrides = [], buffers = {}, loading = {};
   const entry = slot => { for (const s of (FALLBACK[slot] || [slot])) if (files[s]) return typeof files[s] === 'string' ? { file: files[s] } : files[s]; return null; };
@@ -71,7 +72,7 @@ window.Music = (function () {
     if (!C) return null;
     ctx = new C();
     master = ctx.createGain();
-    master.gain.value = vol;
+    master.gain.value = vol * LEVEL;
     master.connect(ctx.destination);
     return ctx;
   }
@@ -162,7 +163,7 @@ window.Music = (function () {
     pop() { overrides.pop(); apply(); },
     setVolume(v) {
       vol = v;
-      if (master) master.gain.setTargetAtTime(Math.max(v, 0.0001), ctx.currentTime, 0.1);
+      if (master) master.gain.setTargetAtTime(Math.max(v * LEVEL, 0.0001), ctx.currentTime, 0.1);
       apply();
     },
   };
