@@ -1,21 +1,20 @@
-// The game's music. Put the audio files in this folder (audio/music/) and list them here by slot.
-// MP3 works everywhere. Loop points: make each track loop cleanly from its end back to its start.
-// Leave a slot out and the game uses the nearest related track instead (see the fallbacks in js/audio.js),
-// so you can start with just "village" and "encounter" and add the rest later.
+// The game's music: written by tools/music/build.py (the scores are in tools/music/tracks.py).
+// Each track is a seamless loop: `loop` is its length in seconds and `start` where the loop begins in the file.
+// To use your own recording for a slot instead, replace the entry with just a file name, e.g. village: 'my-village.mp3'.
 window.LOWMARSH_MUSIC = {
-  // title: 'title.mp3',          // the title screen and menus outside the story
-  // study: 'study.mp3',          // drills, guided papers, the Daily Challenge (exam mode is always silent)
-  // village: 'village.mp3',      // Lowmarsh village, the square and the jetty
-  // wilds: 'wilds.mp3',          // the general outdoors, used where a place has no track of its own
-  // gorge: 'gorge.mp3',          // the gorge and the bridge, to the north
-  // coast: 'coast.mp3',          // the cliff road and Gull Point
-  // meadows: 'meadows.mp3',      // the west meadows and Rowan's farm
-  // flood: 'flood.mp3',          // the meadows while they're flooded (chapter 4)
-  // marsh: 'marsh.mp3',          // the marsh and the Still
-  // home: 'home.mp3',            // cosy interiors: the bakery, Mira's workshop, the clinic, Wick's cottage
-  // townhall: 'townhall.mp3',    // the Town Hall and archive
-  // lighthouse: 'lighthouse.mp3',// inside the lighthouse and the lamp room
-  // lock: 'lock.mp3',            // the lockhouse
-  // encounter: 'encounter.mp3',  // encounters (Bramble, Ottoline, Strix, the Wend, Cog)
-  // finale: 'finale.mp3',        // the last encounter, the Hush
+  title: { file: 'title.mp3', loop: 106.6667, start: 1.0 },
+  village: { file: 'village.mp3', loop: 76.8, start: 1.0 },
+  home: { file: 'home.mp3', loop: 77.1429, start: 1.0 },
+  study: { file: 'study.mp3', loop: 98.4615, start: 1.0 },
+  wilds: { file: 'wilds.mp3', loop: 83.4783, start: 1.0 },
+  gorge: { file: 'gorge.mp3', loop: 50.5263, start: 1.0 },
+  coast: { file: 'coast.mp3', loop: 54.8571, start: 1.0 },
+  meadows: { file: 'meadows.mp3', loop: 71.1111, start: 1.0 },
+  flood: { file: 'flood.mp3', loop: 53.3333, start: 1.0 },
+  marsh: { file: 'marsh.mp3', loop: 71.1111, start: 1.0 },
+  townhall: { file: 'townhall.mp3', loop: 80.0, start: 1.0 },
+  lighthouse: { file: 'lighthouse.mp3', loop: 43.6364, start: 1.0 },
+  lock: { file: 'lock.mp3', loop: 73.8462, start: 1.0 },
+  encounter: { file: 'encounter.mp3', loop: 48.6957, start: 1.0 },
+  finale: { file: 'finale.mp3', loop: 64.6154, start: 1.0 },
 };

@@ -53,6 +53,8 @@ js/engine/               graph.js (SVG plots), sprites.js, tiles.js, ui.js, worl
 js/data/                 topics.js, questions.js (drill bank), papers.js / papers2.js (H230/01), papers3.js (H230/02)
 js/story/                cast.js, maps.js, ch1–ch5.js, finale.js, sides.js (topic-pack side quests), guide.js (objectives, Rook's hints, side-quest list)
 js/main.js               game shell: saves, menus, accounts screens, the G scripting API
+audio/music/             the soundtrack: 15 looping tracks, their MIDI scores, and music.js (see audio/music/README.md)
+tools/music/             the soundtrack written as code, and the script that renders it
 js/auth.js, auth-config.js  accounts (local email accounts; Google/Apple via Firebase when configured)
 tools/validate.js        node tools/validate.js checks every answer, paper total and story problem
 docs/                    DESIGN.md (story bible and structure), ADDING_QUESTIONS.md

@@ -45,8 +45,10 @@ window.Sfx = (function () {
   };
 })();
 
-// Background music. Tracks are optional: list the files you have in audio/music/music.js and they play;
-// anything missing falls back to a related track, or silence. Each place asks for a slot by name.
+// Background music. Tracks are listed in audio/music/music.js; anything missing falls back to a related
+// track, or silence. Each place asks for a slot by name. Played through Web Audio so loops are seamless:
+// a track with `loop`/`start` is played as back-to-back repeats of its loop section, each blended into the
+// next over a few milliseconds; a plain file name just loops the whole file.
 window.Music = (function () {
   const files = window.LOWMARSH_MUSIC || {};
   // what each slot falls back to when its own track hasn't been added
@@ -57,39 +59,98 @@ window.Music = (function () {
     home: ['home', 'village'], townhall: ['townhall', 'home', 'village'], lighthouse: ['lighthouse', 'coast', 'home'], lock: ['lock', 'home'],
     encounter: ['encounter'], finale: ['finale', 'encounter'],
   };
-  let vol = 0.5, cur = null, area = null;
-  const overrides = [];
-  const resolve = slot => { for (const s of (FALLBACK[slot] || [slot])) if (files[s]) return files[s]; return null; };
-  function fade(el, to, ms, done) {
-    const from = el.volume, t0 = performance.now();
-    clearInterval(el._fade);
-    el._fade = setInterval(() => {
-      const k = Math.min(1, (performance.now() - t0) / ms);
-      el.volume = Math.max(0, Math.min(1, from + (to - from) * k));
-      if (k >= 1) { clearInterval(el._fade); if (done) done(); }
-    }, 40);
+  const XF = 0.08;          // seconds each repeat overlaps the next
+  const FADE = 1.2;         // seconds to fade between tracks
+  let vol = 0.5, area = null, ctx = null, master = null, cur = null;
+  const overrides = [], buffers = {}, loading = {};
+  const entry = slot => { for (const s of (FALLBACK[slot] || [slot])) if (files[s]) return typeof files[s] === 'string' ? { file: files[s] } : files[s]; return null; };
+
+  function audio() {
+    if (ctx) return ctx;
+    const C = window.AudioContext || window.webkitAudioContext;
+    if (!C) return null;
+    ctx = new C();
+    master = ctx.createGain();
+    master.gain.value = vol;
+    master.connect(ctx.destination);
+    return ctx;
   }
+  function load(file) {
+    if (buffers[file]) return Promise.resolve(buffers[file]);
+    if (!loading[file]) {
+      loading[file] = fetch('audio/music/' + file).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+        .then(b => new Promise((res, rej) => audio().decodeAudioData(b, res, rej)))
+        .then(buf => (buffers[file] = buf))
+        .catch(() => { delete loading[file]; return null; });
+    }
+    return loading[file];
+  }
+
+  // One playing track: a gain node, and its repeats scheduled a little ahead of time.
+  function play(e, buf) {
+    const c = audio(), out = c.createGain();
+    out.gain.setValueAtTime(0, c.currentTime);
+    out.gain.linearRampToValueAtTime(1, c.currentTime + FADE);
+    out.connect(master);
+    const t = { file: e.file, out, sources: [], timer: 0, stopped: false };
+    if (!e.loop) {
+      const src = c.createBufferSource();
+      src.buffer = buf; src.loop = true; src.connect(out); src.start();
+      t.sources.push(src);
+      return t;
+    }
+    const L = e.loop, S = e.start || 0;
+    let next = c.currentTime + 0.05, first = true;
+    const schedule = () => {
+      if (t.stopped) return;
+      while (next < c.currentTime + 3) {
+        const g = c.createGain(), src = c.createBufferSource();
+        src.buffer = buf; src.connect(g); g.connect(out);
+        const begin = first ? next : next - XF / 2;
+        const from = first ? S : S - XF / 2;
+        // fade in over the overlap (not on the very first repeat), fade out over the next overlap
+        g.gain.setValueAtTime(first ? 1 : 0, begin);
+        if (!first) g.gain.linearRampToValueAtTime(1, next + XF / 2);
+        g.gain.setValueAtTime(1, next + L - XF / 2);
+        g.gain.linearRampToValueAtTime(0, next + L + XF / 2);
+        src.start(begin, from, L + XF + (first ? XF / 2 : 0));
+        src.onended = () => { t.sources = t.sources.filter(x => x !== src); };
+        t.sources.push(src);
+        next += L; first = false;
+      }
+      t.timer = setTimeout(schedule, 1000);
+    };
+    schedule();
+    return t;
+  }
+  function stop(t, secs) {
+    if (!t) return;
+    t.stopped = true; clearTimeout(t.timer);
+    const now = ctx.currentTime;
+    t.out.gain.cancelScheduledValues(now);
+    t.out.gain.setValueAtTime(t.out.gain.value, now);
+    t.out.gain.linearRampToValueAtTime(0, now + secs);
+    t.sources.forEach(s => { try { s.stop(now + secs + 0.05); } catch (err) { /* already stopped */ } });
+  }
+
+  let want = null;
   function apply() {
     const slot = overrides.length ? overrides[overrides.length - 1] : area;
-    const file = slot ? resolve(slot) : null;
-    if (cur && cur.file === file) return;
-    const old = cur;
-    if (old) fade(old.el, 0, 900, () => old.el.pause());
-    cur = null;
-    if (!file || vol <= 0) return;
-    const el = new Audio('audio/music/' + file);
-    el.loop = true; el.volume = 0;
-    cur = { file, el };
-    start();
+    const e = slot && vol > 0 ? entry(slot) : null;
+    want = e ? e.file : null;
+    if (cur && cur.file === want) return;
+    if (cur) { stop(cur, FADE); cur = null; }
+    if (!e || !audio()) return;
+    load(e.file).then(buf => {
+      if (!buf || want !== e.file || (cur && cur.file === e.file)) return;
+      cur = play(e, buf);
+      if (ctx.state !== 'running') resume();
+    });
   }
-  // Browsers only allow sound after the player has clicked or pressed something; try again then.
-  function start() {
-    if (!cur || !cur.el.paused || document.hidden) return;
-    const el = cur.el;
-    el.play().then(() => fade(el, vol, 900)).catch(() => {});
-  }
-  ['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, start, true));
-  document.addEventListener('visibilitychange', () => { if (!cur) return; if (document.hidden) cur.el.pause(); else start(); });
+  // Browsers only start sound after the player has clicked or pressed something.
+  function resume() { if (ctx && ctx.state !== 'running' && !document.hidden) ctx.resume().catch(() => {}); }
+  ['pointerdown', 'keydown', 'touchend'].forEach(ev => addEventListener(ev, resume, true));
+  document.addEventListener('visibilitychange', () => { if (!ctx) return; if (document.hidden) ctx.suspend().catch(() => {}); else resume(); });
 
   return {
     get tracks() { return Object.keys(files).length; },
@@ -101,8 +162,8 @@ window.Music = (function () {
     pop() { overrides.pop(); apply(); },
     setVolume(v) {
       vol = v;
-      if (cur) { if (vol <= 0) { const old = cur; cur = null; fade(old.el, 0, 300, () => old.el.pause()); } else fade(cur.el, vol, 200); }
-      else apply();
+      if (master) master.gain.setTargetAtTime(Math.max(v, 0.0001), ctx.currentTime, 0.1);
+      apply();
     },
   };
 })();
