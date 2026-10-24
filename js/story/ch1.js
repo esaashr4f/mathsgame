@@ -440,7 +440,7 @@
       await G.say('bramble', 'NO. MORE. BRIDGES.');
       await G.narr('* A rock the size of a sheep thuds into the grass in front of you.');
       await G.say('rook', 'Back, back, BACK. We\'re not ready.', 'We need something that\'ll make him listen. Mira\'s workshop — east of the square. She\'ll have the old plans.');
-      await G.walk('player', 49, 9);
+      await G.walk('player', 42, 8);
       return;
     }
     return SC.bramble(G);

@@ -135,7 +135,7 @@
       // the stream between the gorge and the village
       rect(g, 0, 10, 92, 2, '~');
       rect(g, 37, 10, 3, 2, 'a');
-      if (f.ropeFixed) rect(g, 49, 10, 2, 2, 'z');
+      if (f.ropeFixed) rect(g, 41, 10, 2, 2, 'z');   // Moss's crossing, beside the cracked arch
       // east sea + beach
       rect(g, 92, 0, 8, Hh, '~');
       rect(g, 88, 12, 4, 42, '_');
@@ -189,6 +189,9 @@
       rect(g, 76, 26, 12, 2, ':');
       rect(g, 80, 15, 8, 11, '.'); scatter(g, ',', 14, 80, 15, 8, 11, 43);
       rect(g, 83, 18, 4, 1, ':'); rect(g, 84, 18, 2, 8, ':');
+      // Gull Point's landward cliff: the only way in is the road (fogged until chapter 2), not round the back
+      rect(g, 74, 13, 1, 12, 'r'); rect(g, 74, 29, 1, 13, 'r');
+      rect(g, 88, 42, 4, 1, 'r');                     // rocks across the beach below the point
       // west: meadows, the lock, the marsh
       scatter(g, 'T', 22, 0, 12, 28, 40, 51);
       scatter(g, ',', 40, 0, 30, 28, 20, 52);
@@ -213,6 +216,9 @@
       rect(g, 2, 14, 6, 4, '~'); rect(g, 13, 19, 5, 3, '~'); rect(g, 3, 22, 4, 2, '~');
       rect(g, 6, 18, 5, 4, ',');
       rect(g, 10, 22, 2, 4, ':');
+      // the west woods: the meadows are only reached along the road, past the fallen tree (until chapter 4)
+      rect(g, 22, 25, 7, 1, 'T');
+      rect(g, 29, 28, 1, 24, 'T'); rect(g, 29, 52, 1, 2, 'r');
       // the marsh edge: a wall of trees, with two fogged gaps
       rect(g, 1, 25, 21, 1, 'T'); rect(g, 10, 25, 2, 1, ':');
       rect(g, 22, 12, 1, 13, 'T'); rect(g, 22, 18, 1, 2, ':'); rect(g, 23, 18, 3, 2, ':');
@@ -234,7 +240,7 @@
       E.push({ id: 'stall1', x: 57, y: 23, draw: drawStall('#3f6fb0'), talk: S('stall'), w: 12, tall: 30 });
       E.push({ id: 'stall2', x: 61, y: 23, draw: drawStall('#c0403a'), talk: S('stall2'), w: 12, tall: 30 });
       E.push({ id: 'tomas', x: 57, y: 21.9, sprite: 'villager', solid: false });
-      E.push({ id: 'moss', x: f.ropeFixed ? 47 : 51, y: 12, sprite: 'moss', talk: S('moss') });
+      E.push({ id: 'moss', x: f.ropeFixed ? 39 : 42, y: 12, sprite: 'moss', talk: S('moss') });
       E.push({ id: 'wick', x: 60, y: 28, sprite: 'wick', talk: S('wick'), wander: 2 });
       E.push({ id: 'lamp1', x: 47, y: 26, sprite: 'lamp', talk: S('lamp'), w: 3, tall: 12 });
       E.push({ id: 'lamp2', x: 52, y: 41, sprite: 'lamp', talk: S('lamp'), w: 3, tall: 12 });
@@ -248,19 +254,19 @@
       E.push({ id: 'pots3', x: 65, y: 19, sprite: 'pot', talk: S('flowerpot') });
       E.push({ id: 'bench1', x: 45, y: 28.6, sprite: 'bench', talk: S('bench'), solid: false });
       E.push({ id: 'flowerbox1', x: 34, y: 19, sprite: 'flowerbox', talk: S('flowers'), solid: false });
-      E.push({ id: 'sign1', x: 48, y: 13, sprite: 'sign', talk: S('signGorge') });
+      E.push({ id: 'sign1', x: 40, y: 13, sprite: 'sign', talk: S('signGorge') });
       E.push({ id: 'sign2', x: 71, y: 25, sprite: 'sign', talk: S('signEast') });
       E.push({ id: 'sign3', x: 30, y: 25, sprite: 'sign', talk: S('signWest') });
       E.push({ id: 'archSign', x: 38, y: 12.4, sprite: 'sign', talk: S('arch') });
-      E.push({ id: 'duck1', x: 20, y: 60, sprite: 'duck', wander: 5, swim: true, talk: S('duck'), solid: false });
-      E.push({ id: 'duck2', x: 70, y: 58, sprite: 'duck', wander: 5, swim: true, talk: S('duck'), solid: false });
+      E.push({ id: 'duck1', x: 20, y: 54.3, sprite: 'duck', wander: 5, swim: true, talk: S('duck'), solid: false });
+      E.push({ id: 'duck2', x: 70, y: 54.3, sprite: 'duck', wander: 5, swim: true, talk: S('duck'), solid: false });
       E.push({ id: 'duck3', x: 30, y: 10.5, sprite: 'duck', wander: 4, swim: true, talk: S('duck'), solid: false });
       // ── gorge
       E.push({ id: 'bramble', x: 49.5, y: f.brambleSpared ? 5 : 3, sprite: 'bramble', talk: S('bramble'), w: 8, tall: 20, hidden: f.chapter === 4 && !f.drained });
       // ── east road & Gull Point
-      if (!f.eastOpen) for (let y = 25; y <= 28; y++) E.push({ id: 'fogE' + y, x: 74, y, draw: drawFogWall, talk: S('fogWall'), w: 8 });
+      if (!f.eastOpen) for (let y = 25; y <= 28; y++) E.push({ id: 'fogE' + y, x: 74, y, draw: drawFogWall, talk: S('fogWall'), w: 8, h: 12 });
       E.push({ id: 'lighthouse', x: 85, y: 18, draw: drawLighthouse(!!f.lightOn), talk: S('lighthouseDoor'), w: 10, tall: 40 });
-      E.push({ id: 'nell', x: 84, y: 30, sprite: 'nell', talk: S('nell') });
+      E.push({ id: 'nell', x: 85, y: 30, sprite: 'nell', talk: S('nell') });
       E.push({ id: 'net2', x: 82, y: 31, sprite: 'net', talk: S('net'), solid: false });
       E.push({ id: 'boat', x: 89, y: 34, sprite: 'barrel', talk: S('barrel') });
       E.push({ id: 'gull1', x: 86, y: 14, sprite: 'seagull', wander: 6, fly: true, speed: 30, solid: false });
@@ -268,11 +274,11 @@
       E.push({ id: 'jan', x: 78, y: 22, sprite: 'jan', talk: S('jan') });
       E.push({ id: 'pebble', x: 82, y: 24, sprite: 'kid', talk: S('kidKite'), wander: 2 });
       // ── clinic, cottages, allotments
-      E.push({ id: 'ivy', x: 57, y: 45, sprite: 'ivy', talk: S('ivy') });
+      E.push({ id: 'ivy', x: 55, y: 45, sprite: 'ivy', talk: S('ivy') });   // at her allotment gate
       E.push({ id: 'kid2', x: 40, y: 45, sprite: 'kid', talk: S('kid2'), wander: 3 });
       // ── west
-      if (!f.westOpen) E.push({ id: 'log', x: 29, y: 26.5, draw: drawLog, talk: S('log'), w: 8, tall: 30 });
-      E.push({ id: 'lockgate', x: 16, y: 57, draw: drawGate(!!f.lockOpen), talk: S('lockgate'), solid: false, tall: 70 });
+      if (!f.westOpen) E.push({ id: 'log', x: 29, y: 27, draw: drawLog, talk: S('log'), w: 8, h: 26, tall: 30 });
+      E.push({ id: 'lockgate', x: 16, y: 57, draw: drawGate(!!f.lockOpen), talk: S('lockgate'), solid: false, h: 52, tall: 70 });
       E.push({ id: 'cog', x: f.lockOpen ? 12 : 15, y: 51, sprite: 'cog', talk: S('cog'), w: 7, tall: 18 });
       E.push({ id: 'sluice', x: 18, y: 51, sprite: 'sign', talk: S('sluice') });
       // ── the marsh (finale): Mira's scattered thoughts
@@ -287,11 +293,11 @@
       E.push({ id: 'launch', x: 10.6, y: 34.6, draw: drawBoat, talk: S('launch'), w: 8, solid: false, under: true, hidden: !(ch4 && f.pumpOn) });
       E.push({ id: 'launch2', x: 13.6, y: 35.6, draw: drawBoat, talk: S('launchBack'), w: 8, solid: false, under: true, hidden: !(ch4 && f.launchDone) });
       E.push({ id: 'tansy', x: f.drained ? 20 : 21, y: f.drained ? 39.5 : 38.5, sprite: 'tansy', talk: S('tansy'), hidden: !(f.chapter >= 4) });
-      E.push({ id: 'goat1', x: 17, y: 39, sprite: 'goat', talk: S('goat'), wander: 2, speed: 8 });
+      E.push({ id: 'goat1', x: 14, y: 40, sprite: 'goat', talk: S('goat'), wander: 2, speed: 8 });
       E.push({ id: 'goat2', x: 23, y: 36, sprite: 'goat', talk: S('goat'), wander: 2, speed: 8 });
-      E.push({ id: 'goat3', x: 15.5, y: 33, sprite: 'goat', talk: S('goat'), wander: 2, speed: 8 });
+      E.push({ id: 'goat3', x: 16, y: 32, sprite: 'goat', talk: S('goat'), wander: 2, speed: 8 });
       E.push({ id: 'stake', x: 23, y: 32.4, sprite: 'sign', talk: S('surveyStake') });
-      if (!f.marshOpen) [[10, 25], [11, 25], [22, 18], [22, 19]].forEach(([x, y]) => E.push({ id: 'fogW' + x + '_' + y, x, y, draw: drawFogWall, talk: S('fogMarsh'), w: 8 }));
+      if (!f.marshOpen) [[10, 25], [11, 25], [22, 18], [22, 19]].forEach(([x, y]) => E.push({ id: 'fogW' + x + '_' + y, x, y, draw: drawFogWall, talk: S('fogMarsh'), w: 8, h: 12 }));
       E.push({ id: 'still', x: 8.5, y: 20, draw: drawStill, talk: S('still'), w: 14, solid: false, under: true });
       if (f.chapter >= 6 && !f.miraFreed) E.push({ id: 'miraFog', x: 8.5, y: 18.5, sprite: 'mira', talk: S('miraFogged'), alpha: 0.7 });
       return {
@@ -308,7 +314,7 @@
           door(9, 48, 'lockhouse', 5, 7),
           { x: 84, y: 19, w: 2, run: S('lighthouseDoor') },
           { x: 47, y: 46, w: 6, run: S('arriveVillage'), when: f => f.rook && !f.arrived },
-          { x: 49, y: 7, w: 2, run: S('gorgeApproach'), when: f => !f.brambleSpared },
+          { x: 44, y: 4, w: 12, h: 3, run: S('gorgeApproach'), when: f => !f.brambleSpared },
           { x: 48, y: 0, w: 4, run: S('crossBridge'), when: f => f.bridgeBuilt },
           { x: 80, y: 26, h: 2, run: S('arriveGullPoint'), when: f => f.eastOpen && !f.gullPointSeen },
           { x: 24, y: 26, h: 5, run: S('arriveMeadows'), when: f => f.westOpen && !f.meadowsSeen },
